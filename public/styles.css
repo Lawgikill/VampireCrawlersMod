@@ -15,6 +15,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -80,7 +84,7 @@ h2 {
 }
 
 .controls {
-  grid-template-columns: minmax(280px, 1fr) 180px 180px;
+  grid-template-columns: minmax(280px, 1fr) 180px;
   margin: 18px 0;
 }
 
@@ -119,6 +123,13 @@ button:disabled {
   padding: 12px 16px;
 }
 
+.setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .setup-panel p {
   color: var(--muted);
   margin-top: 4px;
@@ -152,15 +163,10 @@ button:disabled {
   min-height: 70vh;
 }
 
-.pile-list,
 .count-list,
 .card-grid {
   display: grid;
   gap: 8px;
-}
-
-.pile-list {
-  margin-bottom: 24px;
 }
 
 #costs {
@@ -201,30 +207,108 @@ button:disabled {
 
 .card-row {
   display: grid;
+  grid-template-rows: 28px 72px minmax(0, auto) 1fr;
+  align-content: start;
   gap: 8px;
+  min-height: 174px;
   padding: 8px;
+  border-color: color-mix(in srgb, var(--card-edge, var(--line)), #ffffff 18%);
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.16), transparent 28%),
+    radial-gradient(circle at 80% 76%, rgba(0, 0, 0, 0.28), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--card-base, var(--panel-2)), #ffffff 10%), var(--card-base, var(--panel-2)) 45%, color-mix(in srgb, var(--card-base, var(--panel-2)), #000000 24%));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 -16px 34px rgba(0, 0, 0, 0.16);
+}
+
+.card-type-attack {
+  --card-base: #a71713;
+  --card-edge: #f0b35a;
+}
+
+.card-type-support {
+  --card-base: #f5b914;
+  --card-edge: #fff071;
+}
+
+.card-type-buff,
+.card-type-utility {
+  --card-base: #b015b8;
+  --card-edge: #ff83f5;
+}
+
+.card-type-crawler {
+  --card-base: #10b991;
+  --card-edge: #f2d55c;
+}
+
+.card-type-defence {
+  --card-base: #45b9df;
+  --card-edge: #c8efff;
+}
+
+.card-type-unknown {
+  --card-base: #4e5966;
+  --card-edge: #bcc8d6;
 }
 
 .card-art {
   justify-self: center;
+  align-self: center;
   width: 64px;
   height: 64px;
-  border: 1px solid var(--line);
+  border: 1px solid color-mix(in srgb, var(--card-edge, var(--line)), #000000 22%);
   border-radius: 6px;
-  background: #111;
+  background: rgba(10, 12, 11, 0.48);
   object-fit: contain;
   image-rendering: pixelated;
 }
 
 .card-title {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px;
+  position: relative;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  align-self: start;
   min-width: 0;
+  min-height: 28px;
+  padding: 0 32px;
   font-weight: 700;
   font-size: 14px;
   line-height: 1.2;
+  color: #ffffff;
+  text-shadow:
+    1px 1px 0 rgba(0, 0, 0, 0.9),
+    0 0 4px rgba(0, 0, 0, 0.55);
+}
+
+.mana-cost {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #f5f1ca;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 30%, #eef8ff 0 10%, transparent 11%),
+    radial-gradient(circle at 62% 62%, #0d4ac7 0 24%, transparent 25%),
+    radial-gradient(circle at 44% 42%, #35b8ff 0 34%, #1467dc 35% 55%, #072e87 56% 72%, #04184c 73% 100%);
+  box-shadow:
+    inset 0 0 0 2px #1f62d1,
+    inset 0 -4px 0 rgba(0, 0, 0, 0.32),
+    0 1px 0 #000;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  position: absolute;
+  left: 0;
+  text-shadow:
+    1px 1px 0 #06215e,
+    -1px 1px 0 #06215e,
+    1px -1px 0 #06215e,
+    -1px -1px 0 #06215e;
 }
 
 .card-title > span:first-child {
@@ -232,17 +316,24 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
-.card-meta,
+.card-title > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;
+  align-content: start;
   gap: 6px;
 }
 
 .tag {
-  border: 1px solid var(--line);
+  border: 1px solid color-mix(in srgb, var(--card-edge, var(--line)), #000000 35%);
   border-radius: 999px;
-  color: var(--muted);
+  background: rgba(12, 16, 15, 0.42);
+  color: #eef2ed;
   padding: 2px 6px;
   font-size: 11px;
   line-height: 1.35;

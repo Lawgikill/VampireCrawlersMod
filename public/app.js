@@ -2,9 +2,9 @@ const state = {
   snapshot: null,
   cardMap: {},
   search: "",
-  pile: "all",
   sortBy: "cost",
   config: null,
+  setupHiddenThisSession: false,
 };
 
 const els = {
@@ -12,16 +12,16 @@ const els = {
   totalCards: document.querySelector("#totalCards"),
   updatedAt: document.querySelector("#updatedAt"),
   search: document.querySelector("#search"),
-  pileFilter: document.querySelector("#pileFilter"),
   sortBy: document.querySelector("#sortBy"),
   setupPanel: document.querySelector("#setupPanel"),
   setupStatus: document.querySelector("#setupStatus"),
+  hideSetup: document.querySelector("#hideSetup"),
+  hideSetupForever: document.querySelector("#hideSetupForever"),
   rebuildArt: document.querySelector("#rebuildArt"),
   setupLog: document.querySelector("#setupLog"),
   updatePanel: document.querySelector("#updatePanel"),
   updateStatus: document.querySelector("#updateStatus"),
   checkUpdates: document.querySelector("#checkUpdates"),
-  piles: document.querySelector("#piles"),
   costs: document.querySelector("#costs"),
   counts: document.querySelector("#counts"),
   cards: document.querySelector("#cards"),
@@ -50,27 +50,17 @@ function cardDisplayName(id) {
   return cleanId(id);
 }
 
-function cardTypeLabel(id) {
-  const parsed = parseCardId(id);
-  if (!parsed) return "";
-
+function cardTypeClass(card) {
+  if (card.cost === "FCC") return "card-type-crawler";
+  if (/^FCC_/.test(card.cardId || "")) return "card-type-crawler";
+  const parsed = parseCardId(card.cardId);
   return {
-    A: "Attack",
-    S: "Support",
-    B: "Buff",
-    D: "Defence",
-    M: "Utility",
-  }[parsed.type] || parsed.type;
-}
-
-function pileRank(pileId) {
-  return {
-    HandPile: 0,
-    DrawPile: 1,
-    DiscardPile: 2,
-    ComboPile: 3,
-    DestroyPile: 4,
-  }[pileId] ?? 20;
+    A: "card-type-attack",
+    S: "card-type-support",
+    B: "card-type-buff",
+    D: "card-type-defence",
+    M: "card-type-utility",
+  }[parsed?.type] || "card-type-unknown";
 }
 
 function costRank(cost) {
@@ -78,13 +68,11 @@ function costRank(cost) {
 }
 
 function cardMatches(card) {
-  if (state.pile !== "all" && card.pileId !== state.pile) return false;
   if (!state.search) return true;
 
   const haystack = [
     card.cardId,
     card.baseId,
-    card.pileId,
     card.guid,
     ...card.gems,
   ].join(" ").toLowerCase();
@@ -98,31 +86,14 @@ function sortCards(cards) {
     if (state.sortBy === "cost") {
       return costRank(a.cost) - costRank(b.cost)
         || a.cardId.localeCompare(b.cardId)
-        || pileRank(a.pileId) - pileRank(b.pileId)
         || a.index - b.index;
     }
     if (state.sortBy === "name") return a.cardId.localeCompare(b.cardId);
     if (state.sortBy === "base") return a.baseId.localeCompare(b.baseId) || a.cardId.localeCompare(b.cardId);
     if (state.sortBy === "gems") return b.gems.length - a.gems.length || a.cardId.localeCompare(b.cardId);
-    return pileRank(a.pileId) - pileRank(b.pileId) || a.index - b.index;
+    return a.cardId.localeCompare(b.cardId);
   });
   return sorted;
-}
-
-function renderPiles(snapshot) {
-  els.piles.innerHTML = snapshot.piles
-    .map((pile) => `
-      <div class="pile-row">
-        <strong>${pile.pileId}</strong>
-        <span class="badge">${pile.count}</span>
-      </div>
-    `)
-    .join("");
-
-  const options = [`<option value="all">All piles</option>`]
-    .concat(snapshot.piles.map((pile) => `<option value="${pile.pileId}">${pile.pileId}</option>`));
-  els.pileFilter.innerHTML = options.join("");
-  els.pileFilter.value = state.pile;
 }
 
 function renderCounts(snapshot) {
@@ -150,7 +121,15 @@ function renderCosts(snapshot) {
 function formatCost(cost) {
   if (typeof cost === "number") return `${cost} mana`;
   if (cost === "FCC") return "Crawler";
+  if (cost === "W") return "Wild";
   return cost;
+}
+
+function formatCostSymbol(cost) {
+  if (typeof cost === "number") return String(cost);
+  if (cost === "FCC") return "C";
+  if (cost === "W") return "W";
+  return "?";
 }
 
 function renderCards(snapshot) {
@@ -168,18 +147,12 @@ function renderCards(snapshot) {
       const artPath = state.cardMap[card.cardId] || state.cardMap[card.baseId] || "";
 
       return `
-        <article class="card-row">
+        <article class="card-row ${cardTypeClass(card)}">
           <div class="card-title">
-            <span class="tag good">${formatCost(card.cost)}</span>
+            <span class="mana-cost" title="${formatCost(card.cost)}">${formatCostSymbol(card.cost)}</span>
             <span>${cardDisplayName(card.cardId)}</span>
           </div>
           ${artPath ? `<img class="card-art" src="/${artPath}" alt="">` : ""}
-          <div class="card-meta">
-            ${cardTypeLabel(card.cardId) ? `<span class="tag">${cardTypeLabel(card.cardId)}</span>` : ""}
-            <span class="tag">${card.pileId}</span>
-            <span class="tag">Base: ${cardDisplayName(card.baseId)}</span>
-            <span class="tag">#${card.index + 1}</span>
-          </div>
           ${card.gems.length ? `<div class="tags">${card.gems.map((gem) => `<span class="tag good">${cleanId(gem)}</span>`).join("")}</div>` : ""}
           ${flags.length ? `<div class="tags">${flags.map((flag) => `<span class="tag">${flag}</span>`).join("")}</div>` : ""}
         </article>
@@ -192,7 +165,6 @@ function render(snapshot) {
   els.subtitle.textContent = snapshot.savePath;
   els.totalCards.textContent = `${snapshot.totalCards} cards`;
   els.updatedAt.textContent = new Date(snapshot.lastModified).toLocaleTimeString();
-  renderPiles(snapshot);
   renderCosts(snapshot);
   renderCounts(snapshot);
   renderCards(snapshot);
@@ -222,7 +194,7 @@ async function loadConfig() {
 function renderSetup(config) {
   if (!config) return;
   const needsAttention = !config.hasSave || !config.hasGame || !config.hasArt || !config.hasCardCosts;
-  els.setupPanel.hidden = !needsAttention && !window.vampireCrawlers;
+  els.setupPanel.hidden = Boolean(config.hideSetupPanel || state.setupHiddenThisSession || (!needsAttention && !window.vampireCrawlers));
 
   const parts = [
     config.hasGame ? "Game install found" : "Game install missing",
@@ -232,6 +204,7 @@ function renderSetup(config) {
   ];
   els.setupStatus.textContent = parts.join(", ");
   els.rebuildArt.hidden = !window.vampireCrawlers;
+  els.hideSetupForever.hidden = !window.vampireCrawlers;
 }
 
 async function refresh() {
@@ -251,14 +224,14 @@ els.search.addEventListener("input", (event) => {
   if (state.snapshot) renderCards(state.snapshot);
 });
 
-els.pileFilter.addEventListener("change", (event) => {
-  state.pile = event.target.value;
-  if (state.snapshot) renderCards(state.snapshot);
-});
-
 els.sortBy.addEventListener("change", (event) => {
   state.sortBy = event.target.value;
   if (state.snapshot) renderCards(state.snapshot);
+});
+
+els.hideSetup.addEventListener("click", () => {
+  state.setupHiddenThisSession = true;
+  els.setupPanel.hidden = true;
 });
 
 loadArtMap().then(refresh);
@@ -270,9 +243,9 @@ if (window.vampireCrawlers) {
   els.updatePanel.hidden = false;
 
   window.vampireCrawlers.onUpdateStatus((status) => {
-    els.updatePanel.hidden = false;
     els.updateStatus.textContent = status.message || "Update status changed.";
     els.checkUpdates.disabled = status.state === "checking" || status.state === "downloading";
+    els.updatePanel.hidden = status.state === "idle";
   });
 
   els.checkUpdates.addEventListener("click", async () => {
@@ -287,15 +260,17 @@ if (window.vampireCrawlers) {
   });
 
   window.vampireCrawlers.onSetupLog((line) => {
+    state.setupHiddenThisSession = false;
+    els.setupPanel.hidden = false;
     els.setupLog.hidden = false;
     els.setupLog.textContent += line;
     els.setupLog.scrollTop = els.setupLog.scrollHeight;
   });
 
-  els.rebuildArt.addEventListener("click", async () => {
+  async function rebuildLocalDataFromUi() {
     els.rebuildArt.disabled = true;
     els.setupLog.hidden = false;
-    els.setupLog.textContent = "Rebuilding local art and cost data...\n";
+    els.setupLog.textContent = "";
     try {
       await window.vampireCrawlers.rebuildArtCache();
       await loadArtMap();
@@ -306,5 +281,14 @@ if (window.vampireCrawlers) {
     } finally {
       els.rebuildArt.disabled = false;
     }
+  }
+
+  els.hideSetupForever.addEventListener("click", async () => {
+    const result = await window.vampireCrawlers.hideSetupPanelForever();
+    if (!result?.hidden) return;
+    state.config = { ...(state.config || {}), hideSetupPanel: true };
+    els.setupPanel.hidden = true;
   });
+
+  els.rebuildArt.addEventListener("click", rebuildLocalDataFromUi);
 }

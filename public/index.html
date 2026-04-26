@@ -20,13 +20,9 @@
       </header>
 
       <section class="controls" aria-label="Deck controls">
-        <input id="search" type="search" placeholder="Search cards, base cards, gems, piles">
-        <select id="pileFilter" aria-label="Pile filter">
-          <option value="all">All piles</option>
-        </select>
+        <input id="search" type="search" placeholder="Search cards, base cards, gems">
         <select id="sortBy" aria-label="Sort cards">
           <option value="cost">Sort by cost</option>
-          <option value="pile">Sort by pile</option>
           <option value="name">Sort by name</option>
           <option value="base">Sort by base card</option>
           <option value="gems">Sort by gems</option>
@@ -38,7 +34,11 @@
           <strong>Local setup</strong>
           <p id="setupStatus">Checking local Vampire Crawlers files...</p>
         </div>
-        <button id="rebuildArt" type="button">Rebuild Local Data</button>
+        <div class="setup-actions">
+          <button id="hideSetup" type="button">Hide</button>
+          <button id="hideSetupForever" type="button">Hide Forever</button>
+          <button id="rebuildArt" type="button">Rebuild Local Data</button>
+        </div>
         <pre id="setupLog" hidden></pre>
       </section>
 
@@ -52,9 +52,6 @@
 
       <section class="layout">
         <aside class="panel">
-          <h2>Piles</h2>
-          <div id="piles" class="pile-list"></div>
-
           <h2>Costs</h2>
           <div id="costs" class="count-list"></div>
 

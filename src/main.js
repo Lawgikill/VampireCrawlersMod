@@ -111,6 +111,22 @@ function buildMenu() {
         },
         { type: "separator" },
         {
+          label: "Rebuild Local Data",
+          click: async () => {
+            try {
+              await rebuildLocalData();
+              dialog.showMessageBox(mainWindow, {
+                type: "info",
+                title: "Local Data Rebuilt",
+                message: "Local art and cost data were rebuilt successfully.",
+              });
+            } catch (error) {
+              dialog.showErrorBox("Rebuild Local Data Failed", error.message);
+            }
+          },
+        },
+        { type: "separator" },
+        {
           label: "Check for Updates",
           click: () => checkForUpdates(true),
         },
@@ -258,7 +274,7 @@ async function runLocalDataBuilder(projectRoot, paths, append) {
   await runPython([path.join(projectRoot, "tools", "build_local_data.py"), ...args], projectRoot, append);
 }
 
-ipcMain.handle("rebuild-art-cache", async () => {
+async function rebuildLocalData() {
   const projectRoot = path.resolve(__dirname, "..");
   const generatedAssetsDir = path.join(config.generatedDir, "assets");
   const artDir = path.join(generatedAssetsDir, "art");
@@ -270,6 +286,8 @@ ipcMain.handle("rebuild-art-cache", async () => {
     log.push(line.trimEnd());
     mainWindow?.webContents.send("setup-log", line);
   };
+
+  append("Rebuilding local art and cost data...\n");
 
   if (!config.gameDir || !fs.existsSync(path.join(config.gameDir, "Vampire Crawlers_Data"))) {
     throw new Error("Vampire Crawlers install folder is not configured.");
@@ -286,6 +304,26 @@ ipcMain.handle("rebuild-art-cache", async () => {
   config.firstRunComplete = true;
   saveConfig(config, app.getPath("userData"));
   return { ok: true, log };
+}
+
+ipcMain.handle("rebuild-art-cache", rebuildLocalData);
+
+ipcMain.handle("hide-setup-panel-forever", async () => {
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: "question",
+    buttons: ["Hide Forever", "Cancel"],
+    defaultId: 1,
+    cancelId: 1,
+    title: "Hide Local Setup",
+    message: "Hide the Local setup section by default from now on?",
+    detail: "You can still rebuild local art and cost data later from File > Rebuild Local Data in the app menu.",
+  });
+
+  if (result.response !== 0) return { hidden: false };
+
+  config.hideSetupPanel = true;
+  saveConfig(config, app.getPath("userData"));
+  return { hidden: true };
 });
 
 ipcMain.handle("check-for-updates", () => checkForUpdates(true));

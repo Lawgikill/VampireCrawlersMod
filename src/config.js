@@ -77,6 +77,7 @@ function createDefaultConfig(userDataDir = defaultUserDataDir()) {
     savePath: detectSavePath(),
     generatedDir: path.join(userDataDir, "generated"),
     firstRunComplete: false,
+    hideSetupPanel: false,
   };
 }
 

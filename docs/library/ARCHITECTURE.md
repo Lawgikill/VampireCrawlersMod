@@ -43,8 +43,9 @@ Responsibilities:
 - Detect default save file.
 - Store config under `%APPDATA%\VampireCrawlersDeckTracker\config.json`.
 - Define `generatedDir`, currently `%APPDATA%\VampireCrawlersDeckTracker\generated`.
+- Store `hideSetupPanel`, which hides the Local setup panel by default after the user confirms **Hide Forever**.
 
-The app allows choosing the game install and save file from the File menu. Changes are saved, but the current implementation does not restart the server automatically after changing them.
+The app allows choosing the game install and save file from the File menu. The File menu also exposes **Rebuild Local Data** for rebuilding extracted local art and cost data even if the Local setup panel is hidden. Changes are saved, but the current implementation does not restart the server automatically after changing paths.
 
 ### HTTP Server
 
@@ -144,6 +145,7 @@ Rules:
 - Use `cardCosts[cardId]` first.
 - Only use `baseId` if `cardId === baseId`.
 - `FCC_*` cards are displayed as `Crawler`.
+- `Card_W_*` and `Card_E_*` cards are displayed with wild cost `W`.
 - Unknown costs remain `Unknown`.
 - Mana gems parse as:
   - `GemConfig_Mana_Plus2`
@@ -214,4 +216,3 @@ to:
 ```text
 resources\asset-builder\vampire-crawlers-asset-builder.exe
 ```
-

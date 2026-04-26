@@ -29,6 +29,7 @@ The current app reads the active save file, extracts the card piles already seri
 - When rebuilding for other users, always build the asset helper first.
 - Do not produce or publish portable builds; the supported release format is the full installer.
 - Upload `latest.yml` with each GitHub Release or installed apps will not see updates.
+- The Local setup panel can be hidden forever via `hideSetupPanel` in config; do not remove the File menu rebuild command.
 - Be direct about uncertainty. Earlier we treated card ID numbers as mana costs and that was wrong.
 - Keep generated game art out of the shipped app.
 
@@ -77,6 +78,7 @@ art\*.png
 5. Art is displayed from a generated local `card-map.json`.
 6. Cost data comes from `card-costs.json`.
 7. `Rebuild Local Data` runs a bundled helper exe in packaged builds.
+8. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
 
 ## Things That Are Known Fragile
 
@@ -84,6 +86,7 @@ art\*.png
 - The card art mapping is reverse-engineered from Unity assets and is not perfect for every future card/config.
 - Unity/Odin serialized `CardConfig` data is partially custom; do not assume `read_typetree()` will expose all fields.
 - Card IDs like `Card_A_1_MagicWand` are not reliable for mana cost. MagicWand’s true base cost is `0`.
+- Wild/event cards such as `Card_W_Combo`, `Card_E_BagOfCoins`, and `Card_E_Vacuum` display with cost `W`.
 - Evolved cards and base cards can differ. Do not fall back from an evolved `cardId` to `baseId` for cost unless you know it is correct.
 - The packaged app must include `public/assets/card-costs.json` but must not include extracted PNG art or generated `card-map.json`.
 

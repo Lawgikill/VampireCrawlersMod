@@ -70,6 +70,7 @@ function getCardCost(cardId, baseId, cardCosts = {}) {
     return Number(cardCosts[baseId]);
   }
   if ((cardId || "").startsWith("FCC_")) return "FCC";
+  if (/^Card_[WE]_/.test(cardId || "")) return "W";
   return "Unknown";
 }
 
