@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+*.spec
+*.log
+__pycache__/
+*.pyc
+
+# Generated from each user's own Vampire Crawlers installation.
+public/assets/art/
+public/assets/art-manifest.json
+public/assets/card-map.json
+public/assets/contact-sheet-*.png
+bin/vampire-crawlers-asset-builder.exe

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Vampire Crawlers Art Browser</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>Art Browser</h1>
+          <p id="subtitle">Loading extracted sprites...</p>
+        </div>
+        <div class="status">
+          <a class="link" href="/">Deck</a>
+          <span id="totalArt">0 sprites</span>
+        </div>
+      </header>
+
+      <section class="controls" aria-label="Art controls">
+        <input id="search" type="search" placeholder="Search bundle, path ID, dimensions">
+        <select id="sizeFilter" aria-label="Size filter">
+          <option value="all">All sizes</option>
+          <option value="large">Large only</option>
+          <option value="wide">Wide only</option>
+          <option value="square">Square-ish</option>
+        </select>
+        <select id="sortBy" aria-label="Sort art">
+          <option value="area">Sort by size</option>
+          <option value="bundle">Sort by bundle</option>
+          <option value="shape">Sort by shape</option>
+        </select>
+      </section>
+
+      <section class="panel">
+        <div id="artGrid" class="art-grid"></div>
+      </section>
+    </main>
+
+    <script src="/art.js"></script>
+  </body>
+</html>

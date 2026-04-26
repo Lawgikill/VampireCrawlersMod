@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Vampire Crawlers Deck Tracker</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>Deck Tracker</h1>
+          <p id="subtitle">Waiting for save data...</p>
+        </div>
+        <div class="status">
+          <span id="totalCards">0 cards</span>
+          <span id="updatedAt">--</span>
+        </div>
+      </header>
+
+      <section class="controls" aria-label="Deck controls">
+        <input id="search" type="search" placeholder="Search cards, base cards, gems, piles">
+        <select id="pileFilter" aria-label="Pile filter">
+          <option value="all">All piles</option>
+        </select>
+        <select id="sortBy" aria-label="Sort cards">
+          <option value="cost">Sort by cost</option>
+          <option value="pile">Sort by pile</option>
+          <option value="name">Sort by name</option>
+          <option value="base">Sort by base card</option>
+          <option value="gems">Sort by gems</option>
+        </select>
+      </section>
+
+      <section id="setupPanel" class="setup-panel" hidden>
+        <div>
+          <strong>Local setup</strong>
+          <p id="setupStatus">Checking local Vampire Crawlers files...</p>
+        </div>
+        <button id="rebuildArt" type="button">Rebuild Local Data</button>
+        <pre id="setupLog" hidden></pre>
+      </section>
+
+      <section class="layout">
+        <aside class="panel">
+          <h2>Piles</h2>
+          <div id="piles" class="pile-list"></div>
+
+          <h2>Costs</h2>
+          <div id="costs" class="count-list"></div>
+
+          <h2>Frequency</h2>
+          <div id="counts" class="count-list"></div>
+        </aside>
+
+        <section class="panel">
+          <h2>Cards</h2>
+          <div id="cards" class="card-grid"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

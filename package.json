@@ -1,0 +1,64 @@
+{
+  "name": "vampire-crawlers-deck-tracker",
+  "version": "0.1.1",
+  "private": true,
+  "author": "Vampire Crawlers Deck Tracker contributors",
+  "description": "Read-only second-screen deck tracker for Vampire Crawlers saves.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node server.js",
+    "desktop": "electron .",
+    "build:win": "electron-builder --win",
+    "extract-art": "python tools\\extract_art.py --min-size 16",
+    "build-card-map": "python tools\\build_card_map.py",
+    "build-card-cost-map": "python tools\\build_card_cost_map.py",
+    "build-local-data": "python tools\\build_local_data.py",
+    "build-asset-builder": "python -m PyInstaller --clean --onefile --collect-all UnityPy --collect-all fmod_toolkit --collect-data archspec --name vampire-crawlers-asset-builder --distpath bin tools\\build_local_data.py"
+  },
+  "build": {
+    "appId": "com.vampirecrawlers.decktracker",
+    "productName": "Vampire Crawlers Deck Tracker",
+    "directories": {
+      "output": "dist"
+    },
+    "asar": false,
+    "files": [
+      "package.json",
+      "requirements.txt",
+      "server.js",
+      "src/**",
+      "tools/**",
+      "public/**",
+      "!public/assets/art/**",
+      "!public/assets/art-manifest.json",
+      "!public/assets/card-map.json",
+      "!public/assets/contact-sheet-*.png"
+    ],
+    "extraResources": [
+      {
+        "from": "bin",
+        "to": "asset-builder",
+        "filter": [
+          "vampire-crawlers-asset-builder.exe"
+        ]
+      }
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "electron": "^38.4.0",
+    "electron-builder": "^26.0.12"
+  }
+}
