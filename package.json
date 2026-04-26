@@ -1,6 +1,6 @@
 {
   "name": "vampire-crawlers-deck-tracker",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "author": "Vampire Crawlers Deck Tracker contributors",
   "description": "Read-only second-screen deck tracker for Vampire Crawlers saves.",
