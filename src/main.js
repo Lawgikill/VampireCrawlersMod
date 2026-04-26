@@ -2,6 +2,7 @@ const { app, BrowserWindow, Menu, dialog, ipcMain } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
+const { autoUpdater } = require("electron-updater");
 
 const { startServer } = require("../server");
 const {
@@ -13,6 +14,7 @@ const {
 let mainWindow;
 let serverHandle;
 let config;
+let updateCheckInFlight = false;
 
 const singleInstanceLock = app.requestSingleInstanceLock();
 if (!singleInstanceLock) {
@@ -38,6 +40,41 @@ function createWindow(url) {
   });
 
   mainWindow.loadURL(url);
+}
+
+function sendUpdateStatus(status) {
+  mainWindow?.webContents.send("update-status", {
+    at: new Date().toISOString(),
+    ...status,
+  });
+}
+
+async function checkForUpdates(manual = false) {
+  if (!app.isPackaged) {
+    const message = "Update checks are only available in the installed app.";
+    sendUpdateStatus({ state: "idle", message });
+    return { ok: false, message };
+  }
+
+  if (updateCheckInFlight) {
+    const message = "Already checking for updates.";
+    sendUpdateStatus({ state: "checking", message });
+    return { ok: true, message };
+  }
+
+  updateCheckInFlight = true;
+  sendUpdateStatus({ state: "checking", message: "Checking for updates..." });
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    return { ok: true, updateInfo: result?.updateInfo || null };
+  } catch (error) {
+    const message = `Update check failed: ${error.message}`;
+    sendUpdateStatus({ state: "error", message });
+    if (manual) dialog.showErrorBox("Update Check Failed", error.message);
+    return { ok: false, message };
+  } finally {
+    updateCheckInFlight = false;
+  }
 }
 
 function buildMenu() {
@@ -73,6 +110,11 @@ function buildMenu() {
           },
         },
         { type: "separator" },
+        {
+          label: "Check for Updates",
+          click: () => checkForUpdates(true),
+        },
+        { type: "separator" },
         { role: "quit" },
       ],
     },
@@ -91,6 +133,58 @@ function buildMenu() {
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
+
+autoUpdater.autoDownload = true;
+
+autoUpdater.on("checking-for-update", () => {
+  sendUpdateStatus({ state: "checking", message: "Checking for updates..." });
+});
+
+autoUpdater.on("update-available", (info) => {
+  sendUpdateStatus({
+    state: "available",
+    message: `Update ${info.version} found. Downloading...`,
+    version: info.version,
+  });
+});
+
+autoUpdater.on("update-not-available", () => {
+  sendUpdateStatus({ state: "idle", message: "You are running the latest version." });
+});
+
+autoUpdater.on("download-progress", (progress) => {
+  sendUpdateStatus({
+    state: "downloading",
+    message: `Downloading update: ${Math.round(progress.percent || 0)}%`,
+    percent: progress.percent || 0,
+  });
+});
+
+autoUpdater.on("update-downloaded", async (info) => {
+  sendUpdateStatus({
+    state: "downloaded",
+    message: `Update ${info.version} is ready to install.`,
+    version: info.version,
+  });
+
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: "info",
+    buttons: ["Restart and Install", "Later"],
+    defaultId: 0,
+    cancelId: 1,
+    title: "Update Ready",
+    message: `Vampire Crawlers Deck Tracker ${info.version} is ready to install.`,
+    detail: "Restart the app now to finish updating.",
+  });
+
+  if (result.response === 0) {
+    autoUpdater.quitAndInstall();
+  }
+});
+
+autoUpdater.on("error", (error) => {
+  sendUpdateStatus({ state: "error", message: `Update error: ${error.message}` });
+});
 
 function runProcess(command, args, cwd, onLine) {
   return new Promise((resolve, reject) => {
@@ -194,6 +288,8 @@ ipcMain.handle("rebuild-art-cache", async () => {
   return { ok: true, log };
 });
 
+ipcMain.handle("check-for-updates", () => checkForUpdates(true));
+
 if (singleInstanceLock) app.whenReady().then(async () => {
   config = {
     ...createDefaultConfig(app.getPath("userData")),
@@ -208,6 +304,7 @@ if (singleInstanceLock) app.whenReady().then(async () => {
     userDataDir: app.getPath("userData"),
   });
   createWindow(serverHandle.url);
+  setTimeout(() => checkForUpdates(false), 3000);
 });
 
 app.on("window-all-closed", () => {

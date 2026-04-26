@@ -38,8 +38,9 @@ If you skip `build-asset-builder`, other users without Python installed will fai
 Release artifacts:
 
 ```text
-dist\Vampire Crawlers Deck Tracker Setup <version>.exe
-dist\Vampire Crawlers Deck Tracker Setup <version>.exe.blockmap
+dist\Vampire-Crawlers-Deck-Tracker-Setup-<version>.exe
+dist\Vampire-Crawlers-Deck-Tracker-Setup-<version>.exe.blockmap
+dist\latest.yml
 dist\win-unpacked\
 ```
 
@@ -74,12 +75,13 @@ bin\vampire-crawlers-asset-builder.exe --help
 After `npm run build:win`:
 
 ```powershell
-Get-ChildItem dist -Filter 'Vampire Crawlers Deck Tracker Setup *.exe' | Sort-Object LastWriteTime -Descending | Select-Object Name,Length,LastWriteTime
+Get-ChildItem dist -Filter 'Vampire-Crawlers-Deck-Tracker-Setup-*.exe' | Sort-Object LastWriteTime -Descending | Select-Object Name,Length,LastWriteTime
 
 Test-Path 'dist\win-unpacked\resources\asset-builder\vampire-crawlers-asset-builder.exe'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\card-costs.json'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\art'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\card-map.json'
+Test-Path 'dist\latest.yml'
 ```
 
 Expected booleans:
@@ -90,7 +92,10 @@ helper: true
 card-costs.json: true
 art folder: false
 card-map.json: false
+latest.yml: true
 ```
+
+GitHub Releases for updater-enabled builds must upload the installer exe, its `.blockmap`, and `latest.yml`.
 
 Check known cost entries:
 

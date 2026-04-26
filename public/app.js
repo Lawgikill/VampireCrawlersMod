@@ -18,6 +18,9 @@ const els = {
   setupStatus: document.querySelector("#setupStatus"),
   rebuildArt: document.querySelector("#rebuildArt"),
   setupLog: document.querySelector("#setupLog"),
+  updatePanel: document.querySelector("#updatePanel"),
+  updateStatus: document.querySelector("#updateStatus"),
+  checkUpdates: document.querySelector("#checkUpdates"),
   piles: document.querySelector("#piles"),
   costs: document.querySelector("#costs"),
   counts: document.querySelector("#counts"),
@@ -264,6 +267,25 @@ setInterval(refresh, 2000);
 setInterval(loadConfig, 10000);
 
 if (window.vampireCrawlers) {
+  els.updatePanel.hidden = false;
+
+  window.vampireCrawlers.onUpdateStatus((status) => {
+    els.updatePanel.hidden = false;
+    els.updateStatus.textContent = status.message || "Update status changed.";
+    els.checkUpdates.disabled = status.state === "checking" || status.state === "downloading";
+  });
+
+  els.checkUpdates.addEventListener("click", async () => {
+    els.checkUpdates.disabled = true;
+    try {
+      await window.vampireCrawlers.checkForUpdates();
+    } catch (error) {
+      els.updateStatus.textContent = error.message;
+    } finally {
+      els.checkUpdates.disabled = false;
+    }
+  });
+
   window.vampireCrawlers.onSetupLog((line) => {
     els.setupLog.hidden = false;
     els.setupLog.textContent += line;

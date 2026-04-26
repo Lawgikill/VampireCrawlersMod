@@ -18,6 +18,8 @@ The current app reads the active save file, extracts the card piles already seri
   - `npm run build:win`
 - Latest release artifacts are in `dist/`:
   - NSIS installer only
+  - installer blockmap
+  - `latest.yml` for electron-updater
 
 ## User Preferences And Working Style
 
@@ -26,6 +28,7 @@ The current app reads the active save file, extracts the card piles already seri
 - Do not rebuild the exe unless the user explicitly asks.
 - When rebuilding for other users, always build the asset helper first.
 - Do not produce or publish portable builds; the supported release format is the full installer.
+- Upload `latest.yml` with each GitHub Release or installed apps will not see updates.
 - Be direct about uncertainty. Earlier we treated card ID numbers as mana costs and that was wrong.
 - Keep generated game art out of the shipped app.
 
