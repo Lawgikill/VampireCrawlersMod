@@ -61,6 +61,10 @@ The app should **not** package:
 ```text
 dist\win-unpacked\resources\app\public\assets\art\
 dist\win-unpacked\resources\app\public\assets\card-map.json
+dist\win-unpacked\resources\app\public\assets\card-names.json
+dist\win-unpacked\resources\app\public\assets\card-text.json
+dist\win-unpacked\resources\app\public\assets\gem-map.json
+dist\win-unpacked\resources\app\public\assets\gem-text.json
 dist\win-unpacked\resources\app\public\assets\art-manifest.json
 ```
 
@@ -81,6 +85,10 @@ Test-Path 'dist\win-unpacked\resources\asset-builder\vampire-crawlers-asset-buil
 Test-Path 'dist\win-unpacked\resources\app\public\assets\card-costs.json'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\art'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\card-map.json'
+Test-Path 'dist\win-unpacked\resources\app\public\assets\card-names.json'
+Test-Path 'dist\win-unpacked\resources\app\public\assets\card-text.json'
+Test-Path 'dist\win-unpacked\resources\app\public\assets\gem-map.json'
+Test-Path 'dist\win-unpacked\resources\app\public\assets\gem-text.json'
 Test-Path 'dist\latest.yml'
 ```
 
@@ -92,10 +100,28 @@ helper: true
 card-costs.json: true
 art folder: false
 card-map.json: false
+card-names.json: false
+card-text.json: false
+gem-map.json: false
+gem-text.json: false
 latest.yml: true
 ```
 
 GitHub Releases for updater-enabled builds must upload the installer exe, its `.blockmap`, and `latest.yml`.
+
+The v1.0.0 release was published with GitHub CLI:
+
+```powershell
+& 'C:\Program Files\GitHub CLI\gh.exe' release create v1.0.0 `
+  'dist\Vampire-Crawlers-Deck-Tracker-Setup-1.0.0.exe' `
+  'dist\Vampire-Crawlers-Deck-Tracker-Setup-1.0.0.exe.blockmap' `
+  'dist\latest.yml' `
+  --repo Lawgikill/VampireCrawlersMod `
+  --title 'v1.0.0' `
+  --notes-file <release-notes.md>
+```
+
+If `gh` is installed but not on PATH, check `C:\Program Files\GitHub CLI\gh.exe`.
 
 Check known cost entries:
 
@@ -165,6 +191,9 @@ public/assets/art/
 public/assets/art-manifest.json
 public/assets/card-map.json
 public/assets/card-names.json
+public/assets/card-text.json
+public/assets/gem-map.json
+public/assets/gem-text.json
 public/assets/contact-sheet-*.png
 ```
 

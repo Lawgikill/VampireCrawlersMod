@@ -7,7 +7,7 @@ from pathlib import Path
 import UnityPy
 
 
-CARD_ID_RE = re.compile(rb"(?:Card_[A-Z]_(?:[0-9]_[A-Za-z0-9]+|[A-Za-z0-9]+)|FCC_[A-Za-z0-9]+)")
+CARD_ID_RE = re.compile(rb"(?:Card_[A-Z]_(?:[0-9]_[A-Za-z0-9]+|[A-Za-z0-9]+)|FCC_[A-Za-z0-9']+)")
 
 
 def get_script_path_id(raw):
@@ -58,7 +58,23 @@ def is_name_key(key):
 def clean_localized_name(value):
     if not value or value.startswith("{"):
         return ""
-    return value.replace("\n", " ").strip()
+
+    replacements = {
+        "{GlobalKeywords.Armor}": "Armor",
+        "{GlobalKeywords.Mana}": "Mana",
+        "{GlobalKeywords.Crawler}": "Crawler",
+        "{GlobalKeywords.Amount}": "Amount",
+        "{GlobalKeywords.Area}": "Area",
+        "{GlobalKeywords.Duration}": "Duration",
+        "{GlobalKeywords.Handsize}": "Hand",
+        "{GlobalKeywords.Luck}": "Luck",
+        "{GlobalKeywords.Might}": "Might",
+    }
+
+    text = value
+    for source, replacement in replacements.items():
+        text = text.replace(source, replacement)
+    return text.replace("\n", " ").strip()
 
 
 def find_name(raw, localized_names):

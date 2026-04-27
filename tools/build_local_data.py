@@ -5,6 +5,9 @@ from pathlib import Path
 import build_card_cost_map
 import build_card_map
 import build_card_name_map
+import build_card_text_map
+import build_gem_map
+import build_gem_text_map
 import extract_art
 
 
@@ -26,6 +29,9 @@ def main():
     parser.add_argument("--card-map", type=Path, required=True)
     parser.add_argument("--card-costs", type=Path, required=True)
     parser.add_argument("--card-names", type=Path, required=True)
+    parser.add_argument("--card-text", type=Path, required=True)
+    parser.add_argument("--gem-map", type=Path, required=True)
+    parser.add_argument("--gem-text", type=Path, required=True)
     parser.add_argument("--min-size", default="16")
     args = parser.parse_args()
 
@@ -75,6 +81,38 @@ def main():
             str(game_data),
             "--output",
             str(args.card_names),
+        ],
+    )
+    run_step(
+        "build_card_text_map",
+        build_card_text_map.main,
+        [
+            "--game-data",
+            str(game_data),
+            "--output",
+            str(args.card_text),
+        ],
+    )
+    run_step(
+        "build_gem_map",
+        build_gem_map.main,
+        [
+            "--game-data",
+            str(game_data),
+            "--manifest",
+            str(args.manifest),
+            "--output",
+            str(args.gem_map),
+        ],
+    )
+    run_step(
+        "build_gem_text_map",
+        build_gem_text_map.main,
+        [
+            "--game-data",
+            str(game_data),
+            "--output",
+            str(args.gem_text),
         ],
     )
 

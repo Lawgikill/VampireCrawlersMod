@@ -196,7 +196,7 @@ Correct result:
 base=3 effective=3
 ```
 
-This is why `server.js` does not use `baseId` as a general fallback for cost. If `cardCosts[cardId]` is missing, showing `Unknown` is better than silently showing the base card’s wrong cost.
+This is why `server.js` does not use `baseId` as a general fallback for cost. If `cardCosts[cardId]` is missing, showing `Unknown` is better than silently showing the base card's wrong cost.
 
 ## Mana Gems
 
@@ -272,3 +272,55 @@ m_Script: CardConfig
 ```
 
 AssetRipper export also generated a large temporary project and logs. Do not commit these.
+
+## Card And Gem Text
+
+Rules text is not a single complete, clean table for every card. The current
+tracker builds practical display text with a layered approach:
+
+1. Read English localization entries where they are directly referenced.
+2. Decode common command/effect names from raw `CardConfig`, `FccConfig`, and
+   `GemConfig` payloads.
+3. Decode simple numeric fields where reliable, such as `_armorAmount`,
+   `_healAmount`, and `_reduceAmount`.
+4. Apply explicit overrides for cards/gems that the user has checked in-game.
+
+The source of truth for these overrides is:
+
+```text
+tools\build_card_text_map.py
+tools\build_gem_text_map.py
+```
+
+Generated files are local artifacts and ignored:
+
+```text
+public\assets\card-text.json
+public\assets\gem-text.json
+```
+
+Known decoded examples:
+
+```text
+GemConfig_Armor -> ArmorEffect, _armorAmount = 2 -> Add 2 Armor.
+Card_M_0_Wings / Card_W_Wings -> WingsEffect, _reduceAmount = 1 -> Reduce Mana cost of next card played by 1.
+FCC_Antonio -> ArmorEffect before fccActions, then AttackCardTypeTrigger + MightEffect.
+```
+
+For crawler cards, `FccConfig` serializes base effects before `fccActions` and
+triggered effects after `_triggerType` blocks. The app formats crawler rules
+with line breaks after the base sentence and before `Duration:`.
+
+Some observed in-game wording intentionally differs from generic effect names.
+Examples:
+
+```text
+Spellbinder -> Duration : Crawlers trigger XX more abilities before leaving.
+Candelabrador -> Area : Attacks deal XX% splash damage.
+Sprig o' Spinach -> Might : Deal XX% more damage.
+Garlic -> Deal XX damage to the front row. / Disarm.
+```
+
+Do not assume every number should be highlighted as a variable. Wings uses a
+literal `1`, so the frontend leaves it white. Percentage placeholders should be
+highlighted as a complete token, including the `%` symbol.

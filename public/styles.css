@@ -9,6 +9,7 @@
   --accent: #d74738;
   --accent-2: #e7b95c;
   --good: #78c28f;
+  --card-font: "Lucida Console", "Cascadia Mono", "Consolas", monospace;
 }
 
 * {
@@ -173,6 +174,33 @@ button:disabled {
   margin-bottom: 24px;
 }
 
+.panel-section-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.panel-section-header h2 {
+  margin-bottom: 0;
+}
+
+.inline-select {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.inline-select select {
+  width: 88px;
+  min-height: 30px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
 .cost-histogram {
   display: grid;
   grid-auto-flow: column;
@@ -278,15 +306,17 @@ button:disabled {
 }
 
 .card-grid {
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
 }
 
 .card-row {
   display: grid;
-  grid-template-rows: 28px 72px minmax(0, auto) 1fr;
-  align-content: start;
-  gap: 8px;
-  min-height: 174px;
+  grid-template-rows: 28px 88px minmax(74px, 1fr);
+  grid-auto-rows: auto;
+  align-content: stretch;
+  gap: 7px;
+  min-height: 250px;
+  height: 100%;
   padding: 8px;
   border-color: color-mix(in srgb, var(--card-edge, var(--line)), #ffffff 18%);
   background:
@@ -332,8 +362,8 @@ button:disabled {
 .card-art {
   justify-self: center;
   align-self: center;
-  width: 64px;
-  height: 64px;
+  width: 78px;
+  height: 78px;
   border: 1px solid color-mix(in srgb, var(--card-edge, var(--line)), #000000 22%);
   border-radius: 6px;
   background: rgba(10, 12, 11, 0.48);
@@ -350,8 +380,17 @@ button:disabled {
   min-width: 0;
   min-height: 28px;
   padding: 0 32px;
+  border: 1px solid color-mix(in srgb, var(--card-edge, #f0b35a), #ffffff 12%);
+  border-radius: 4px 4px 2px 2px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 38%),
+    color-mix(in srgb, var(--card-base, #812018), #000000 18%);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.22),
+    inset 0 -2px rgba(0, 0, 0, 0.18);
+  font-family: var(--card-font);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.2;
   color: #ffffff;
   text-shadow:
@@ -396,7 +435,8 @@ button:disabled {
   gap: 4px;
 }
 
-.gem-slot-empty {
+.gem-slot-empty,
+.gem-slot-filled {
   display: block;
   width: 28px;
   height: 28px;
@@ -409,15 +449,109 @@ button:disabled {
     0 1px 0 #000;
 }
 
+.gem-slot-filled {
+  display: grid;
+  place-items: center;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.gem-slot-filled img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.gem-slot-label {
+  overflow: hidden;
+  color: #102538;
+  font-size: 6px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+}
+
 .card-title > span:first-child {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.card-title > span:last-child {
+.card-name {
+  display: block;
+  width: 100%;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow: visible;
+  white-space: nowrap;
   text-align: center;
+}
+
+.card-description {
+  display: grid;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  align-self: stretch;
+  margin: 0 -8px;
+  border-top: 1px solid color-mix(in srgb, var(--card-edge, #f0b35a), #ffffff 8%);
+  border-bottom: 1px solid color-mix(in srgb, var(--card-edge, #f0b35a), #000000 12%);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 26%),
+    linear-gradient(135deg, #70789d, #5e658d 60%, #545a80);
+  color: #f8fbff;
+  padding: 8px 9px;
+  overflow: hidden;
+  font-family: var(--card-font);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  text-shadow:
+    1px 1px 0 rgba(0, 0, 0, 0.78),
+    0 0 3px rgba(0, 0, 0, 0.45);
+}
+
+.card-description:last-child {
+  margin-bottom: -8px;
+  border-radius: 0 0 4px 4px;
+}
+
+.card-description > span {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.rules-value {
+  color: #ffd83f;
+  text-shadow:
+    1px 1px 0 rgba(93, 56, 0, 0.8),
+    0 0 5px rgba(255, 176, 42, 0.36);
+}
+
+.gem-rules {
+  display: block;
+  margin-top: 2px;
+}
+
+.gem-rule {
+  display: block;
+  color: #ffd83f;
+  text-shadow:
+    1px 1px 0 rgba(93, 56, 0, 0.88),
+    0 0 5px rgba(255, 176, 42, 0.38);
+}
+
+.gem-rule-card-text {
+  color: white;
+  text-shadow:
+    1px 1px 0 #12121c,
+    -1px 1px 0 #12121c,
+    1px -1px 0 #12121c,
+    -1px -1px 0 #12121c,
+    0 2px 0 rgba(0, 0, 0, 0.55);
 }
 
 .tags {

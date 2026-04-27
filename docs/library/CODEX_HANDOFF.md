@@ -79,23 +79,30 @@ art\*.png
 5. Art is displayed from a generated local `card-map.json`.
 6. Cost data comes from `card-costs.json`.
 7. Display names come from generated local `card-names.json`.
-7. `Rebuild Local Data` runs a bundled helper exe in packaged builds.
-8. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
+8. Card rules text comes from generated local `card-text.json`.
+9. Filled gem slot art comes from generated local `gem-map.json`.
+10. Gem rules text comes from generated local `gem-text.json`.
+11. `Rebuild Local Data` runs a bundled helper exe in packaged builds.
+12. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
 
 ## Things That Are Known Fragile
 
-- The save file polling is only as real-time as the game’s save writes. It is not process-memory live.
+- The save file polling is only as real-time as the game's save writes. It is not process-memory live.
 - The card art mapping is reverse-engineered from Unity assets and is not perfect for every future card/config.
 - Unity/Odin serialized `CardConfig` data is partially custom; do not assume `read_typetree()` will expose all fields.
-- Card IDs like `Card_A_1_MagicWand` are not reliable for mana cost. MagicWand’s true base cost is `0`.
+- Card IDs like `Card_A_1_MagicWand` are not reliable for mana cost. MagicWand's true base cost is `0`.
 - Wild/event cards such as `Card_W_Combo`, `Card_E_BagOfCoins`, and `Card_E_Vacuum` display with cost `W`.
 - Event cards can use ids without a numeric tier, such as `Card_E_LittleClover` and `Card_E_Orologion`; the builder regex must support that shorter shape.
 - `FCC_*` crawler cards do have real mana costs, but not from generated `card-costs.json`. The server reads `RunMetaSaveData.SelectedPartyFccIds`: first selected crawler costs `0`, other selected crawlers cost `1`.
 - The Costs panel separates crawler buckets from normal deck mana buckets. Normal numeric mana buckets render as a histogram; `Wild` and `Crawler N` render as rows.
 - Gem tags are display-formatted in the frontend. `GemConfig_YinYang` becomes `Yin Yang`, and mana modifier gems display as `Mana +N` / `Mana -N`.
 - Open gem slots can be derived from the save: `Data.ProgressionSaveData.CardGemSlots[cardId] - GemIds.length`, clamped at zero. The app renders them as black/gold circles under the card's mana cost.
+- Filled gem slots render generated gem sprites and should not show a separate colored backing ring.
 - Evolved cards and base cards can differ. Do not fall back from an evolved `cardId` to `baseId` for cost unless you know it is correct.
-- The packaged app must include `public/assets/card-costs.json` but must not include extracted PNG art or generated `card-map.json` / `card-names.json`.
+- `Card_M_0_Wings` is a special wild-cost card even though the serialized cost map contains a numeric value.
+- Card and gem rules text are reverse-engineered approximations with explicit overrides for observed in-game wording. Keep overrides in `tools/build_card_text_map.py` / `tools/build_gem_text_map.py`, regenerate local JSON, and avoid editing generated JSON as the source of truth.
+- The frontend intentionally hides some gem rule lines while keeping icons visible, currently `GemConfig_DoubleDamage` and `GemConfig_Evolve`.
+- The packaged app must include `public/assets/card-costs.json` but must not include extracted PNG art or generated `card-map.json`, `card-names.json`, `card-text.json`, `gem-map.json`, or `gem-text.json`.
 
 ## Quick Sanity Checks
 
@@ -104,7 +111,8 @@ Use these after cost logic changes:
 ```powershell
 node -c server.js
 node -c src\main.js
-python -m py_compile tools\build_local_data.py tools\extract_art.py tools\build_card_map.py tools\build_card_cost_map.py tools\build_card_name_map.py
+node -c public\app.js
+python -m py_compile tools\build_local_data.py tools\extract_art.py tools\build_card_map.py tools\build_card_cost_map.py tools\build_card_name_map.py tools\build_card_text_map.py tools\build_gem_map.py tools\build_gem_text_map.py
 ```
 
 Check live save cost behavior:
@@ -140,5 +148,5 @@ Card_A_3_NoFuture base=3 effective=3 gems=GemConfig_Evolve
 - Improve the setup UI so it explains what `Rebuild Local Data` is doing.
 - Add a first-run friendly flow that automatically triggers local data rebuild if art is missing.
 - Add a small diagnostic export/log button.
-- Add tests for mana gem parsing and card cost lookup.
+- Add tests for mana gem parsing, card cost lookup, and open gem slot display.
 - Consider BepInEx IL2CPP plugin only if save polling proves insufficient.

@@ -79,6 +79,7 @@ function getCardGemSlotCapacity(cardId, baseId, cardGemSlots = {}) {
 }
 
 function getCardCost(cardId, baseId, cardCosts = {}, context = {}) {
+  if (cardId === "Card_M_0_Wings" || cardId === "Card_W_Wings") return "W";
   if (/^Card_[WE]_/.test(cardId || "")) return "W";
   if ((cardId || "").startsWith("FCC_")) {
     return getFccCost(cardId, context.selectedPartyFccIds || []);
@@ -333,10 +334,16 @@ function startServer(options = {}) {
   const cardMapPath = options.cardMapPath || path.join(generatedDir, "assets", "card-map.json");
   const cardCostsPath = options.cardCostsPath || path.join(generatedDir, "assets", "card-costs.json");
   const cardNamesPath = options.cardNamesPath || path.join(generatedDir, "assets", "card-names.json");
+  const cardTextPath = options.cardTextPath || path.join(generatedDir, "assets", "card-text.json");
+  const gemMapPath = options.gemMapPath || path.join(generatedDir, "assets", "gem-map.json");
+  const gemTextPath = options.gemTextPath || path.join(generatedDir, "assets", "gem-text.json");
   const fallbackArtManifestPath = path.join(publicDir, "assets", "art-manifest.json");
   const fallbackCardMapPath = path.join(publicDir, "assets", "card-map.json");
   const fallbackCardCostsPath = path.join(publicDir, "assets", "card-costs.json");
   const fallbackCardNamesPath = path.join(publicDir, "assets", "card-names.json");
+  const fallbackCardTextPath = path.join(publicDir, "assets", "card-text.json");
+  const fallbackGemMapPath = path.join(publicDir, "assets", "gem-map.json");
+  const fallbackGemTextPath = path.join(publicDir, "assets", "gem-text.json");
 
   const server = http.createServer((req, res) => {
     if (req.url === "/api/deck") {
@@ -361,6 +368,9 @@ function startServer(options = {}) {
         hasArt: fs.existsSync(cardMapPath) || fs.existsSync(fallbackCardMapPath),
         hasCardCosts: fs.existsSync(cardCostsPath) || fs.existsSync(fallbackCardCostsPath),
         hasCardNames: fs.existsSync(cardNamesPath) || fs.existsSync(fallbackCardNamesPath),
+        hasCardText: fs.existsSync(cardTextPath) || fs.existsSync(fallbackCardTextPath),
+        hasGemMap: fs.existsSync(gemMapPath) || fs.existsSync(fallbackGemMapPath),
+        hasGemText: fs.existsSync(gemTextPath) || fs.existsSync(fallbackGemTextPath),
       });
       return;
     }
@@ -380,6 +390,21 @@ function startServer(options = {}) {
 
     if (req.url === "/api/card-names") {
       sendJson(res, 200, readJsonIfExists(cardNamesPath, readJsonIfExists(fallbackCardNamesPath, {})));
+      return;
+    }
+
+    if (req.url === "/api/card-text") {
+      sendJson(res, 200, readJsonIfExists(cardTextPath, readJsonIfExists(fallbackCardTextPath, {})));
+      return;
+    }
+
+    if (req.url === "/api/gem-map") {
+      sendJson(res, 200, readJsonIfExists(gemMapPath, readJsonIfExists(fallbackGemMapPath, {})));
+      return;
+    }
+
+    if (req.url === "/api/gem-text") {
+      sendJson(res, 200, readJsonIfExists(gemTextPath, readJsonIfExists(fallbackGemTextPath, {})));
       return;
     }
 

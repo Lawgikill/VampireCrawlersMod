@@ -1,6 +1,6 @@
 {
   "name": "vampire-crawlers-deck-tracker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "author": "Vampire Crawlers Deck Tracker contributors",
   "description": "Read-only second-screen deck tracker for Vampire Crawlers saves.",
@@ -34,6 +34,9 @@
       "!public/assets/art-manifest.json",
       "!public/assets/card-map.json",
       "!public/assets/card-names.json",
+      "!public/assets/card-text.json",
+      "!public/assets/gem-map.json",
+      "!public/assets/gem-text.json",
       "!public/assets/contact-sheet-*.png"
     ],
     "extraResources": [

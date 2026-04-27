@@ -2,11 +2,20 @@ const state = {
   snapshot: null,
   cardMap: {},
   cardNames: {},
+  cardText: {},
+  gemMap: {},
+  gemText: {},
   search: "",
   sortBy: "cost",
+  frequencySort: "name",
   config: null,
   setupHiddenThisSession: false,
 };
+
+const HIDDEN_GEM_RULE_IDS = new Set([
+  "GemConfig_DoubleDamage",
+  "GemConfig_Evolve",
+]);
 
 const els = {
   subtitle: document.querySelector("#subtitle"),
@@ -14,6 +23,7 @@ const els = {
   updatedAt: document.querySelector("#updatedAt"),
   search: document.querySelector("#search"),
   sortBy: document.querySelector("#sortBy"),
+  frequencySort: document.querySelector("#frequencySort"),
   setupPanel: document.querySelector("#setupPanel"),
   setupStatus: document.querySelector("#setupStatus"),
   hideSetup: document.querySelector("#hideSetup"),
@@ -44,6 +54,82 @@ function splitIdentifier(value) {
     .trim();
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function resolveDisplayTokens(value) {
+  const replacements = {
+    "{GlobalKeywords.Armor}": "Armor",
+    "{GlobalKeywords.Mana}": "Mana",
+    "{GlobalKeywords.Crawler}": "Crawler",
+    "{GlobalKeywords.Amount}": "Amount",
+    "{GlobalKeywords.Area}": "Area",
+    "{GlobalKeywords.Duration}": "Duration",
+    "{GlobalKeywords.Handsize}": "Hand",
+    "{GlobalKeywords.Luck}": "Luck",
+    "{GlobalKeywords.Might}": "Might",
+  };
+
+  return Object.entries(replacements).reduce(
+    (text, [source, replacement]) => text.replaceAll(source, replacement),
+    String(value || ""),
+  );
+}
+
+function formatRulesTextHtml(value, card) {
+  let text = escapeHtml(value);
+  if (/^FCC_/.test(card?.cardId || "") || /^FCC_/.test(card?.baseId || "")) {
+    text = text.replace(/\. /, ".<br>");
+    text = text.replace(/\. Duration:/g, ".<br>Duration:");
+  }
+  text = text.replace(/\r?\n/g, "<br>");
+  if (card?.cardId === "Card_M_0_Wings" || card?.cardId === "Card_W_Wings") {
+    return text;
+  }
+  if (card?.cardId === "Card_S_2_Bracer") {
+    return highlightRuleValues(text, /(?<![\w%])(XX%?|YY%?|Z|\d+%?)(?![\w%])/g);
+  }
+  return highlightRuleValues(text, /(?<![\w%])(XX%?|YY%?|Z|\d+%?|Area|Crit|Disarm|Duration|Hand|Knockback|Might)(?![\w%])/g);
+}
+
+function formatGemRulesHtml(gems) {
+  return (gems || [])
+    .map((gem) => {
+      if (HIDDEN_GEM_RULE_IDS.has(gem)) return "";
+      const text = highlightRuleValues(
+        escapeHtml(punctuateSentence(gemRulesText(gem))),
+        /(?<![\w%])(XX%?|YY%?|Z|\d+%?)(?![\w%])/g,
+      );
+      const className = gem === "GemConfig_Armor" ? "gem-rule gem-rule-card-text" : "gem-rule";
+      return `<span class="${className}">${text}</span>`;
+    })
+    .join("");
+}
+
+function highlightRuleValues(text, pattern) {
+  return text.replace(pattern, `<span class="rules-value">$1</span>`);
+}
+
+function fitCardTitles() {
+  for (const name of els.cards.querySelectorAll(".card-name")) {
+    name.style.fontSize = "";
+    const baseSize = Number.parseFloat(getComputedStyle(name).fontSize);
+    if (!baseSize) continue;
+
+    let size = baseSize;
+    const minimumSize = 8;
+    while (name.scrollWidth > name.clientWidth && size > minimumSize) {
+      size -= 0.5;
+      name.style.fontSize = `${size}px`;
+    }
+  }
+}
+
 function gemDisplayName(id) {
   const gemId = String(id || "");
   const name = gemId.replace(/^GemConfig_?/, "");
@@ -53,6 +139,20 @@ function gemDisplayName(id) {
     return `Mana ${sign}${manaMatch[2]}`;
   }
   return splitIdentifier(name);
+}
+
+function gemArtPath(id) {
+  return state.gemMap[id] || "";
+}
+
+function gemRulesText(id) {
+  return state.gemText[id] || gemDisplayName(id);
+}
+
+function punctuateSentence(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  return /[.!?]$/.test(text) ? text : `${text}.`;
 }
 
 function parseCardId(id) {
@@ -66,10 +166,14 @@ function parseCardId(id) {
 }
 
 function cardDisplayName(id) {
-  if (state.cardNames[id]) return state.cardNames[id];
+  if (state.cardNames[id]) return resolveDisplayTokens(state.cardNames[id]);
   const parsed = parseCardId(id);
   if (parsed) return parsed.name;
   return cleanId(id);
+}
+
+function cardRulesText(id) {
+  return state.cardText[id] || "";
 }
 
 function cardTypeClass(card) {
@@ -121,7 +225,18 @@ function sortCards(cards) {
 }
 
 function renderCounts(snapshot) {
-  els.counts.innerHTML = snapshot.counts
+  const counts = [...snapshot.counts].sort((a, b) => {
+    const nameSort = cardDisplayName(a.cardId).localeCompare(cardDisplayName(b.cardId), undefined, { sensitivity: "base" })
+      || a.cardId.localeCompare(b.cardId);
+
+    if (state.frequencySort === "count") {
+      return b.count - a.count || nameSort;
+    }
+
+    return nameSort;
+  });
+
+  els.counts.innerHTML = counts
     .map((entry) => `
       <div class="count-row">
         <span>${cardDisplayName(entry.cardId)}</span>
@@ -220,13 +335,22 @@ function formatCostSymbol(cost) {
   return "?";
 }
 
-function renderOpenGemSlots(card) {
-  const slotCount = Math.max(0, Number(card.openGemSlots) || 0);
-  if (!slotCount) return "";
+function renderGemSlots(card) {
+  const openSlotCount = Math.max(0, Number(card.openGemSlots) || 0);
+  const filledGems = Array.isArray(card.gems) ? card.gems : [];
+  if (!openSlotCount && !filledGems.length) return "";
 
   return `
-    <div class="gem-slot-stack" aria-label="${slotCount} open gem slot${slotCount === 1 ? "" : "s"}">
-      ${Array.from({ length: slotCount }, () => `<span class="gem-slot-empty" title="Open gem slot"></span>`).join("")}
+    <div class="gem-slot-stack" aria-label="${filledGems.length} filled gem slot${filledGems.length === 1 ? "" : "s"}, ${openSlotCount} open gem slot${openSlotCount === 1 ? "" : "s"}">
+      ${filledGems.map((gem) => {
+        const artPath = gemArtPath(gem);
+        const gemName = escapeHtml(gemDisplayName(gem));
+        if (artPath) {
+          return `<span class="gem-slot-filled" title="${gemName}"><img src="/${artPath}" alt="${gemName}"></span>`;
+        }
+        return `<span class="gem-slot-filled gem-slot-label" title="${escapeHtml(gem)}">${gemName}</span>`;
+      }).join("")}
+      ${Array.from({ length: openSlotCount }, () => `<span class="gem-slot-empty" title="Open gem slot"></span>`).join("")}
     </div>
   `;
 }
@@ -244,21 +368,29 @@ function renderCards(snapshot) {
         card.manaModifier ? `Mana ${card.manaModifier}` : "",
       ].filter(Boolean);
       const artPath = state.cardMap[card.cardId] || state.cardMap[card.baseId] || "";
+      const rulesText = cardRulesText(card.cardId) || cardRulesText(card.baseId);
+      const gemRulesTextValue = card.gems.map((gem) => punctuateSentence(gemRulesText(gem))).filter(Boolean).join("\n");
+      const safeRulesText = escapeHtml([rulesText, gemRulesTextValue].filter(Boolean).join("\n"));
+      const rulesTextHtml = formatRulesTextHtml(rulesText, card);
+      const gemRulesHtml = formatGemRulesHtml(card.gems);
+      const hasDescription = Boolean(rulesText || gemRulesHtml);
 
       return `
-        <article class="card-row ${cardTypeClass(card)}">
+        <article class="card-row ${cardTypeClass(card)}"${hasDescription ? ` title="${safeRulesText}"` : ""}>
           <div class="card-title">
             <span class="mana-cost" title="${formatCost(card.cost)}">${formatCostSymbol(card.cost)}</span>
-            ${renderOpenGemSlots(card)}
-            <span>${cardDisplayName(card.cardId)}</span>
+            ${renderGemSlots(card)}
+            <span class="card-name">${escapeHtml(cardDisplayName(card.cardId))}</span>
           </div>
           ${artPath ? `<img class="card-art" src="/${artPath}" alt="">` : ""}
-          ${card.gems.length ? `<div class="tags">${card.gems.map((gem) => `<span class="tag good" title="${gem}">${gemDisplayName(gem)}</span>`).join("")}</div>` : ""}
+          ${hasDescription ? `<p class="card-description"><span>${rulesTextHtml}${gemRulesHtml ? `<span class="gem-rules">${gemRulesHtml}</span>` : ""}</span></p>` : ""}
           ${flags.length ? `<div class="tags">${flags.map((flag) => `<span class="tag">${flag}</span>`).join("")}</div>` : ""}
         </article>
       `;
     }).join("")
     : `<p class="muted">No cards match the current filters.</p>`;
+
+  requestAnimationFrame(fitCardTitles);
 }
 
 function render(snapshot) {
@@ -290,6 +422,36 @@ async function loadCardNames() {
   }
 }
 
+async function loadCardText() {
+  try {
+    const response = await fetch("/api/card-text", { cache: "no-store" });
+    const data = await response.json();
+    state.cardText = data || {};
+  } catch {
+    state.cardText = {};
+  }
+}
+
+async function loadGemMap() {
+  try {
+    const response = await fetch("/api/gem-map", { cache: "no-store" });
+    const data = await response.json();
+    state.gemMap = data || {};
+  } catch {
+    state.gemMap = {};
+  }
+}
+
+async function loadGemText() {
+  try {
+    const response = await fetch("/api/gem-text", { cache: "no-store" });
+    const data = await response.json();
+    state.gemText = data || {};
+  } catch {
+    state.gemText = {};
+  }
+}
+
 async function loadConfig() {
   try {
     const response = await fetch("/api/config", { cache: "no-store" });
@@ -303,7 +465,7 @@ async function loadConfig() {
 
 function renderSetup(config) {
   if (!config) return;
-  const needsAttention = !config.hasSave || !config.hasGame || !config.hasArt || !config.hasCardCosts || !config.hasCardNames;
+  const needsAttention = !config.hasSave || !config.hasGame || !config.hasArt || !config.hasCardCosts || !config.hasCardNames || !config.hasCardText || !config.hasGemMap || !config.hasGemText;
   els.setupPanel.hidden = Boolean(config.hideSetupPanel || state.setupHiddenThisSession || (!needsAttention && !window.vampireCrawlers));
 
   const parts = [
@@ -312,6 +474,9 @@ function renderSetup(config) {
     config.hasArt ? "art cache ready" : "art cache missing",
     config.hasCardCosts ? "cost data ready" : "cost data missing",
     config.hasCardNames ? "name data ready" : "name data missing",
+    config.hasCardText ? "text data ready" : "text data missing",
+    config.hasGemMap ? "gem art ready" : "gem art missing",
+    config.hasGemText ? "gem text ready" : "gem text missing",
   ];
   els.setupStatus.textContent = parts.join(", ");
   els.rebuildArt.hidden = !window.vampireCrawlers;
@@ -340,12 +505,21 @@ els.sortBy.addEventListener("change", (event) => {
   if (state.snapshot) renderCards(state.snapshot);
 });
 
+els.frequencySort.addEventListener("change", (event) => {
+  state.frequencySort = event.target.value;
+  if (state.snapshot) renderCounts(state.snapshot);
+});
+
 els.hideSetup.addEventListener("click", () => {
   state.setupHiddenThisSession = true;
   els.setupPanel.hidden = true;
 });
 
-Promise.all([loadArtMap(), loadCardNames()]).then(refresh);
+window.addEventListener("resize", () => {
+  if (state.snapshot) requestAnimationFrame(fitCardTitles);
+});
+
+Promise.all([loadArtMap(), loadCardNames(), loadCardText(), loadGemMap(), loadGemText()]).then(refresh);
 loadConfig();
 setInterval(refresh, 2000);
 setInterval(loadConfig, 10000);
@@ -386,6 +560,9 @@ if (window.vampireCrawlers) {
       await window.vampireCrawlers.rebuildArtCache();
       await loadArtMap();
       await loadCardNames();
+      await loadCardText();
+      await loadGemMap();
+      await loadGemText();
       await loadConfig();
       if (state.snapshot) renderCards(state.snapshot);
     } catch (error) {

@@ -257,6 +257,12 @@ async function runLocalDataBuilder(projectRoot, paths, append) {
     paths.cardCostsPath,
     "--card-names",
     paths.cardNamesPath,
+    "--card-text",
+    paths.cardTextPath,
+    "--gem-map",
+    paths.gemMapPath,
+    "--gem-text",
+    paths.gemTextPath,
     "--min-size",
     "16",
   ];
@@ -284,6 +290,9 @@ async function rebuildLocalData() {
   const cardMapPath = path.join(generatedAssetsDir, "card-map.json");
   const cardCostsPath = path.join(generatedAssetsDir, "card-costs.json");
   const cardNamesPath = path.join(generatedAssetsDir, "card-names.json");
+  const cardTextPath = path.join(generatedAssetsDir, "card-text.json");
+  const gemMapPath = path.join(generatedAssetsDir, "gem-map.json");
+  const gemTextPath = path.join(generatedAssetsDir, "gem-text.json");
   const log = [];
   const append = (line) => {
     log.push(line.trimEnd());
@@ -303,6 +312,9 @@ async function rebuildLocalData() {
     cardMapPath,
     cardCostsPath,
     cardNamesPath,
+    cardTextPath,
+    gemMapPath,
+    gemTextPath,
   }, append);
 
   config.firstRunComplete = true;
