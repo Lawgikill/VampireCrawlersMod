@@ -6,7 +6,7 @@ The current app reads the active save file, extracts the card piles already seri
 
 ## Current State
 
-- Version is currently `0.1.1`.
+- Version is currently `1.0.0`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`
@@ -66,6 +66,7 @@ Generated local files:
 art-manifest.json
 card-map.json
 card-costs.json
+card-names.json
 art\*.png
 ```
 
@@ -77,6 +78,7 @@ art\*.png
 4. `public/app.js` polls `/api/deck` every two seconds.
 5. Art is displayed from a generated local `card-map.json`.
 6. Cost data comes from `card-costs.json`.
+7. Display names come from generated local `card-names.json`.
 7. `Rebuild Local Data` runs a bundled helper exe in packaged builds.
 8. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
 
@@ -87,8 +89,13 @@ art\*.png
 - Unity/Odin serialized `CardConfig` data is partially custom; do not assume `read_typetree()` will expose all fields.
 - Card IDs like `Card_A_1_MagicWand` are not reliable for mana cost. MagicWand’s true base cost is `0`.
 - Wild/event cards such as `Card_W_Combo`, `Card_E_BagOfCoins`, and `Card_E_Vacuum` display with cost `W`.
+- Event cards can use ids without a numeric tier, such as `Card_E_LittleClover` and `Card_E_Orologion`; the builder regex must support that shorter shape.
+- `FCC_*` crawler cards do have real mana costs, but not from generated `card-costs.json`. The server reads `RunMetaSaveData.SelectedPartyFccIds`: first selected crawler costs `0`, other selected crawlers cost `1`.
+- The Costs panel separates crawler buckets from normal deck mana buckets. Normal numeric mana buckets render as a histogram; `Wild` and `Crawler N` render as rows.
+- Gem tags are display-formatted in the frontend. `GemConfig_YinYang` becomes `Yin Yang`, and mana modifier gems display as `Mana +N` / `Mana -N`.
+- Open gem slots can be derived from the save: `Data.ProgressionSaveData.CardGemSlots[cardId] - GemIds.length`, clamped at zero. The app renders them as black/gold circles under the card's mana cost.
 - Evolved cards and base cards can differ. Do not fall back from an evolved `cardId` to `baseId` for cost unless you know it is correct.
-- The packaged app must include `public/assets/card-costs.json` but must not include extracted PNG art or generated `card-map.json`.
+- The packaged app must include `public/assets/card-costs.json` but must not include extracted PNG art or generated `card-map.json` / `card-names.json`.
 
 ## Quick Sanity Checks
 
@@ -97,7 +104,7 @@ Use these after cost logic changes:
 ```powershell
 node -c server.js
 node -c src\main.js
-python -m py_compile tools\build_local_data.py tools\extract_art.py tools\build_card_map.py tools\build_card_cost_map.py
+python -m py_compile tools\build_local_data.py tools\extract_art.py tools\build_card_map.py tools\build_card_cost_map.py tools\build_card_name_map.py
 ```
 
 Check live save cost behavior:

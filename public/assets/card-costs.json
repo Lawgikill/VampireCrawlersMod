@@ -51,6 +51,15 @@
   "Card_D_3_Armor": 3,
   "Card_D_3_ClockLancet": 3,
   "Card_D_6_InfiniteCorridor": 6,
+  "Card_E_BagOfCoins": 0,
+  "Card_E_CloverPetal": 0,
+  "Card_E_CoinPurse": 0,
+  "Card_E_LargeBagOfCoins": 0,
+  "Card_E_LittleClover": 0,
+  "Card_E_LittleHeart": 0,
+  "Card_E_Orologion": 0,
+  "Card_E_Rosary": 0,
+  "Card_E_Vacuum": 0,
   "Card_M_0_Wings": 4,
   "Card_M_3_SongOfMana": 4,
   "Card_M_5_Mannajja": 5,
@@ -80,5 +89,10 @@
   "Card_S_2_Pummarola": 2,
   "Card_S_2_Spinach": 2,
   "Card_S_2_StoneMask": 2,
-  "Card_S_2_Tiramisu": 2
+  "Card_S_2_Tiramisu": 2,
+  "Card_W_Bracelet": 4,
+  "Card_W_Combo": 3,
+  "Card_W_GoldRing": 1,
+  "Card_W_SilverRing": 2,
+  "Card_W_WildDefence": 4
 }

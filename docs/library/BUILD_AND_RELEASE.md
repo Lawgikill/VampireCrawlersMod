@@ -115,23 +115,30 @@ Expected values:
 
 Electron builder currently warns about no custom icon and uses the default Electron icon. That is expected for now.
 
-PyInstaller may warn:
+If PyInstaller is called directly instead of through `npm run build-asset-builder`,
+it may warn:
 
 ```text
 Library fmod.dll required via ctypes not found
 ```
 
-This can still appear during analysis, but the built helper must be tested with a real extraction. Sprite decoding depends on `fmod_toolkit` and `archspec` data through UnityPy's texture path. If those are not bundled, the helper can read assets and build costs but export `0` sprites.
+The npm script uses `tools/build_asset_builder.py`, which points `PYFMODEX_DLL_PATH`
+and `PATH` at `fmod_toolkit`'s bundled DLL before analysis so this warning should
+not appear during normal builds. If it appears during a direct/manual PyInstaller
+run, the built helper must be tested with a real extraction. Sprite decoding
+depends on `fmod_toolkit` and `archspec` data through UnityPy's texture path. If
+those are not bundled, the helper can read assets and build costs but export `0`
+sprites.
 
 ## Python/PyInstaller Notes
 
 `pyinstaller.exe` might not be on PATH after install. The npm script intentionally uses:
 
 ```powershell
-python -m PyInstaller
+python tools\build_asset_builder.py
 ```
 
-The script includes:
+The wrapper calls `python -m PyInstaller` and includes:
 
 ```powershell
 --collect-all UnityPy --collect-all fmod_toolkit --collect-data archspec
@@ -157,6 +164,7 @@ bin/vampire-crawlers-asset-builder.exe
 public/assets/art/
 public/assets/art-manifest.json
 public/assets/card-map.json
+public/assets/card-names.json
 public/assets/contact-sheet-*.png
 ```
 

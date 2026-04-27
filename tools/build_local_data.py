@@ -4,6 +4,7 @@ from pathlib import Path
 
 import build_card_cost_map
 import build_card_map
+import build_card_name_map
 import extract_art
 
 
@@ -24,6 +25,7 @@ def main():
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--card-map", type=Path, required=True)
     parser.add_argument("--card-costs", type=Path, required=True)
+    parser.add_argument("--card-names", type=Path, required=True)
     parser.add_argument("--min-size", default="16")
     args = parser.parse_args()
 
@@ -63,6 +65,16 @@ def main():
             str(game_data),
             "--output",
             str(args.card_costs),
+        ],
+    )
+    run_step(
+        "build_card_name_map",
+        build_card_name_map.main,
+        [
+            "--game-data",
+            str(game_data),
+            "--output",
+            str(args.card_names),
         ],
     )
 

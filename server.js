@@ -29,14 +29,16 @@ function walk(value, visit) {
   }
 }
 
-function normalizeCard(card, pileId, index, cardCosts = {}) {
+function normalizeCard(card, pileId, index, cardCosts = {}, context = {}) {
   const cardId = card.CardConfigId || "UnknownCard";
   const baseId = card.BaseCardConfigId || cardId;
-  const baseCost = getCardCost(cardId, baseId, cardCosts);
+  const baseCost = getCardCost(cardId, baseId, cardCosts, context);
   const manaModifier = Number(card.ManaCostModifier || 0);
   const tempManaModifier = Number(card.TempManaCostModifier || 0);
   const confusedManaModifier = Number(card.ConfusedManaCostModifier || 0);
   const gems = Array.isArray(card.GemIds) ? card.GemIds : [];
+  const gemSlotCapacity = getCardGemSlotCapacity(cardId, baseId, context.cardGemSlots);
+  const openGemSlots = Math.max(0, gemSlotCapacity - gems.length);
   const cost = getEffectiveCardCost(baseCost, {
     manaModifier,
     tempManaModifier,
@@ -61,17 +63,37 @@ function normalizeCard(card, pileId, index, cardCosts = {}) {
     tempManaModifier,
     confusedManaModifier,
     gems,
+    gemSlotCapacity,
+    openGemSlots,
   };
 }
 
-function getCardCost(cardId, baseId, cardCosts = {}) {
+function getCardGemSlotCapacity(cardId, baseId, cardGemSlots = {}) {
+  const cardSlotCount = cardGemSlots[cardId];
+  if (Number.isFinite(cardSlotCount)) return cardSlotCount;
+
+  const baseSlotCount = cardGemSlots[baseId];
+  if (Number.isFinite(baseSlotCount)) return baseSlotCount;
+
+  return 0;
+}
+
+function getCardCost(cardId, baseId, cardCosts = {}, context = {}) {
+  if (/^Card_[WE]_/.test(cardId || "")) return "W";
+  if ((cardId || "").startsWith("FCC_")) {
+    return getFccCost(cardId, context.selectedPartyFccIds || []);
+  }
   if (Object.prototype.hasOwnProperty.call(cardCosts, cardId)) return Number(cardCosts[cardId]);
   if (cardId === baseId && Object.prototype.hasOwnProperty.call(cardCosts, baseId)) {
     return Number(cardCosts[baseId]);
   }
-  if ((cardId || "").startsWith("FCC_")) return "FCC";
-  if (/^Card_[WE]_/.test(cardId || "")) return "W";
   return "Unknown";
+}
+
+function getFccCost(cardId, selectedPartyFccIds) {
+  const selectedIndex = selectedPartyFccIds.indexOf(cardId);
+  if (selectedIndex === 0) return 0;
+  return 1;
 }
 
 function getGemManaModifier(gems) {
@@ -98,10 +120,60 @@ function getEffectiveCardCost(baseCost, card) {
   return baseCost + modifier;
 }
 
+function getCostBucket(card) {
+  if ((card.cardId || "").startsWith("FCC_")) {
+    return {
+      key: `crawler:${card.cost}`,
+      kind: "crawler",
+      cost: card.cost,
+      label: `Crawler ${card.cost}`,
+    };
+  }
+  if (card.cost === "W") {
+    return {
+      key: "wild",
+      kind: "wild",
+      cost: card.cost,
+      label: "Wild",
+    };
+  }
+  if (typeof card.cost === "number") {
+    return {
+      key: `mana:${card.cost}`,
+      kind: "mana",
+      cost: card.cost,
+      label: String(card.cost),
+    };
+  }
+  return {
+    key: `unknown:${card.cost}`,
+    kind: "unknown",
+    cost: card.cost,
+    label: String(card.cost),
+  };
+}
+
+function compareCostBuckets(a, b) {
+  const rank = { mana: 0, wild: 1, crawler: 2, unknown: 3 };
+  const rankDiff = (rank[a.kind] ?? 99) - (rank[b.kind] ?? 99);
+  if (rankDiff) return rankDiff;
+
+  const aNum = typeof a.cost === "number";
+  const bNum = typeof b.cost === "number";
+  if (aNum && bNum) return a.cost - b.cost;
+  if (aNum) return -1;
+  if (bNum) return 1;
+  return String(a.cost).localeCompare(String(b.cost));
+}
+
 function getDeckSnapshot(savePath, options = {}) {
   const raw = fs.readFileSync(savePath, "utf8");
   const parsed = JSON.parse(raw);
   const cardCosts = options.cardCosts || {};
+  const context = {
+    selectedPartyFccIds: getSelectedPartyFccIds(parsed),
+    cardGemSlots: getCardGemSlots(parsed),
+  };
   const piles = [];
   const cards = [];
 
@@ -109,7 +181,7 @@ function getDeckSnapshot(savePath, options = {}) {
     if (typeof node.cardPileId !== "string" || !Array.isArray(node.cards)) return;
 
     const pileCards = node.cards.map((card, index) =>
-      normalizeCard(card, node.cardPileId, index, cardCosts),
+      normalizeCard(card, node.cardPileId, index, cardCosts, context),
     );
     piles.push({
       pileId: node.cardPileId,
@@ -140,21 +212,14 @@ function getDeckSnapshot(savePath, options = {}) {
 
   const costCounts = Array.from(
     cards.reduce((map, card) => {
-      const key = String(card.cost);
-      const current = map.get(key) || { cost: card.cost, count: 0, piles: {} };
+      const bucket = getCostBucket(card);
+      const current = map.get(bucket.key) || { ...bucket, count: 0, piles: {} };
       current.count += 1;
       current.piles[card.pileId] = (current.piles[card.pileId] || 0) + 1;
-      map.set(key, current);
+      map.set(bucket.key, current);
       return map;
     }, new Map()).values(),
-  ).sort((a, b) => {
-    const aNum = typeof a.cost === "number";
-    const bNum = typeof b.cost === "number";
-    if (aNum && bNum) return a.cost - b.cost;
-    if (aNum) return -1;
-    if (bNum) return 1;
-    return String(a.cost).localeCompare(String(b.cost));
-  });
+  ).sort(compareCostBuckets);
 
   return {
     savePath,
@@ -166,6 +231,27 @@ function getDeckSnapshot(savePath, options = {}) {
     counts,
     costCounts,
   };
+}
+
+function getSelectedPartyFccIds(parsed) {
+  let selectedPartyFccIds = [];
+  walk(parsed, (node) => {
+    if (!Array.isArray(node.SelectedPartyFccIds)) return;
+    selectedPartyFccIds = node.SelectedPartyFccIds.filter((id) => typeof id === "string");
+  });
+  return selectedPartyFccIds;
+}
+
+function getCardGemSlots(parsed) {
+  const slotEntries = parsed?.Data?.ProgressionSaveData?.CardGemSlots;
+  if (!Array.isArray(slotEntries)) return {};
+
+  return slotEntries.reduce((slots, entry) => {
+    if (!entry || typeof entry.Key !== "string") return slots;
+    const value = Number(entry.Value);
+    if (Number.isFinite(value)) slots[entry.Key] = value;
+    return slots;
+  }, {});
 }
 
 function readJsonIfExists(filePath, fallback) {
@@ -246,9 +332,11 @@ function startServer(options = {}) {
   const artManifestPath = options.artManifestPath || path.join(generatedDir, "assets", "art-manifest.json");
   const cardMapPath = options.cardMapPath || path.join(generatedDir, "assets", "card-map.json");
   const cardCostsPath = options.cardCostsPath || path.join(generatedDir, "assets", "card-costs.json");
+  const cardNamesPath = options.cardNamesPath || path.join(generatedDir, "assets", "card-names.json");
   const fallbackArtManifestPath = path.join(publicDir, "assets", "art-manifest.json");
   const fallbackCardMapPath = path.join(publicDir, "assets", "card-map.json");
   const fallbackCardCostsPath = path.join(publicDir, "assets", "card-costs.json");
+  const fallbackCardNamesPath = path.join(publicDir, "assets", "card-names.json");
 
   const server = http.createServer((req, res) => {
     if (req.url === "/api/deck") {
@@ -272,6 +360,7 @@ function startServer(options = {}) {
         hasGame: Boolean(config.gameDir && fs.existsSync(config.gameDir)),
         hasArt: fs.existsSync(cardMapPath) || fs.existsSync(fallbackCardMapPath),
         hasCardCosts: fs.existsSync(cardCostsPath) || fs.existsSync(fallbackCardCostsPath),
+        hasCardNames: fs.existsSync(cardNamesPath) || fs.existsSync(fallbackCardNamesPath),
       });
       return;
     }
@@ -286,6 +375,11 @@ function startServer(options = {}) {
 
     if (req.url === "/api/card-map") {
       sendJson(res, 200, readJsonIfExists(cardMapPath, readJsonIfExists(fallbackCardMapPath, {})));
+      return;
+    }
+
+    if (req.url === "/api/card-names") {
+      sendJson(res, 200, readJsonIfExists(cardNamesPath, readJsonIfExists(fallbackCardNamesPath, {})));
       return;
     }
 

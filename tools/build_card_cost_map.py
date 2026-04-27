@@ -7,7 +7,7 @@ from pathlib import Path
 import UnityPy
 
 
-CARD_ID_RE = re.compile(rb"(?:Card_[A-Z]_[0-9]_[A-Za-z0-9]+|FCC_[A-Za-z0-9]+)")
+CARD_ID_RE = re.compile(rb"(?:Card_[A-Z]_(?:[0-9]_[A-Za-z0-9]+|[A-Za-z0-9]+)|FCC_[A-Za-z0-9]+)")
 
 
 def align(value, boundary):
@@ -109,7 +109,8 @@ def main():
                 continue
 
             raw = obj.get_raw_data()
-            if get_script_path_id(raw) not in card_config_script_ids:
+            script_path_id = get_script_path_id(raw)
+            if script_path_id not in card_config_script_ids:
                 continue
 
             tail = raw[get_tail_start(raw):]

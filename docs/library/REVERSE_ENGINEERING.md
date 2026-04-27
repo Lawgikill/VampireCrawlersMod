@@ -124,8 +124,26 @@ For cost mapping:
 
 For art mapping:
 
-- `build_card_map.py` currently maps through card groups and sprites mostly from `globalgamemanagers.assets`.
-- Some configs may remain unmapped, especially evolved/special cards.
+- `build_card_map.py` scans `globalgamemanagers.assets`, `resources.assets`, and `sharedassets*.assets`.
+- It resolves `CardConfig` and `FccConfig` objects, then maps them through `CardGroup` sprite refs.
+- It also detects local `CardGroup` objects in shared asset files; this matters for event cards such as `Card_E_LittleClover` and `Card_E_Orologion`.
+- FCC cards without group refs can fall back to character sprite names such as `newAntonio_01`.
+
+## FCC Crawler Costs
+
+Do not read crawler costs from the `FCCConfig` Odin `_cardCostType` payload. The
+nearby `5` byte is serializer/type metadata, not mana cost.
+
+The visible crawler cost appears to be runtime party-position logic from the
+save's `RunMetaSaveData.SelectedPartyFccIds`:
+
+```text
+selected party index 0 -> cost 0
+other selected FCC cards -> cost 1
+```
+
+This matches observed game screenshots where `FCC_Imelda` is first in the
+selected party and costs `0`, while `FCC_Antonio` costs `1`.
 
 ## MagicWand Investigation
 
@@ -208,6 +226,42 @@ Minus<n> subtracts n from cost.
 
 This is intentionally not clamped.
 
+## Gem Slots
+
+The save stores open gem-slot capacity separately from occupied gems.
+
+Per-card instances in piles contain occupied gems only:
+
+```json
+"GemIds": []
+```
+
+Unlocked slot counts live in:
+
+```text
+Data.ProgressionSaveData.CardGemSlots
+```
+
+This is a key/value list keyed by card config ID. In the observed save:
+
+```text
+Card_A_0_Whip => 1
+Card_A_1_Runetracer => 1
+Card_D_0_Armor => 0
+Card_B_2_EmptyTome => 2
+```
+
+To render open gem slots for a card, use:
+
+```text
+open slots = CardGemSlots[cardId] - GemIds.length
+```
+
+Clamp at zero for display. `GemIds.length` is the count of filled slots on that
+specific card instance, while `CardGemSlots[cardId]` appears to be the unlocked
+slot capacity for that card config. The tracker shows open slots as black/gold
+circles under the mana cost badge.
+
 ## AssetRipper Notes
 
 AssetRipper was useful to confirm exported C# stubs and script/class names, but it did not expose the custom CardConfig payload in YAML/JSON. It showed only shallow Unity fields for MagicWand:
@@ -218,4 +272,3 @@ m_Script: CardConfig
 ```
 
 AssetRipper export also generated a large temporary project and logs. Do not commit these.
-

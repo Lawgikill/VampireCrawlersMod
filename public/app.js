@@ -1,6 +1,7 @@
 const state = {
   snapshot: null,
   cardMap: {},
+  cardNames: {},
   search: "",
   sortBy: "cost",
   config: null,
@@ -34,6 +35,26 @@ function cleanId(id) {
     .replace(/_/g, " ");
 }
 
+function splitIdentifier(value) {
+  return String(value || "")
+    .replace(/_/g, " ")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function gemDisplayName(id) {
+  const gemId = String(id || "");
+  const name = gemId.replace(/^GemConfig_?/, "");
+  const manaMatch = /^Mana_?(Plus|Minus)(\d+)$/i.exec(name);
+  if (manaMatch) {
+    const sign = manaMatch[1].toLowerCase() === "plus" ? "+" : "-";
+    return `Mana ${sign}${manaMatch[2]}`;
+  }
+  return splitIdentifier(name);
+}
+
 function parseCardId(id) {
   const match = /^Card_([A-Z])_(\d+)_(.+)$/.exec(id || "");
   if (!match) return null;
@@ -45,6 +66,7 @@ function parseCardId(id) {
 }
 
 function cardDisplayName(id) {
+  if (state.cardNames[id]) return state.cardNames[id];
   const parsed = parseCardId(id);
   if (parsed) return parsed.name;
   return cleanId(id);
@@ -73,8 +95,10 @@ function cardMatches(card) {
   const haystack = [
     card.cardId,
     card.baseId,
+    cardDisplayName(card.cardId),
     card.guid,
     ...card.gems,
+    ...card.gems.map(gemDisplayName),
   ].join(" ").toLowerCase();
 
   return haystack.includes(state.search.toLowerCase());
@@ -100,7 +124,7 @@ function renderCounts(snapshot) {
   els.counts.innerHTML = snapshot.counts
     .map((entry) => `
       <div class="count-row">
-        <span>${cleanId(entry.cardId)}</span>
+        <span>${cardDisplayName(entry.cardId)}</span>
         <span class="badge">${entry.count}</span>
       </div>
     `)
@@ -108,14 +132,78 @@ function renderCounts(snapshot) {
 }
 
 function renderCosts(snapshot) {
-  els.costs.innerHTML = (snapshot.costCounts || [])
+  const costCounts = snapshot.costCounts || [];
+  const manaCosts = costCounts.filter(isManaCostEntry);
+  const otherCosts = costCounts.filter((entry) => !isManaCostEntry(entry));
+
+  els.costs.innerHTML = [
+    renderCostHistogram(manaCosts),
+    renderCostRows(otherCosts),
+  ].filter(Boolean).join("");
+}
+
+function isManaCostEntry(entry) {
+  if (!entry) return false;
+  if (entry.kind === "mana") return true;
+  return typeof entry.cost === "number" && !String(entry.key || "").startsWith("crawler:");
+}
+
+function renderCostHistogram(entries) {
+  if (!entries.length) return "";
+
+  const costs = entries
+    .map((entry) => entry.cost)
+    .filter((cost) => typeof cost === "number");
+  const minCost = Math.min(0, ...costs);
+  const maxCost = Math.max(0, ...costs);
+  const entriesByCost = new Map(entries.map((entry) => [entry.cost, entry]));
+  const curveEntries = Array.from({ length: maxCost - minCost + 1 }, (_, index) => {
+    const cost = minCost + index;
+    return entriesByCost.get(cost) || {
+      key: `mana:${cost}`,
+      kind: "mana",
+      cost,
+      label: String(cost),
+      count: 0,
+    };
+  });
+  const maxCount = Math.max(...curveEntries.map((entry) => entry.count || 0), 1);
+
+  return `
+    <div class="cost-histogram" aria-label="Mana cost curve">
+      ${curveEntries.map((entry) => {
+        const count = entry.count || 0;
+        const height = count ? Math.max(12, Math.round((count / maxCount) * 100)) : 0;
+
+        return `
+          <div class="cost-bar-group" title="${formatCostEntry(entry)}: ${count}">
+            <div class="cost-bar-shell">
+              <div class="cost-bar${count ? "" : " is-empty"}" style="height: ${height}%">
+                <span>${count}</span>
+              </div>
+            </div>
+            <div class="cost-bar-label">${formatCostEntry(entry)}</div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderCostRows(entries) {
+  return entries
     .map((entry) => `
       <div class="count-row">
-        <span>${formatCost(entry.cost)}</span>
+        <span>${formatCostEntry(entry)}</span>
         <span class="badge">${entry.count}</span>
       </div>
     `)
     .join("");
+}
+
+function formatCostEntry(entry) {
+  if (entry?.label) return entry.label;
+  return formatCost(entry?.cost);
 }
 
 function formatCost(cost) {
@@ -130,6 +218,17 @@ function formatCostSymbol(cost) {
   if (cost === "FCC") return "C";
   if (cost === "W") return "W";
   return "?";
+}
+
+function renderOpenGemSlots(card) {
+  const slotCount = Math.max(0, Number(card.openGemSlots) || 0);
+  if (!slotCount) return "";
+
+  return `
+    <div class="gem-slot-stack" aria-label="${slotCount} open gem slot${slotCount === 1 ? "" : "s"}">
+      ${Array.from({ length: slotCount }, () => `<span class="gem-slot-empty" title="Open gem slot"></span>`).join("")}
+    </div>
+  `;
 }
 
 function renderCards(snapshot) {
@@ -150,10 +249,11 @@ function renderCards(snapshot) {
         <article class="card-row ${cardTypeClass(card)}">
           <div class="card-title">
             <span class="mana-cost" title="${formatCost(card.cost)}">${formatCostSymbol(card.cost)}</span>
+            ${renderOpenGemSlots(card)}
             <span>${cardDisplayName(card.cardId)}</span>
           </div>
           ${artPath ? `<img class="card-art" src="/${artPath}" alt="">` : ""}
-          ${card.gems.length ? `<div class="tags">${card.gems.map((gem) => `<span class="tag good">${cleanId(gem)}</span>`).join("")}</div>` : ""}
+          ${card.gems.length ? `<div class="tags">${card.gems.map((gem) => `<span class="tag good" title="${gem}">${gemDisplayName(gem)}</span>`).join("")}</div>` : ""}
           ${flags.length ? `<div class="tags">${flags.map((flag) => `<span class="tag">${flag}</span>`).join("")}</div>` : ""}
         </article>
       `;
@@ -180,6 +280,16 @@ async function loadArtMap() {
   }
 }
 
+async function loadCardNames() {
+  try {
+    const response = await fetch("/api/card-names", { cache: "no-store" });
+    const data = await response.json();
+    state.cardNames = data || {};
+  } catch {
+    state.cardNames = {};
+  }
+}
+
 async function loadConfig() {
   try {
     const response = await fetch("/api/config", { cache: "no-store" });
@@ -193,7 +303,7 @@ async function loadConfig() {
 
 function renderSetup(config) {
   if (!config) return;
-  const needsAttention = !config.hasSave || !config.hasGame || !config.hasArt || !config.hasCardCosts;
+  const needsAttention = !config.hasSave || !config.hasGame || !config.hasArt || !config.hasCardCosts || !config.hasCardNames;
   els.setupPanel.hidden = Boolean(config.hideSetupPanel || state.setupHiddenThisSession || (!needsAttention && !window.vampireCrawlers));
 
   const parts = [
@@ -201,6 +311,7 @@ function renderSetup(config) {
     config.hasSave ? "save found" : "save missing",
     config.hasArt ? "art cache ready" : "art cache missing",
     config.hasCardCosts ? "cost data ready" : "cost data missing",
+    config.hasCardNames ? "name data ready" : "name data missing",
   ];
   els.setupStatus.textContent = parts.join(", ");
   els.rebuildArt.hidden = !window.vampireCrawlers;
@@ -234,7 +345,7 @@ els.hideSetup.addEventListener("click", () => {
   els.setupPanel.hidden = true;
 });
 
-loadArtMap().then(refresh);
+Promise.all([loadArtMap(), loadCardNames()]).then(refresh);
 loadConfig();
 setInterval(refresh, 2000);
 setInterval(loadConfig, 10000);
@@ -274,6 +385,7 @@ if (window.vampireCrawlers) {
     try {
       await window.vampireCrawlers.rebuildArtCache();
       await loadArtMap();
+      await loadCardNames();
       await loadConfig();
       if (state.snapshot) renderCards(state.snapshot);
     } catch (error) {

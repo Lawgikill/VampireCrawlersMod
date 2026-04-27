@@ -255,6 +255,8 @@ async function runLocalDataBuilder(projectRoot, paths, append) {
     paths.cardMapPath,
     "--card-costs",
     paths.cardCostsPath,
+    "--card-names",
+    paths.cardNamesPath,
     "--min-size",
     "16",
   ];
@@ -281,6 +283,7 @@ async function rebuildLocalData() {
   const manifestPath = path.join(generatedAssetsDir, "art-manifest.json");
   const cardMapPath = path.join(generatedAssetsDir, "card-map.json");
   const cardCostsPath = path.join(generatedAssetsDir, "card-costs.json");
+  const cardNamesPath = path.join(generatedAssetsDir, "card-names.json");
   const log = [];
   const append = (line) => {
     log.push(line.trimEnd());
@@ -299,6 +302,7 @@ async function rebuildLocalData() {
     manifestPath,
     cardMapPath,
     cardCostsPath,
+    cardNamesPath,
   }, append);
 
   config.firstRunComplete = true;

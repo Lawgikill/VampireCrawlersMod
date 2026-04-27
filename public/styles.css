@@ -173,6 +173,82 @@ button:disabled {
   margin-bottom: 24px;
 }
 
+.cost-histogram {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(38px, 1fr);
+  align-items: end;
+  gap: 8px;
+  min-height: 150px;
+  margin-bottom: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+  padding: 12px 10px 8px;
+}
+
+.cost-bar-group {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cost-bar-shell {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  max-width: 44px;
+  height: 104px;
+}
+
+.cost-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  min-height: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 5px 5px 2px 2px;
+  background: linear-gradient(180deg, #ffcf40 0%, #f15b4d 100%);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.22),
+    0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.cost-bar span {
+  padding-top: 4px;
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+.cost-bar.is-empty {
+  min-height: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.cost-bar.is-empty span {
+  display: none;
+}
+
+.cost-bar-label {
+  width: 100%;
+  margin-top: 7px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .pile-row,
 .count-row,
 .card-row {
@@ -309,6 +385,28 @@ button:disabled {
     -1px 1px 0 #06215e,
     1px -1px 0 #06215e,
     -1px -1px 0 #06215e;
+}
+
+.gem-slot-stack {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+}
+
+.gem-slot-empty {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #f0d85b;
+  border-radius: 50%;
+  background: #050504;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 -3px 0 rgba(255, 255, 255, 0.08),
+    0 1px 0 #000;
 }
 
 .card-title > span:first-child {
