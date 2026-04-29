@@ -90,6 +90,7 @@ The app-owned text assets should be packaged at:
 
 ```text
 dist\win-unpacked\resources\app\public\assets\card-text.json
+dist\win-unpacked\resources\app\public\assets\evolutions.json
 dist\win-unpacked\resources\app\public\assets\gem-text.json
 dist\win-unpacked\resources\app\public\assets\text-meta.json
 ```
@@ -123,6 +124,7 @@ Test-Path 'dist\win-unpacked\resources\app\public\assets\art'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\card-map.json'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\card-names.json'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\card-text.json'
+Test-Path 'dist\win-unpacked\resources\app\public\assets\evolutions.json'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\gem-map.json'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\gem-text.json'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\text-meta.json'
@@ -141,6 +143,7 @@ art folder: false
 card-map.json: false
 card-names.json: false
 card-text.json: true
+evolutions.json: true
 gem-map.json: false
 gem-text.json: true
 text-meta.json: true
@@ -242,9 +245,11 @@ Tracked intentionally:
 ```text
 public/assets/card-costs.json
 public/assets/card-text.json
+public/assets/evolutions.json
 public/assets/gem-text.json
 public/assets/text-meta.json
 data/display-overrides.csv
+data/evolutions.csv
 resources/live-bridge/BepInEx/plugins/VampireCrawlers.LiveBridge/VampireCrawlers.LiveBridge.dll
 bin/.gitkeep
 ```

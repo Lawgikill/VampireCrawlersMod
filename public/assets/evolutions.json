@@ -1,0 +1,87 @@
+[
+  {
+    "inputs": [["Card_A_0_Whip"], ["Card_S_1_HollowHeart", "Card_S_2_HollowHeart"]],
+    "resultId": "Card_A_2_BloodyTear",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_2_Axe", "Card_A_3_Axe"], ["Card_S_0_Candelabrador", "Card_S_1_Candelabrador", "Card_S_2_Candelabrador"]],
+    "resultId": "Card_A_3_DeathSpiral",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_4_Pentagram", "Card_A_5_Pentagram"], ["Card_S_1_Crown", "Card_S_2_Crown"]],
+    "resultId": "Card_A_0_GorgeousMoon",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_0_Cross", "Card_A_2_Cross"], ["Card_S_2_Clover"]],
+    "resultId": "Card_A_3_HeavenSword",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_1_FireWand"], ["Card_S_1_Spinach", "Card_S_2_Spinach"]],
+    "resultId": "Card_A_3_HellFire",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_0_MagicWand", "Card_A_1_MagicWand"], ["Card_B_0_EmptyTome", "Card_B_1_EmptyTome", "Card_B_2_EmptyTome", "Card_B_3_EmptyTome"]],
+    "resultId": "Card_A_2_HolyWand",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_3_SantaWater"], ["Card_S_1_Attractorb"]],
+    "resultId": "Card_A_4_LaBorra",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_M_3_SongOfMana", "Card_M_4_SongOfMana"], ["Card_S_0_SkullOManic", "Card_S_0_SkullOmanic"]],
+    "resultId": "Card_M_5_Mannajja",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_1_Runetracer"], ["Card_D_0_Armor", "Card_D_1_Armor", "Card_D_2_Armor", "Card_D_3_Armor"]],
+    "resultId": "Card_A_3_NoFuture",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_2_EightTheSparrow"], ["Card_A_3_PhieraDerTuphello", "Card_A_4_PhieraDerTuphello"], ["Card_S_2_Tirajisu", "Card_S_2_Tiramisu"]],
+    "resultId": "Card_A_4_Phieraggi",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_0_Garlic", "Card_A_1_Garlic"], ["Card_S_1_Pummarola", "Card_S_2_Pummarola"]],
+    "resultId": "Card_A_1_SoulEater",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_0_Knife"], ["Card_S_2_Bracer"]],
+    "resultId": "Card_A_3_ThousandEdge",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_2_LightningRing"], ["Card_S_1_Duplicator", "Card_S_2_Duplicator"]],
+    "resultId": "Card_A_4_Thunderloop",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_1_KingBible"], ["Card_S_0_SpellBinder", "Card_S_1_SpellBinder"]],
+    "resultId": "Card_A_2_UnholyVespers",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_3_ShadowPinion"], ["Card_M_0_Wings", "Card_W_Wings"]],
+    "resultId": "Card_A_2_ValkyrieTurner",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_3_Peachone", "Card_A_5_Peachone"], ["Card_A_4_EbonyWings", "Card_A_6_EbonyWings"]],
+    "resultId": "Card_A_5_Vandalier",
+    "sourceNote": "PDF best-match"
+  },
+  {
+    "inputs": [["Card_A_1_GattiAmari"], ["Card_S_1_StoneMask"]],
+    "resultId": "Card_A_2_ViciousHunger",
+    "sourceNote": "PDF best-match"
+  }
+]

@@ -14,20 +14,9 @@
           <p id="subtitle">Waiting for save data...</p>
         </div>
         <div class="status">
-          <span id="totalCards">0 cards</span>
           <span id="updatedAt">--</span>
         </div>
       </header>
-
-      <section class="controls" aria-label="Deck controls">
-        <input id="search" type="search" placeholder="Search cards, base cards, gems">
-        <select id="sortBy" aria-label="Sort cards">
-          <option value="cost">Sort by cost</option>
-          <option value="name">Sort by name</option>
-          <option value="base">Sort by base card</option>
-          <option value="gems">Sort by gems</option>
-        </select>
-      </section>
 
       <section id="setupPanel" class="setup-panel" hidden>
         <div>
@@ -52,7 +41,10 @@
 
       <section class="layout">
         <aside class="panel">
-          <h2>Costs</h2>
+          <div class="panel-section-header costs-header">
+            <h2>Costs</h2>
+            <button id="clearCostFilter" class="clear-cost-filter" type="button" disabled>Show all</button>
+          </div>
           <div id="costs" class="count-list"></div>
 
           <div class="panel-section-header">
@@ -78,12 +70,33 @@
               </span>
               <span id="handCardsLabel" class="card-view-label">CARDS IN HAND</span>
             </label>
-            <span id="handManaTotal" class="hand-mana-total">HAND MANA TOTAL: 0</span>
+            <button id="evolutionsButton" class="evolutions-button" type="button">Evolutions</button>
+            <div class="card-view-actions">
+              <span id="handManaTotal" class="hand-mana-total">HAND MANA TOTAL: 0</span>
+              <label class="card-sort-control">
+                <span>Sort by</span>
+                <select id="sortBy" class="card-sort-select" aria-label="Sort cards">
+                  <option value="cost">cost</option>
+                  <option value="name">name</option>
+                  <option value="gems">gems</option>
+                </select>
+              </label>
+            </div>
           </div>
           <div id="cards" class="card-grid"></div>
         </section>
       </section>
     </main>
+
+    <dialog id="evolutionDialog" class="evolution-dialog" aria-labelledby="evolutionDialogTitle">
+      <div class="evolution-modal">
+        <header class="evolution-modal-header">
+          <h2 id="evolutionDialogTitle">Evolution Chart</h2>
+          <button id="evolutionClose" class="modal-close-button" type="button" aria-label="Close evolution chart">Close</button>
+        </header>
+        <div id="evolutionRecipes" class="evolution-recipes"></div>
+      </div>
+    </dialog>
 
     <script src="/app.js"></script>
   </body>

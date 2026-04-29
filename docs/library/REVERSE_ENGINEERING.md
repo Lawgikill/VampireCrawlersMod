@@ -226,6 +226,13 @@ Minus<n> subtracts n from cost.
 
 This is intentionally not clamped.
 
+## Wild Cost Gem
+
+`GemConfig_SetCostType_Wild` changes the card's effective cost type to `W`.
+Handle this before applying numeric mana modifiers. This is runtime deck-state
+logic, not a visual-only frontend rule, because the cost badge, cost histogram,
+cost filtering, and hand mana total all consume the normalized server snapshot.
+
 ## Gem Slots
 
 The save stores open gem-slot capacity separately from occupied gems.

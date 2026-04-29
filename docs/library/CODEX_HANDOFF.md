@@ -6,7 +6,7 @@ The current app prefers the live bridge JSON when fresh, falls back to the activ
 
 ## Current State
 
-- Version is currently `1.1.0`.
+- Version is currently `1.1.1`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`
@@ -85,8 +85,9 @@ art\*.png
 10. Filled gem slot art comes from generated local `gem-map.json`.
 11. Gem rules text comes from bundled app-owned `public/assets/gem-text.json`.
 12. Display metadata comes from bundled app-owned `public/assets/text-meta.json`.
-13. `Rebuild Local Data` runs a bundled helper exe in packaged builds.
-14. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
+13. Evolution cheat sheet data comes from bundled app-owned `public/assets/evolutions.json`.
+14. `Rebuild Local Data` runs a bundled helper exe in packaged builds.
+15. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
 
 ## Things That Are Known Fragile
 
@@ -97,15 +98,17 @@ art\*.png
 - Wild/event cards such as `Card_W_Combo`, `Card_E_BagOfCoins`, and `Card_E_Vacuum` display with cost `W`.
 - Event cards can use ids without a numeric tier, such as `Card_E_LittleClover` and `Card_E_Orologion`; the builder regex must support that shorter shape.
 - `FCC_*` crawler cards do have real mana costs, but not from generated `card-costs.json`. The server reads `RunMetaSaveData.SelectedPartyFccIds`: first selected crawler costs `0`, other selected crawlers cost `1`.
-- The Costs panel separates crawler buckets from normal deck mana buckets. Normal numeric mana buckets render as a histogram; `Wild` and `Crawler N` render as rows.
+- The Costs panel separates crawler buckets from normal deck mana buckets. `Wild` and normal numeric mana buckets render as a histogram; `Crawler N` buckets render as rows.
+- `GemConfig_SetCostType_Wild` changes a card's effective cost to `W`; this must happen in server-side snapshot cost logic so the badge, histogram, filters, and hand mana total agree.
 - Gem tags are display-formatted in the frontend. `GemConfig_YinYang` becomes `Yin Yang`, and mana modifier gems display as `Mana +N` / `Mana -N`.
 - Open gem slots can be derived from the save: `Data.ProgressionSaveData.CardGemSlots[cardId] - GemIds.length`, clamped at zero. The app renders them as black/gold circles under the card's mana cost.
 - Filled gem slots render generated gem sprites and should not show a separate colored backing ring.
 - Evolved cards and base cards can differ. Do not fall back from an evolved `cardId` to `baseId` for cost unless you know it is correct.
 - `Card_M_0_Wings` is a special wild-cost card even though the serialized cost map contains a numeric value.
 - Card/gem rules text, gold highlight tokens, and card color overrides live in `data/display-overrides.csv`. Regenerate local JSON and avoid editing generated JSON as the source of truth.
+- Evolution recipes live in `data/evolutions.csv` and ship through `public/assets/evolutions.json`. The CSV uses `+` for required recipe parts and `|` for alternatives.
 - Blank gem text in `data/display-overrides.csv` intentionally hides that gem rule line while keeping the icon visible, currently including `GemConfig_DoubleDamage` and `GemConfig_Evolve`.
-- The packaged app must include `public/assets/card-costs.json`, `public/assets/card-text.json`, `public/assets/gem-text.json`, `public/assets/text-meta.json`, and `resources/live-bridge/**`, but must not include extracted PNG art or generated `card-map.json`, `card-names.json`, or `gem-map.json`.
+- The packaged app must include `public/assets/card-costs.json`, `public/assets/card-text.json`, `public/assets/evolutions.json`, `public/assets/gem-text.json`, `public/assets/text-meta.json`, and `resources/live-bridge/**`, but must not include extracted PNG art or generated `card-map.json`, `card-names.json`, or `gem-map.json`.
 - App updates carry the live bridge payload. On the next launch, the app silently installs/updates it into the configured Steam game folder. File > Install/Update Live Bridge remains as a manual fallback.
 
 ## Quick Sanity Checks
@@ -131,7 +134,7 @@ const snapshot = getDeckSnapshot(
   { cardCosts: costs }
 );
 for (const card of snapshot.cards) {
-  if (/MagicWand|KingBible|NoFuture|Runetracer/.test(card.cardId) || card.gems.some((gem) => /Mana/.test(gem))) {
+  if (/MagicWand|KingBible|NoFuture|Runetracer|WeightyTome/.test(card.cardId) || card.gems.some((gem) => /Mana|SetCostType_Wild/.test(gem))) {
     console.log(`${card.cardId} base=${card.baseCost} effective=${card.cost} gems=${card.gems.join(',') || '-'}`);
   }
 }
@@ -145,6 +148,7 @@ Expected examples from prior testing:
 Card_A_1_MagicWand base=0 effective=-1 gems=GemConfig_Mana_Minus1
 Card_A_1_KingBible base=1 effective=3 gems=GemConfig_Mana_Plus2
 Card_A_3_NoFuture base=3 effective=3 gems=GemConfig_Evolve
+Card_B_2_EmptyTome base=2 effective=W gems=GemConfig_SetCostType_Wild
 ```
 
 ## Good Next Tasks

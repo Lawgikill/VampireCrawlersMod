@@ -6,7 +6,8 @@ const state = {
   textMeta: {},
   gemMap: {},
   gemText: {},
-  search: "",
+  evolutions: [],
+  costFilterKey: "",
   sortBy: "cost",
   frequencySort: "name",
   cardViewMode: "all",
@@ -16,9 +17,7 @@ const state = {
 
 const els = {
   subtitle: document.querySelector("#subtitle"),
-  totalCards: document.querySelector("#totalCards"),
   updatedAt: document.querySelector("#updatedAt"),
-  search: document.querySelector("#search"),
   sortBy: document.querySelector("#sortBy"),
   frequencySort: document.querySelector("#frequencySort"),
   setupPanel: document.querySelector("#setupPanel"),
@@ -30,13 +29,30 @@ const els = {
   updatePanel: document.querySelector("#updatePanel"),
   updateStatus: document.querySelector("#updateStatus"),
   checkUpdates: document.querySelector("#checkUpdates"),
+  clearCostFilter: document.querySelector("#clearCostFilter"),
   costs: document.querySelector("#costs"),
   counts: document.querySelector("#counts"),
   allCardsLabel: document.querySelector("#allCardsLabel"),
   handCardsLabel: document.querySelector("#handCardsLabel"),
   handManaTotal: document.querySelector("#handManaTotal"),
+  evolutionsButton: document.querySelector("#evolutionsButton"),
+  evolutionDialog: document.querySelector("#evolutionDialog"),
+  evolutionClose: document.querySelector("#evolutionClose"),
+  evolutionRecipes: document.querySelector("#evolutionRecipes"),
   cardViewMode: document.querySelector("#cardViewMode"),
   cards: document.querySelector("#cards"),
+};
+
+const WILD_COST_ICON_PATH = "/assets/art/UI_sprites_icon_wild_702ec41b2e.png";
+const COST_SEGMENT_ORDER = ["attack", "support", "defence", "buff", "utility", "crawler", "unknown"];
+const COST_SEGMENT_LABELS = {
+  attack: "Attack",
+  support: "Support",
+  defence: "Defence",
+  buff: "Buff",
+  utility: "Utility",
+  crawler: "Crawler",
+  unknown: "Unknown",
 };
 
 function cleanId(id) {
@@ -101,7 +117,7 @@ function formatGemRulesHtml(gems) {
       const rawText = gemRulesText(gem);
       if (!rawText) return "";
       const text = highlightRuleValues(
-        highlightConfiguredTokens(escapeHtml(punctuateSentence(rawText)), gem),
+        highlightConfiguredTokens(escapeHtml(punctuateSentence(rawText)).replace(/\r?\n/g, "<br>"), gem),
         null,
       );
       return `<span class="gem-rule">${text}</span>`;
@@ -223,23 +239,25 @@ function cardTypeClass(card) {
   }[parsed?.type] || "card-type-unknown";
 }
 
+function cardTypeKey(card) {
+  const className = cardTypeClass(card);
+  return className.replace(/^card-type-/, "") || "unknown";
+}
+
 function costRank(cost) {
   return typeof cost === "number" ? cost : 99;
 }
 
+function costFilterKeyForCard(card) {
+  if ((card.cardId || "").startsWith("FCC_")) return `crawler:${card.cost}`;
+  if (card.cost === "W") return "wild";
+  if (typeof card.cost === "number") return `mana:${card.cost}`;
+  return `unknown:${card.cost}`;
+}
+
 function cardMatches(card) {
-  if (!state.search) return true;
-
-  const haystack = [
-    card.cardId,
-    card.baseId,
-    cardDisplayName(card.cardId),
-    card.guid,
-    ...card.gems,
-    ...card.gems.map(gemDisplayName),
-  ].join(" ").toLowerCase();
-
-  return haystack.includes(state.search.toLowerCase());
+  if (state.costFilterKey && costFilterKeyForCard(card) !== state.costFilterKey) return false;
+  return true;
 }
 
 function sortCards(cards) {
@@ -251,7 +269,6 @@ function sortCards(cards) {
         || a.index - b.index;
     }
     if (state.sortBy === "name") return a.cardId.localeCompare(b.cardId);
-    if (state.sortBy === "base") return a.baseId.localeCompare(b.baseId) || a.cardId.localeCompare(b.cardId);
     if (state.sortBy === "gems") return b.gems.length - a.gems.length || a.cardId.localeCompare(b.cardId);
     return a.cardId.localeCompare(b.cardId);
   });
@@ -282,11 +299,15 @@ function renderCounts(snapshot) {
 
 function renderCosts(snapshot) {
   const costCounts = snapshot.costCounts || [];
-  const manaCosts = costCounts.filter(isManaCostEntry);
-  const otherCosts = costCounts.filter((entry) => !isManaCostEntry(entry));
+  const histogramCosts = [
+    ...costCounts.filter((entry) => entry.kind === "wild"),
+    ...costCounts.filter(isManaCostEntry),
+  ];
+  const otherCosts = costCounts.filter((entry) => !isManaCostEntry(entry) && entry.kind !== "wild");
 
+  els.clearCostFilter.disabled = !state.costFilterKey;
   els.costs.innerHTML = [
-    renderCostHistogram(manaCosts),
+    renderCostHistogram(histogramCosts, snapshot.cards || []),
     renderCostRows(otherCosts),
   ].filter(Boolean).join("");
 }
@@ -297,16 +318,50 @@ function isManaCostEntry(entry) {
   return typeof entry.cost === "number" && !String(entry.key || "").startsWith("crawler:");
 }
 
-function renderCostHistogram(entries) {
+function buildCostSegments(cards) {
+  const countsByCost = new Map();
+
+  cards.forEach((card) => {
+    const costKey = costFilterKeyForCard(card);
+    const typeKey = cardTypeKey(card);
+    const counts = countsByCost.get(costKey) || new Map();
+    counts.set(typeKey, (counts.get(typeKey) || 0) + 1);
+    countsByCost.set(costKey, counts);
+  });
+
+  return new Map(Array.from(countsByCost.entries()).map(([costKey, counts]) => [
+    costKey,
+    COST_SEGMENT_ORDER
+      .map((type) => ({ type, count: counts.get(type) || 0 }))
+      .filter((segment) => segment.count > 0),
+  ]));
+}
+
+function renderCostBarSegments(segments, total) {
+  if (!total || !segments.length) return "";
+
+  return segments
+    .map((segment) => {
+      const label = COST_SEGMENT_LABELS[segment.type] || COST_SEGMENT_LABELS.unknown;
+      const percent = (segment.count / total) * 100;
+      return `<span class="cost-bar-segment cost-bar-segment-${escapeHtml(segment.type)}" style="height: ${percent}%" title="${escapeHtml(label)}: ${segment.count}"></span>`;
+    })
+    .join("");
+}
+
+function renderCostHistogram(entries, cards) {
   if (!entries.length) return "";
 
-  const costs = entries
+  const segmentsByCost = buildCostSegments(cards);
+  const manaEntries = entries.filter(isManaCostEntry);
+  const wildEntry = entries.find((entry) => entry.kind === "wild");
+  const costs = manaEntries
     .map((entry) => entry.cost)
     .filter((cost) => typeof cost === "number");
   const minCost = Math.min(0, ...costs);
   const maxCost = Math.max(0, ...costs);
-  const entriesByCost = new Map(entries.map((entry) => [entry.cost, entry]));
-  const curveEntries = Array.from({ length: maxCost - minCost + 1 }, (_, index) => {
+  const entriesByCost = new Map(manaEntries.map((entry) => [entry.cost, entry]));
+  const manaCurveEntries = Array.from({ length: maxCost - minCost + 1 }, (_, index) => {
     const cost = minCost + index;
     return entriesByCost.get(cost) || {
       key: `mana:${cost}`,
@@ -316,6 +371,10 @@ function renderCostHistogram(entries) {
       count: 0,
     };
   });
+  const curveEntries = [
+    wildEntry ? { ...wildEntry, label: "W" } : { key: "wild", kind: "wild", cost: "W", label: "W", count: 0 },
+    ...manaCurveEntries,
+  ];
   const maxCount = Math.max(...curveEntries.map((entry) => entry.count || 0), 1);
 
   return `
@@ -323,16 +382,17 @@ function renderCostHistogram(entries) {
       ${curveEntries.map((entry) => {
         const count = entry.count || 0;
         const height = count ? Math.max(12, Math.round((count / maxCount) * 100)) : 0;
+        const isActive = state.costFilterKey === entry.key;
+        const segments = segmentsByCost.get(entry.key) || [];
 
         return `
-          <div class="cost-bar-group" title="${formatCostEntry(entry)}: ${count}">
+          <button class="cost-bar-group${isActive ? " is-active" : ""}" type="button" data-cost-key="${escapeHtml(entry.key)}" title="${formatCostEntry(entry)}: ${count}"${count ? "" : " disabled"}>
             <div class="cost-bar-shell">
-              <div class="cost-bar${count ? "" : " is-empty"}" style="height: ${height}%">
-                <span>${count}</span>
-              </div>
+              ${count ? `<div class="cost-bar-count" style="bottom: calc(${height}% + 4px)">${count}</div>` : ""}
+              <div class="cost-bar${count ? "" : " is-empty"}" style="height: ${height}%">${renderCostBarSegments(segments, count)}</div>
             </div>
             <div class="cost-bar-label">${formatCostEntry(entry)}</div>
-          </div>
+          </button>
         `;
       }).join("")}
     </div>
@@ -341,12 +401,15 @@ function renderCostHistogram(entries) {
 
 function renderCostRows(entries) {
   return entries
-    .map((entry) => `
-      <div class="count-row">
+    .map((entry) => {
+      const isActive = state.costFilterKey === entry.key;
+      return `
+      <button class="count-row cost-filter-row${isActive ? " is-active" : ""}" type="button" data-cost-key="${escapeHtml(entry.key)}">
         <span>${formatCostEntry(entry)}</span>
         <span class="badge">${entry.count}</span>
-      </div>
-    `)
+      </button>
+    `;
+    })
     .join("");
 }
 
@@ -367,6 +430,64 @@ function formatCostSymbol(cost) {
   if (cost === "FCC") return "C";
   if (cost === "W") return "W";
   return "?";
+}
+
+function renderManaCost(cost) {
+  if (cost === "W") {
+    return `
+      <span class="mana-cost mana-cost-wild" title="${formatCost(cost)}">
+        <img src="${WILD_COST_ICON_PATH}" alt="Wild" onerror="this.hidden=true; this.nextElementSibling.hidden=false">
+        <span class="mana-cost-fallback" hidden>W</span>
+      </span>
+    `;
+  }
+  return `<span class="mana-cost" title="${formatCost(cost)}">${formatCostSymbol(cost)}</span>`;
+}
+
+function cardArtHtml(cardId, className = "recipe-card-art") {
+  const artPath = state.cardMap[cardId] || "";
+  const name = cardDisplayName(cardId);
+  if (!artPath) {
+    return `<span class="${className} recipe-card-art-missing" aria-hidden="true">${escapeHtml(name.slice(0, 1) || "?")}</span>`;
+  }
+  return `<img class="${className}" src="/${artPath}" alt="">`;
+}
+
+function renderRecipeOption(cardId) {
+  return `
+    <span class="recipe-card-token" title="${escapeHtml(cardDisplayName(cardId))}">
+      ${cardArtHtml(cardId)}
+      <span>${escapeHtml(cardDisplayName(cardId))}</span>
+    </span>
+  `;
+}
+
+function renderRecipeGroup(cardIds) {
+  const ids = Array.isArray(cardIds) ? cardIds : [];
+  return `
+    <span class="recipe-card-group${ids.length > 1 ? " has-alternates" : ""}">
+      ${ids.map(renderRecipeOption).join("")}
+    </span>
+  `;
+}
+
+function renderEvolutionRecipes() {
+  els.evolutionRecipes.innerHTML = state.evolutions.length
+    ? state.evolutions.map((recipe) => `
+      <article class="evolution-recipe">
+        <div class="recipe-equation">
+          ${recipe.inputs.map((group, index) => `
+            ${index ? `<span class="recipe-operator">+</span>` : ""}
+            ${renderRecipeGroup(group)}
+          `).join("")}
+          <span class="recipe-operator">=</span>
+          <span class="recipe-result">
+            ${renderRecipeOption(recipe.resultId)}
+          </span>
+        </div>
+      </article>
+    `).join("")
+    : `<p class="muted">No evolution data loaded.</p>`;
 }
 
 function formatHandManaTotal(snapshot) {
@@ -408,7 +529,11 @@ function renderCards(snapshot) {
   const visibleCards = state.cardViewMode === "hand"
     ? snapshot.cards.filter((card) => card.pileId === "HandPile")
     : snapshot.cards;
+  const allCardCount = snapshot.totalCards ?? snapshot.cards.length;
+  const handCardCount = snapshot.cards.filter((card) => card.pileId === "HandPile").length;
   const cards = sortCards(visibleCards.filter(cardMatches));
+  els.allCardsLabel.textContent = `ALL CARDS (${allCardCount})`;
+  els.handCardsLabel.textContent = `CARDS IN HAND (${handCardCount})`;
   els.allCardsLabel.classList.toggle("is-active", state.cardViewMode === "all");
   els.handCardsLabel.classList.toggle("is-active", state.cardViewMode === "hand");
   els.handManaTotal.textContent = `HAND MANA TOTAL: ${formatHandManaTotal(snapshot)}`;
@@ -437,7 +562,7 @@ function renderCards(snapshot) {
       return `
         <article class="card-row ${cardTypeClass(card)}">
           <div class="card-title">
-            <span class="mana-cost" title="${formatCost(card.cost)}">${formatCostSymbol(card.cost)}</span>
+            ${renderManaCost(card.cost)}
             ${renderGemSlots(card)}
             <span class="card-name">${escapeHtml(cardDisplayName(card.cardId))}</span>
           </div>
@@ -455,7 +580,6 @@ function renderCards(snapshot) {
 function render(snapshot) {
   const sourceLabel = snapshot.liveStateActive ? "Live bridge" : "Save file";
   els.subtitle.textContent = `${sourceLabel}: ${snapshot.savePath}`;
-  els.totalCards.textContent = `${snapshot.totalCards} cards`;
   els.updatedAt.textContent = new Date(snapshot.lastModified).toLocaleTimeString();
   renderCosts(snapshot);
   renderCounts(snapshot);
@@ -522,6 +646,16 @@ async function loadGemText() {
   }
 }
 
+async function loadEvolutions() {
+  try {
+    const response = await fetch("/assets/evolutions.json", { cache: "no-store" });
+    const data = await response.json();
+    state.evolutions = Array.isArray(data) ? data : [];
+  } catch {
+    state.evolutions = [];
+  }
+}
+
 async function loadConfig() {
   try {
     const response = await fetch("/api/config", { cache: "no-store" });
@@ -565,11 +699,6 @@ async function refresh() {
   }
 }
 
-els.search.addEventListener("input", (event) => {
-  state.search = event.target.value.trim();
-  if (state.snapshot) renderCards(state.snapshot);
-});
-
 els.sortBy.addEventListener("change", (event) => {
   state.sortBy = event.target.value;
   if (state.snapshot) renderCards(state.snapshot);
@@ -585,6 +714,44 @@ els.cardViewMode.addEventListener("change", (event) => {
   if (state.snapshot) renderCards(state.snapshot);
 });
 
+els.costs.addEventListener("click", (event) => {
+  const target = event.target.closest("[data-cost-key]");
+  if (!target || !els.costs.contains(target) || target.disabled) return;
+
+  const costKey = target.dataset.costKey || "";
+  state.costFilterKey = state.costFilterKey === costKey ? "" : costKey;
+  if (state.snapshot) {
+    renderCosts(state.snapshot);
+    renderCards(state.snapshot);
+  }
+});
+
+els.clearCostFilter.addEventListener("click", () => {
+  if (!state.costFilterKey) return;
+  state.costFilterKey = "";
+  if (state.snapshot) {
+    renderCosts(state.snapshot);
+    renderCards(state.snapshot);
+  }
+});
+
+els.evolutionsButton.addEventListener("click", () => {
+  renderEvolutionRecipes();
+  if (typeof els.evolutionDialog.showModal === "function") {
+    els.evolutionDialog.showModal();
+    return;
+  }
+  els.evolutionDialog.setAttribute("open", "");
+});
+
+els.evolutionClose.addEventListener("click", () => {
+  els.evolutionDialog.close();
+});
+
+els.evolutionDialog.addEventListener("click", (event) => {
+  if (event.target === els.evolutionDialog) els.evolutionDialog.close();
+});
+
 els.hideSetup.addEventListener("click", () => {
   state.setupHiddenThisSession = true;
   els.setupPanel.hidden = true;
@@ -594,7 +761,7 @@ window.addEventListener("resize", () => {
   if (state.snapshot) requestAnimationFrame(fitCardTitles);
 });
 
-Promise.all([loadArtMap(), loadCardNames(), loadCardText(), loadTextMeta(), loadGemMap(), loadGemText()]).then(refresh);
+Promise.all([loadArtMap(), loadCardNames(), loadCardText(), loadTextMeta(), loadGemMap(), loadGemText(), loadEvolutions()]).then(refresh);
 loadConfig();
 setInterval(refresh, 2000);
 setInterval(loadConfig, 10000);

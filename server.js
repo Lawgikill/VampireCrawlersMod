@@ -110,7 +110,12 @@ function getGemManaModifier(gems) {
   }, 0);
 }
 
+function hasWildCostGem(gems) {
+  return gems.includes("GemConfig_SetCostType_Wild");
+}
+
 function getEffectiveCardCost(baseCost, card) {
+  if (hasWildCostGem(card.gems)) return "W";
   if (typeof baseCost !== "number") return baseCost;
 
   const modifier =

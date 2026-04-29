@@ -112,8 +112,9 @@ Responsibilities:
 - Poll `/api/config` every ten seconds.
 - Load `/api/card-map`, `/api/card-names`, `/api/card-text`, `/api/gem-map`, `/api/gem-text`, and `/api/text-meta` once on startup and after local data rebuild.
 - Render the cost curve, non-mana cost buckets, card frequency, and card grid.
-- Search/filter/sort.
+- Filter by cost bucket, switch between all cards and cards in hand, and sort the visible card grid.
 - Render generated card rules text and gem rules text inside the card description plate.
+- Render the evolution cheat sheet modal from `public/assets/evolutions.json`.
 
 Current default sort:
 
@@ -180,7 +181,8 @@ Rules:
 - Use `cardCosts[cardId]` first.
 - Only use `baseId` if `cardId === baseId`.
 - `FCC_*` cards use `RunMetaSaveData.SelectedPartyFccIds`: the first selected crawler costs `0`, other selected crawlers cost `1`.
-- Cost distribution buckets keep crawlers separate from normal mana costs. The frontend renders normal mana buckets as a compact histogram, while `Wild` and `Crawler N` buckets stay as rows.
+- Cost distribution buckets keep crawlers separate from normal mana costs. The frontend renders `Wild` plus normal mana buckets as a compact histogram, while `Crawler N` buckets stay as rows.
+- `GemConfig_SetCostType_Wild` changes the card's effective cost to `W` before numeric mana modifiers are applied.
 - `Card_W_*` and `Card_E_*` cards are displayed with wild cost `W`.
 - `Card_M_0_Wings` is also displayed with wild cost `W`; the serialized cost map contains a numeric value, but the in-game card uses the wild marker.
 - Unknown costs remain `Unknown`.
@@ -302,6 +304,33 @@ Gem text is intentionally concise and sometimes overridden through
 are intentionally blank in `data/display-overrides.csv` while their icons remain
 visible, including `GemConfig_DoubleDamage` and `GemConfig_Evolve`.
 
+## Evolution Cheat Sheet
+
+Evolution reference data starts in:
+
+```text
+data/evolutions.csv
+```
+
+The app consumes:
+
+```text
+public/assets/evolutions.json
+```
+
+The CSV uses `+` for required recipe parts and `|` for alternatives inside a
+part. For example:
+
+```text
+Card_A_0_MagicWand|Card_A_1_MagicWand+Card_B_0_EmptyTome|Card_B_1_EmptyTome|Card_B_2_EmptyTome|Card_B_3_EmptyTome
+```
+
+means any listed Magic Wand variant plus any listed Tome variant evolves into
+the row's result card. The frontend renders this as a visual recipe modal using
+existing card art from `card-map.json` and display names from `card-names.json`.
+Keep the CSV human-editable and regenerate/update the JSON whenever recipes are
+changed.
+
 ## Packaging
 
 Electron build config is in `package.json`.
@@ -322,6 +351,7 @@ It intentionally includes:
 ```text
 public/assets/card-costs.json
 public/assets/card-text.json
+public/assets/evolutions.json
 public/assets/gem-text.json
 public/assets/text-meta.json
 resources/live-bridge/**
@@ -332,6 +362,7 @@ Reason:
 - Extracted art should not ship.
 - Card cost data is tiny and needed as a fallback before users rebuild local data.
 - Card/gem rules text and display metadata are app-authored data and should update with the app.
+- Evolution data is app-authored reference data and should update with the app.
 - The live bridge payload is release-owned data and should update with the app.
 
 The packaged helper is included via `extraResources` from:
