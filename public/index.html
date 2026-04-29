@@ -69,7 +69,17 @@
         </aside>
 
         <section class="panel">
-          <h2>Cards</h2>
+          <div class="panel-section-header card-view-header">
+            <label class="card-view-toggle">
+              <span id="allCardsLabel" class="card-view-label is-active">ALL CARDS</span>
+              <input id="cardViewMode" type="checkbox" aria-label="Show cards in hand">
+              <span class="toggle-track" aria-hidden="true">
+                <span class="toggle-thumb"></span>
+              </span>
+              <span id="handCardsLabel" class="card-view-label">CARDS IN HAND</span>
+            </label>
+            <span id="handManaTotal" class="hand-mana-total">HAND MANA TOTAL: 0</span>
+          </div>
           <div id="cards" class="card-grid"></div>
         </section>
       </section>

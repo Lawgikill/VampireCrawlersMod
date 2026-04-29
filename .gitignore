@@ -1,6 +1,9 @@
 node_modules/
 dist/
 build/
+.downloads/
+**/bin/
+**/obj/
 *.spec
 *.log
 __pycache__/
@@ -11,8 +14,6 @@ public/assets/art/
 public/assets/art-manifest.json
 public/assets/card-map.json
 public/assets/card-names.json
-public/assets/card-text.json
 public/assets/gem-map.json
-public/assets/gem-text.json
 public/assets/contact-sheet-*.png
 bin/vampire-crawlers-asset-builder.exe

@@ -1,6 +1,6 @@
 {
   "name": "vampire-crawlers-deck-tracker",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "private": true,
   "author": "Vampire Crawlers Deck Tracker contributors",
   "description": "Read-only second-screen deck tracker for Vampire Crawlers saves.",
@@ -12,7 +12,9 @@
     "extract-art": "python tools\\extract_art.py --min-size 16",
     "build-card-map": "python tools\\build_card_map.py",
     "build-card-cost-map": "python tools\\build_card_cost_map.py",
+    "build-text-meta": "python tools\\build_text_meta.py",
     "build-local-data": "python tools\\build_local_data.py",
+    "stage-live-bridge": "python tools\\stage_live_bridge_payload.py",
     "build-asset-builder": "python tools\\build_asset_builder.py"
   },
   "build": {
@@ -26,6 +28,7 @@
     "files": [
       "package.json",
       "requirements.txt",
+      "data/**",
       "server.js",
       "src/**",
       "tools/**",
@@ -34,12 +37,17 @@
       "!public/assets/art-manifest.json",
       "!public/assets/card-map.json",
       "!public/assets/card-names.json",
-      "!public/assets/card-text.json",
       "!public/assets/gem-map.json",
-      "!public/assets/gem-text.json",
       "!public/assets/contact-sheet-*.png"
     ],
     "extraResources": [
+      {
+        "from": "resources/live-bridge",
+        "to": "live-bridge",
+        "filter": [
+          "**/*"
+        ]
+      },
       {
         "from": "bin",
         "to": "asset-builder",

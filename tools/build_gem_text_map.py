@@ -8,6 +8,7 @@ import UnityPy
 
 from build_card_name_map import clean_localized_name, is_name_key
 from build_card_text_map import clean_text, load_table_entries
+from display_overrides import load_text_overrides
 
 
 GEM_ID_RE = re.compile(rb"GemConfig_[A-Za-z0-9_]+")
@@ -27,11 +28,6 @@ MANA_GEM_TEXT = {
     "GemConfig_Mana_Minus1": "Reduce Mana Cost.",
     "GemConfig_Mana_Minus2": "Reduce Mana Cost.",
 }
-
-GEM_TEXT_OVERRIDES = {
-    "GemConfig_Drain": "Drain.",
-}
-
 
 def get_script_path_id(raw):
     if len(raw) < 28:
@@ -145,9 +141,6 @@ def build_card_name_lookup(config_inputs, global_env, card_config_script_ids, lo
 
 
 def build_gem_text(raw, gem_id, local_objects, global_objects, card_names_by_path, gem_name):
-    if gem_id in GEM_TEXT_OVERRIDES:
-        return GEM_TEXT_OVERRIDES[gem_id]
-
     for effect_name in command_effects_from_raw(raw):
         if effect_name == "AddCardEffect":
             for _, file_id, path_id in iter_pptrs(raw):
@@ -177,9 +170,15 @@ def main():
         default="public/assets/gem-text.json",
         help="Output gem text map path, relative to project root.",
     )
+    parser.add_argument(
+        "--text-overrides",
+        default="data/display-overrides.csv",
+        help="CSV file containing display overrides, relative to project root.",
+    )
     args = parser.parse_args()
 
     project_root = Path(__file__).resolve().parents[1]
+    gem_text_overrides = load_text_overrides(project_root, "gem", args.text_overrides)
     game_data = Path(args.game_data)
     localization_dir = game_data / "StreamingAssets" / "aa" / "StandaloneWindows64"
     global_assets = game_data / "globalgamemanagers.assets"
@@ -251,8 +250,8 @@ def main():
 
             gem_name = referenced_localized_name(raw, localized_gem_names)
             for gem_id in gem_ids:
-                text = build_gem_text(raw, gem_id, local_objects, global_objects, card_names_by_path, gem_name)
-                if text:
+                text = gem_text_overrides[gem_id] if gem_id in gem_text_overrides else build_gem_text(raw, gem_id, local_objects, global_objects, card_names_by_path, gem_name)
+                if text or gem_id in gem_text_overrides:
                     gem_text[gem_id] = text
                 else:
                     diagnostics.append(
@@ -264,7 +263,7 @@ def main():
                         }
                     )
 
-    gem_text.update(GEM_TEXT_OVERRIDES)
+    gem_text.update(gem_text_overrides)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(dict(sorted(gem_text.items())), indent=2) + "\n", encoding="utf-8")

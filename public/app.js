@@ -3,19 +3,16 @@ const state = {
   cardMap: {},
   cardNames: {},
   cardText: {},
+  textMeta: {},
   gemMap: {},
   gemText: {},
   search: "",
   sortBy: "cost",
   frequencySort: "name",
+  cardViewMode: "all",
   config: null,
   setupHiddenThisSession: false,
 };
-
-const HIDDEN_GEM_RULE_IDS = new Set([
-  "GemConfig_DoubleDamage",
-  "GemConfig_Evolve",
-]);
 
 const els = {
   subtitle: document.querySelector("#subtitle"),
@@ -35,6 +32,10 @@ const els = {
   checkUpdates: document.querySelector("#checkUpdates"),
   costs: document.querySelector("#costs"),
   counts: document.querySelector("#counts"),
+  allCardsLabel: document.querySelector("#allCardsLabel"),
+  handCardsLabel: document.querySelector("#handCardsLabel"),
+  handManaTotal: document.querySelector("#handManaTotal"),
+  cardViewMode: document.querySelector("#cardViewMode"),
   cards: document.querySelector("#cards"),
 };
 
@@ -91,28 +92,41 @@ function formatRulesTextHtml(value, card) {
   if (card?.cardId === "Card_M_0_Wings" || card?.cardId === "Card_W_Wings") {
     return text;
   }
-  if (card?.cardId === "Card_S_2_Bracer") {
-    return highlightRuleValues(text, /(?<![\w%])(XX%?|YY%?|Z|\d+%?)(?![\w%])/g);
-  }
-  return highlightRuleValues(text, /(?<![\w%])(XX%?|YY%?|Z|\d+%?|Area|Crit|Disarm|Duration|Hand|Knockback|Might)(?![\w%])/g);
+  return highlightConfiguredTokens(text, card?.cardId || card?.baseId);
 }
 
 function formatGemRulesHtml(gems) {
   return (gems || [])
     .map((gem) => {
-      if (HIDDEN_GEM_RULE_IDS.has(gem)) return "";
+      const rawText = gemRulesText(gem);
+      if (!rawText) return "";
       const text = highlightRuleValues(
-        escapeHtml(punctuateSentence(gemRulesText(gem))),
-        /(?<![\w%])(XX%?|YY%?|Z|\d+%?)(?![\w%])/g,
+        highlightConfiguredTokens(escapeHtml(punctuateSentence(rawText)), gem),
+        null,
       );
-      const className = gem === "GemConfig_Armor" ? "gem-rule gem-rule-card-text" : "gem-rule";
-      return `<span class="${className}">${text}</span>`;
+      return `<span class="gem-rule">${text}</span>`;
     })
     .join("");
 }
 
 function highlightRuleValues(text, pattern) {
+  if (!pattern) return text;
   return text.replace(pattern, `<span class="rules-value">$1</span>`);
+}
+
+function highlightConfiguredTokens(text, id) {
+  const tokens = state.textMeta[id]?.gold || [];
+  if (!tokens.length) return text;
+
+  const pattern = new RegExp(
+    `(?<![\\w%])(${tokens.map(escapeRegExp).sort((a, b) => b.length - a.length).join("|")})(?![\\w%])`,
+    "g",
+  );
+  return highlightRuleValues(text, pattern);
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function fitCardTitles() {
@@ -146,7 +160,8 @@ function gemArtPath(id) {
 }
 
 function gemRulesText(id) {
-  return state.gemText[id] || gemDisplayName(id);
+  if (Object.prototype.hasOwnProperty.call(state.gemText, id)) return state.gemText[id];
+  return gemDisplayName(id);
 }
 
 function punctuateSentence(value) {
@@ -177,6 +192,25 @@ function cardRulesText(id) {
 }
 
 function cardTypeClass(card) {
+  const color = state.textMeta[card.cardId]?.color || state.textMeta[card.baseId]?.color || "";
+  const colorClass = {
+    attack: "card-type-attack",
+    red: "card-type-attack",
+    support: "card-type-support",
+    yellow: "card-type-support",
+    buff: "card-type-buff",
+    utility: "card-type-utility",
+    purple: "card-type-utility",
+    crawler: "card-type-crawler",
+    green: "card-type-crawler",
+    defence: "card-type-defence",
+    defense: "card-type-defence",
+    blue: "card-type-defence",
+    unknown: "card-type-unknown",
+    grey: "card-type-unknown",
+    gray: "card-type-unknown",
+  }[String(color).toLowerCase()];
+  if (colorClass) return colorClass;
   if (card.cost === "FCC") return "card-type-crawler";
   if (/^FCC_/.test(card.cardId || "")) return "card-type-crawler";
   const parsed = parseCardId(card.cardId);
@@ -335,6 +369,21 @@ function formatCostSymbol(cost) {
   return "?";
 }
 
+function formatHandManaTotal(snapshot) {
+  const handCards = snapshot.cards.filter((card) => card.pileId === "HandPile");
+  const numericTotal = handCards.reduce((total, card) => total + (typeof card.cost === "number" ? card.cost : 0), 0);
+  const extras = Array.from(
+    handCards.reduce((map, card) => {
+      if (typeof card.cost === "number") return map;
+      const key = formatCostSymbol(card.cost);
+      map.set(key, (map.get(key) || 0) + 1);
+      return map;
+    }, new Map()).entries(),
+  ).map(([cost, count]) => `${count}${cost}`);
+
+  return [String(numericTotal), ...extras].join(" + ");
+}
+
 function renderGemSlots(card) {
   const openSlotCount = Math.max(0, Number(card.openGemSlots) || 0);
   const filledGems = Array.isArray(card.gems) ? card.gems : [];
@@ -356,11 +405,17 @@ function renderGemSlots(card) {
 }
 
 function renderCards(snapshot) {
-  const cards = sortCards(snapshot.cards.filter(cardMatches));
+  const visibleCards = state.cardViewMode === "hand"
+    ? snapshot.cards.filter((card) => card.pileId === "HandPile")
+    : snapshot.cards;
+  const cards = sortCards(visibleCards.filter(cardMatches));
+  els.allCardsLabel.classList.toggle("is-active", state.cardViewMode === "all");
+  els.handCardsLabel.classList.toggle("is-active", state.cardViewMode === "hand");
+  els.handManaTotal.textContent = `HAND MANA TOTAL: ${formatHandManaTotal(snapshot)}`;
 
   els.cards.innerHTML = cards.length
     ? cards.map((card) => {
-      const flags = [
+      const statusLines = [
         card.temporary ? "Temporary" : "",
         card.broken ? "Broken" : "",
         card.copyWithDestroy ? "Destroy copy" : "",
@@ -370,31 +425,36 @@ function renderCards(snapshot) {
       const artPath = state.cardMap[card.cardId] || state.cardMap[card.baseId] || "";
       const rulesText = cardRulesText(card.cardId) || cardRulesText(card.baseId);
       const gemRulesTextValue = card.gems.map((gem) => punctuateSentence(gemRulesText(gem))).filter(Boolean).join("\n");
-      const safeRulesText = escapeHtml([rulesText, gemRulesTextValue].filter(Boolean).join("\n"));
       const rulesTextHtml = formatRulesTextHtml(rulesText, card);
       const gemRulesHtml = formatGemRulesHtml(card.gems);
+      const statusLinesHtml = statusLines.length
+        ? `<span class="status-lines">${statusLines.map((line) => `<span>${escapeHtml(line)}</span>`).join("")}</span>`
+        : "";
+      const hasEvolveGem = card.gems.includes("GemConfig_Evolve");
       const hasDescription = Boolean(rulesText || gemRulesHtml);
+      const descriptionClass = hasEvolveGem ? "card-description card-description-clear" : "card-description";
 
       return `
-        <article class="card-row ${cardTypeClass(card)}"${hasDescription ? ` title="${safeRulesText}"` : ""}>
+        <article class="card-row ${cardTypeClass(card)}">
           <div class="card-title">
             <span class="mana-cost" title="${formatCost(card.cost)}">${formatCostSymbol(card.cost)}</span>
             ${renderGemSlots(card)}
             <span class="card-name">${escapeHtml(cardDisplayName(card.cardId))}</span>
           </div>
           ${artPath ? `<img class="card-art" src="/${artPath}" alt="">` : ""}
-          ${hasDescription ? `<p class="card-description"><span>${rulesTextHtml}${gemRulesHtml ? `<span class="gem-rules">${gemRulesHtml}</span>` : ""}</span></p>` : ""}
-          ${flags.length ? `<div class="tags">${flags.map((flag) => `<span class="tag">${flag}</span>`).join("")}</div>` : ""}
+          ${hasDescription ? `<p class="${descriptionClass}"><span>${rulesTextHtml}${gemRulesHtml ? `<span class="gem-rules">${gemRulesHtml}</span>` : ""}</span></p>` : ""}
+          ${statusLinesHtml}
         </article>
       `;
     }).join("")
-    : `<p class="muted">No cards match the current filters.</p>`;
+    : `<p class="muted">${state.cardViewMode === "hand" ? "No cards in hand match the current filters." : "No cards match the current filters."}</p>`;
 
   requestAnimationFrame(fitCardTitles);
 }
 
 function render(snapshot) {
-  els.subtitle.textContent = snapshot.savePath;
+  const sourceLabel = snapshot.liveStateActive ? "Live bridge" : "Save file";
+  els.subtitle.textContent = `${sourceLabel}: ${snapshot.savePath}`;
   els.totalCards.textContent = `${snapshot.totalCards} cards`;
   els.updatedAt.textContent = new Date(snapshot.lastModified).toLocaleTimeString();
   renderCosts(snapshot);
@@ -429,6 +489,16 @@ async function loadCardText() {
     state.cardText = data || {};
   } catch {
     state.cardText = {};
+  }
+}
+
+async function loadTextMeta() {
+  try {
+    const response = await fetch("/api/text-meta", { cache: "no-store" });
+    const data = await response.json();
+    state.textMeta = data || {};
+  } catch {
+    state.textMeta = {};
   }
 }
 
@@ -510,6 +580,11 @@ els.frequencySort.addEventListener("change", (event) => {
   if (state.snapshot) renderCounts(state.snapshot);
 });
 
+els.cardViewMode.addEventListener("change", (event) => {
+  state.cardViewMode = event.target.checked ? "hand" : "all";
+  if (state.snapshot) renderCards(state.snapshot);
+});
+
 els.hideSetup.addEventListener("click", () => {
   state.setupHiddenThisSession = true;
   els.setupPanel.hidden = true;
@@ -519,7 +594,7 @@ window.addEventListener("resize", () => {
   if (state.snapshot) requestAnimationFrame(fitCardTitles);
 });
 
-Promise.all([loadArtMap(), loadCardNames(), loadCardText(), loadGemMap(), loadGemText()]).then(refresh);
+Promise.all([loadArtMap(), loadCardNames(), loadCardText(), loadTextMeta(), loadGemMap(), loadGemText()]).then(refresh);
 loadConfig();
 setInterval(refresh, 2000);
 setInterval(loadConfig, 10000);
@@ -561,6 +636,7 @@ if (window.vampireCrawlers) {
       await loadArtMap();
       await loadCardNames();
       await loadCardText();
+      await loadTextMeta();
       await loadGemMap();
       await loadGemText();
       await loadConfig();

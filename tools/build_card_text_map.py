@@ -6,37 +6,10 @@ from pathlib import Path
 
 import UnityPy
 
+from display_overrides import load_text_overrides
+
 
 CARD_ID_RE = re.compile(rb"(?:Card_[A-Z]_(?:[0-9]_[A-Za-z0-9]+|[A-Za-z0-9]+)|FCC_[A-Za-z0-9']+)")
-
-CARD_TEXT_OVERRIDES = {
-    "Card_A_0_Cross": "Deal XX damage.",
-    "Card_A_0_Knife": "Deal XX damage.\nCrit.",
-    "Card_A_0_Garlic": "Deal XX damage to the front row.\nDisarm.",
-    "Card_A_0_Whip": "Deal XX damage to multiple enemies.",
-    "Card_A_1_FireWand": "Deal XX damage.",
-    "Card_A_1_Garlic": "Deal XX damage to the front row.\nDisarm.",
-    "Card_A_1_MagicWand": "Deal XX damage. Prioritize attackers.",
-    "Card_A_1_Runetracer": "Deal XX damage. Bounces to deal more damage.",
-    "Card_A_2_Cross": "Deal XX damage.",
-    "Card_A_2_UnholyVespers": "Deal XX damage with a chance to Knockback.",
-    "Card_A_3_DeathSpiral": "Deal XX damage to the front row.\nCrit.",
-    "Card_B_0_EmptyTome": "Add XX Mana.",
-    "Card_B_1_EmptyTome": "Add XX Mana.",
-    "Card_B_2_EmptyTome": "Add XX Mana.",
-    "Card_B_3_EmptyTome": "Add XX Mana.",
-    "Card_S_1_Attractorb": "Draw XX card.",
-    "Card_S_0_Candelabrador": "Area : Attacks deal XX% splash damage.",
-    "Card_S_1_Candelabrador": "Area : Attacks deal XX% splash damage.",
-    "Card_S_2_Candelabrador": "Area : Attacks deal XX% splash damage.",
-    "Card_S_2_Clover": "Add XX% luck.",
-    "Card_S_0_SpellBinder": "Duration : Crawlers trigger XX more abilities before leaving.",
-    "Card_S_1_SpellBinder": "Duration : Crawlers trigger XX more abilities before leaving.",
-    "Card_S_0_Spinach": "Might : Deal XX% more damage.",
-    "Card_S_1_Spinach": "Might : Deal XX% more damage.",
-    "Card_S_2_Spinach": "Might : Deal XX% more damage.",
-    "Card_S_2_Bracer": "Hand : Increase Hand by XX.",
-}
 
 EFFECT_TEXT = [
     ("Nosebleed.Pancake.GameCommands.DamageEffect", "Deal XX damage."),
@@ -398,9 +371,6 @@ def is_redundant_localized_description(description, effects):
 
 
 def build_card_text(raw, card_id, entries, all_localized):
-    if card_id in CARD_TEXT_OVERRIDES:
-        return CARD_TEXT_OVERRIDES[card_id]
-
     if card_id.startswith("FCC_"):
         return fcc_text_from_raw(raw) or crawler_text(card_id, all_localized)
 
@@ -424,9 +394,15 @@ def main():
         default="public/assets/card-text.json",
         help="Output card text map path, relative to project root.",
     )
+    parser.add_argument(
+        "--text-overrides",
+        default="data/display-overrides.csv",
+        help="CSV file containing display overrides, relative to project root.",
+    )
     args = parser.parse_args()
 
     project_root = Path(__file__).resolve().parents[1]
+    card_text_overrides = load_text_overrides(project_root, "card", args.text_overrides)
     game_data = Path(args.game_data)
     localization_dir = game_data / "StreamingAssets" / "aa" / "StandaloneWindows64"
     global_assets = game_data / "globalgamemanagers.assets"
@@ -482,11 +458,11 @@ def main():
 
             entries = referenced_localized_entries(raw, card_keys, card_localized)
             for card_id in card_ids:
-                text = build_card_text(raw, card_id, entries, all_localized)
-                if text:
+                text = card_text_overrides[card_id] if card_id in card_text_overrides else build_card_text(raw, card_id, entries, all_localized)
+                if text or card_id in card_text_overrides:
                     card_text[card_id] = text
 
-    card_text.update(CARD_TEXT_OVERRIDES)
+    card_text.update(card_text_overrides)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(dict(sorted(card_text.items())), indent=2) + "\n", encoding="utf-8")

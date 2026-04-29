@@ -1,0 +1,209 @@
+﻿kind,id,name,text,gold,color
+card,Card_A_0_Bone,Bone,Deal XX damage. Throws a bouncing projectile.,XX,attack
+card,Card_A_0_CherryBomb,Cherry Bomb,Deal XX damage. Chance to explode.,XX,attack
+card,Card_A_0_Cross,Cross,Deal XX damage.,XX,attack
+card,Card_A_0_Garlic,Garlic,"Deal XX damage to the front row.
+Disarm.",XX|Disarm,attack
+card,Card_A_0_GorgeousMoon,Gorgeous Moon,Erase 1 enemy. Keep using to increase power.,1,attack
+card,Card_A_0_Knife,Knife,"Deal XX damage.
+Crit.",XX|Crit,attack
+card,Card_A_0_MagicWand,Magic Wand,Deal XX damage. Prioritize attackers.,XX,attack
+card,Card_A_0_Whip,Whip,Deal XX damage to multiple enemies.,XX,attack
+card,Card_A_1_CherryBomb,Cherry Bomb,Deal XX damage. Chance to explode.,XX,attack
+card,Card_A_1_FireWand,Fire Wand,Deal XX damage.,XX,attack
+card,Card_A_1_Garlic,Garlic,"Deal XX damage to the front row.
+Disarm.",XX|Disarm,attack
+card,Card_A_1_GattiAmari,Gatti Amari,Deal XX damage. Chance to {:color(Keyword):Scuffle}.,XX,attack
+card,Card_A_1_KingBible,King Bible,Deal XX damage. Fire in an arc.,XX,attack
+card,Card_A_1_MagicWand,Magic Wand,Deal XX damage. Prioritize attackers.,XX,attack
+card,Card_A_1_Runetracer,Runetracer,Deal XX damage. Bounces to deal more damage.,XX,attack
+card,Card_A_1_SoulEater,Soul Eater,Deal XX damage. Heal XX HP. Evolved {db.Cards.Card_A_0_Garlic.Name}. Heal on use.,XX,attack
+card,Card_A_2_Axe,Axe,Deal XX damage. High damage.,XX,attack
+card,Card_A_2_BloodyTear,Bloody Tear,Deal XX damage. Heal XX HP. Evolution of the {db.Cards.Card_A_0_Whip.Name}. Can deal Critical damage and absorb HP.,XX,attack
+card,Card_A_2_Carrello,Carréllo,Deal XX damage. Throws a bouncing projectile. Number of bounces affected by Amount.,XX,attack
+card,Card_A_2_CelestialDusting,Celestial Dusting,Deal XX damage. Throws flowers.,XX,attack
+card,Card_A_2_Cross,Cross,Deal XX damage.,XX,attack
+card,Card_A_2_EightTheSparrow,Eight The Sparrow,Deal XX damage. Fires quickly from two directions.,XX,attack
+card,Card_A_2_GlassFandango,A 2 Glass Fandango,Deal XX damage. Attacks from the bottom.,XX,attack
+card,Card_A_2_HolyWand,Holy Wand,Deal XX damage. Prioritize attackers.,XX,attack
+card,Card_A_2_LightningRing,Lightning Ring,Deal XX damage. Fires projectiles from the sky.,XX,attack
+card,Card_A_2_UnholyVespers,Unholy Vespers,Deal XX damage with a chance to Knockback.,XX|Knockback,attack
+card,Card_A_2_ValkyrieTurner,Valkyrie Turner,Deal XX damage. Evolved {db.Cards.Card_A_3_ShadowPinion.Name}. Charges up between uses.,XX,attack
+card,Card_A_2_ViciousHunger,Vicious Hunger,Deal XX damage. May turn enemies into coins.,XX,attack
+card,Card_A_3_Axe,Axe,Deal XX damage. High damage.,XX,attack
+card,Card_A_3_DeathSpiral,Death Spiral,"Deal XX damage to the front row.
+Crit.",XX|Crit,attack
+card,Card_A_3_HeavenSword,Heaven Sword,Deal XX damage. Evolved {db.Cards.Card_A_0_Cross.Name}. Can do Critical damage.,XX,attack
+card,Card_A_3_HellFire,Hellfire,Deal XX damage. Evolved {db.Cards.Card_A_1_FireWand.Name}. Deals massive damage to a few enemies.,XX,attack
+card,Card_A_3_NoFuture,NO FUTURE,Deal XX damage. Heal XX HP. Bounces and explodes.,XX,attack
+card,Card_A_3_Peachone,Peachone,Deal XX damage. \nBombards enemies \nafter every turn.,XX,attack
+card,Card_A_3_PhieraDerTuphello,Phiera Der Tuphello,Deal XX damage. Fires quickly from two directions.,XX,attack
+card,Card_A_3_SantaWater,Santa Water,Deal XX damage. \nBurns enemies \nafter this turn.,XX,attack
+card,Card_A_3_ShadowPinion,Shadow Pinion,Deal XX damage. Burns enemies after this turn.,XX,attack
+card,Card_A_3_SoulEater,Soul Eater,Deal XX damage. Heal XX HP. Evolved {db.Cards.Card_A_0_Garlic.Name}. Heal on use.,XX,attack
+card,Card_A_3_ThousandEdge,Thousand Edge,Deal XX damage. Evolved {db.Cards.Card_A_0_Knife.Name}. Fires more projectiles.,XX,attack
+card,Card_A_3_VentoSacro,A 3 Vento Sacro,Deal XX damage. Attack quickly with high Critical strike chance.,XX,attack
+card,Card_A_4_EbonyWings,Ebony Wings,Deal XX damage. Bombards enemies after every turn.,XX,attack
+card,Card_A_4_Fuwalafuwaloo,A 4 Fuwalafuwaloo,Deal XX damage. Union of {db.Cards.Card_A_3_VentoSacro.Name} and {db.Cards.Card_A_2_BloodyTear.Name}. Critical hits might generate explosions.,XX,attack
+card,Card_A_4_LaBorra,La Borra,Deal XX damage. \nBurns enemies after every turn.,XX,attack
+card,Card_A_4_PhieraDerTuphello,Phiera Der Tuphello,Deal XX damage. Fires quickly from two directions.,XX,attack
+card,Card_A_4_Phieraggi,Phieraggi,Deal XX damage. Fires quickly from two directions.,XX,attack
+card,Card_A_4_Thunderloop,Thunder Loop,Deal XX damage. Attacks again at the end of the turn.,XX,attack
+card,Card_A_4_VentoSacro,A 4 Vento Sacro,Deal XX damage. Attack quickly with high Critical strike chance.,XX,attack
+card,Card_A_5_Peachone,Peachone,Deal XX damage. Bombards enemies after every turn.,XX,attack
+card,Card_A_0_Pentagram,Pentagram,Erase XX row. \nCountdown.,Erase XX|Countdown,attack
+card,Card_A_1_Pentagram,Pentagram,Erase XX row. \nCountdown.,Erase XX|Countdown,attack
+card,Card_A_2_Pentagram,Pentagram,Erase XX row. \nCountdown.,Erase XX|Countdown,attack
+card,Card_A_3_Pentagram,Pentagram,Erase XX row. \nCountdown.,Erase XX|Countdown,attack
+card,Card_A_4_Pentagram,Pentagram,Erase XX row. \nCountdown.,Erase XX|Countdown,attack
+card,Card_A_5_Pentagram,Pentagram,Erase XX row. \nCountdown.,Erase XX|Countdown,attack
+card,Card_A_5_Vandalier,Vandalier,Deal XX damage \nwith a chance to \nKnockback. \nBig Bird.,XX|Knockback|Big Bird,attack
+card,Card_A_6_EbonyWings,Ebony Wings,Deal XX damage. Bombards enemies after every turn.,XX,attack
+card,Card_B_0_EmptyTome,Empty Tome,Add XX Mana.,XX,buff
+card,Card_B_0_RawMana,Raw Mana,Gain XX Mana. Gain temporary Mana.,XX,buff
+card,Card_B_1_EmptyTome,Light Tome,Add XX Mana.,XX,buff
+card,Card_B_2_EmptyTome,Weighty Tome,Add XX Mana.,XX,buff
+card,Card_B_3_EmptyTome,Ancient Tome,Add XX Mana.,XX,buff
+card,Card_D_0_Armor,D 0 Armor,Add XX Armor.,XX,defence
+card,Card_D_1_Armor,Golden Armor,Add XX Armor.,XX,defence
+card,Card_D_2_Armor,Rainbow Armor,Add XX Armor.,XX,defence
+card,Card_D_3_Armor,Hero's Armor,Add XX Armor.,XX,defence
+card,Card_D_3_ClockLancet,Clock Lancet,Apply XX Freeze.,XX Freeze,defence
+card,Card_D_6_InfiniteCorridor,D 6 Infinite Corridor,Deal XX damage. Freeze enemies in time.,XX,defence
+card,Card_E_BagOfCoins,Big Coin Bag,Gain XX coins.,XX,unknown
+card,Card_E_CloverPetal,Clover Petal,Draw XX card. Increase Luck slightly. Draw a card.,XX,unknown
+card,Card_E_CoinPurse,Coin Purse,Draw XX card. Gain XX coins. Coin Purse.,XX,unknown
+card,Card_E_LargeBagOfCoins,Rich Coin Bag,Gain XX coins.,XX,unknown
+card,Card_E_LittleClover,Little Clover,Increase Luck.,,unknown
+card,Card_E_LittleHeart,Little Heart,Heal XX HP. Heals HP.,XX,unknown
+card,Card_E_Orologion,Orologion,Deal XX damage. Freeze the front row.,XX,unknown
+card,Card_E_Rosary,Rosary,Deal massive damage to the front row.,,unknown
+card,Card_E_Vacuum,Vacuum,Draw XX card. Coin Purse.,XX,unknown
+card,Card_M_0_RawMana,Raw Mana,Gain XX Mana. Gain temporary Mana.,XX,utility
+card,Card_M_0_Wings,Wings,Reduce Mana cost \nof next card played \nby 1.,,utility
+card,Card_M_3_SongOfMana,Song of Mana,Deal XX damage. Attack all enemies with a wave of mana. Create a {db.Cards.Card_B_0_RawMana.Name} card.,XX,utility
+card,Card_M_4_SongOfMana,Song of Mana,Deal XX damage. Attack all enemies with a wave of mana. Create a {db.Cards.Card_B_0_RawMana.Name} card.,XX,utility
+card,Card_M_5_Mannajja,Mannajja,Deal XX damage. Attack all enemies with a wave of mana. Create multiple {db.Cards.Card_B_0_RawMana.Name} cards.,XX,utility
+card,Card_S_0_Candelabrador,Candle,Area : Attacks deal XX% splash damage.,Area|XX%,support
+card,Card_S_0_Crown,S 0 Crown,Gain additional XP.,,support
+card,Card_S_0_HollowHeart,S 0 Hollow Heart,Increase Max Health.,,support
+card,Card_S_0_Pummarola,S 0 Pummarola,Heals after Battle.,,support
+card,Card_S_0_SkullOManic,Skull O'Maniac,Gain XX Curse. Increase enemy damage.,XX,support
+card,Card_S_0_SkullOmanic,Skull O'Maniac,Gain XX Curse. Increase enemy damage.,XX,support
+card,Card_S_0_SpellBinder,Spellbinder,Duration : Crawlers trigger XX more abilities before leaving.,Duration|XX,support
+card,Card_S_0_Spinach,S 0 Spinach,Might : Deal XX% more damage.,Might|XX%,support
+card,Card_S_0_StoneMask,S 0 Stone Mask,Increase coins gained.,,support
+card,Card_S_1_Attractorb,Attractorb,Draw XX card.,XX,support
+card,Card_S_1_Candelabrador,Candella,Area : Attacks deal XX% splash damage.,Area|XX%,support
+card,Card_S_1_Crown,Crown,Gain additional XP.,,support
+card,Card_S_1_Duplicator,Duplicator,Fire more projectiles.,,support
+card,Card_S_1_GoldRing,S 1 Gold Ring,Gain XX Curse. Increase enemy difficulty.,XX,support
+card,Card_S_1_HollowHeart,Hollow Heart,Increase Max Health.,,support
+card,Card_S_1_Pummarola,Pummarola,Heals after Battle.,,support
+card,Card_S_1_SpellBinder,Spellbinder,Duration : Crawlers trigger XX more abilities before leaving.,Duration|XX,support
+card,Card_S_1_Spinach,Spinach,Might : Deal XX% more damage.,Might|XX%,support
+card,Card_S_1_StoneMask,Stone Mask,Increase coins gained.,,support
+card,Card_S_2_Attractorb,S 2 Attractorb,Draw XX card. Draw cards.,XX,support
+card,Card_S_2_Bracer,Bracer,Hand : Increase Hand by XX.,Hand|XX,support
+card,Card_S_2_Candelabrador,Candelabrador,Area : Attacks deal XX% splash damage.,Area|XX%,support
+card,Card_S_2_Clover,Clover,Add XX% luck.,XX%,support
+card,Card_S_2_Crown,Crystal Crown,Gain additional XP.,,support
+card,Card_S_2_Duplicator,Du-Duplicator,Fire more projectiles.,,support
+card,Card_S_2_HollowHeart,Forever Heart,Gain XX Max Health.,XX,support
+card,Card_S_2_Pummarola,Pummadora,Heals after Battle.,,support
+card,Card_S_2_SilverRing,S 2 Silver Ring,Increase duration by XX. Increase area by XX. {GlobalKeywords.Crawlers} stay longer and increased weapons hit additional times.,XX,support
+card,Card_S_2_Spinach,Sprig o' Spinach,Might : Deal XX% \nmore damage.,Might|XX%,support
+card,Card_S_2_StoneMask,S 2 Stone Mask,Increase coins gained.,,support
+card,Card_S_2_Tirajisu,Tirajisú,Revive on death.,,support
+card,Card_S_2_Tiramisu,Tirajisú,Revive on death.,,support
+card,Card_W_Bracelet,Bracelet,Deal XX damage.,XX,attack
+card,Card_W_Combo,Friendship Amulet,Increases Combo.,,unknown
+card,Card_W_GoldRing,W Gold Ring,Gain XX Curse. Increase enemy difficulty.,XX,unknown
+card,Card_W_SilverRing,W Silver Ring,Increase duration by XX. Increase area by XX. {GlobalKeywords.Crawlers} stay longer and increased weapons hit additional times.,XX,unknown
+card,Card_W_WildDefence,Parm Aegis,Add XX Armor.,XX,defence
+card,Card_W_Wings,Wings,Reduce Mana cost of next card played by 1.,,utility
+card,FCC_Antonio,Antonio,Add XX Armor. Deal XX% more damage when a red card is played. Duration: Triggers Z times.,XX|XX%|Duration|Z,crawler
+card,FCC_Arca,Arca,Add XX Mana. Add XX Mana when a purple card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Cavallo,Cavallo,Add XX Amount. Add XX Amount when a yellow card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Christine,Christine,Reduce card cost by XX. Prevent XX enemies from attacking when a purple card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Clerici,Clerici,Heal XX. Heal XX after encounter when a blue card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Concetta,Concetta,Add XX Area. Add XX Area when a red card is played. Duration: Triggers Z times.,XX|Area|Duration|Z,crawler
+card,FCC_Dommario,Dommario,Gain XX Duration. Deal XX damage when a purple card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Gallo,Gallo,Gain XX% more coins. Gain XX% more coins when a wild card is played. Duration: Triggers Z times.,XX%|Duration|Z,crawler
+card,FCC_Gennaro,Gennaro,Add XX Amount. Deal XX damage when a red card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Giovanna,Giovanna,Add XX Luck. Draw XX card when a purple card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Imelda,Imelda,Add XX XP. Gain XX XP Growth when a yellow card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Krochi,Krochi,Add XX Revival. Add XX Revival when a wild card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Lama,Lama,Deal XX% more damage. Deal XX% more damage when a blue card is played. Duration: Triggers Z times.,XX%|Duration|Z,crawler
+card,FCC_Mana,Pasqualina,Increase Hand by XX. Increase Hand by XX when a purple card is played. Duration: Triggers Z times.,Hand|XX|Duration|Z,crawler
+card,FCC_ManaDuration,Dommario,Add XX Area. Gain XX Duration when a purple card is played. Duration: Triggers Z times.,XX|Area|Duration|Z,crawler
+card,FCC_MissingNo,MissingN0,Add XX Armor. Draw XX card when a red card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Mortaccio,Mortaccio,Add XX Amount. Add XX Amount when a blue card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_OSole,O'Sole,Add XX Amount. Add XX Luck when a red card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Pasqualina,Pasqualina,Add XX Area. Increase Hand by XX when a purple card is played. Duration: Triggers Z times.,XX|Area|Hand|Duration|Z,crawler
+card,FCC_Poe,Poe,Add XX Area. Draw XX card when a blue card is played. Duration: Triggers Z times.,XX|Area|Duration|Z,crawler
+card,FCC_Poppea,Poppea,Increase Hand by XX. Gain XX Duration when a yellow card is played. Duration: Triggers Z times.,Hand|XX|Duration|Z,crawler
+card,FCC_Porta,Porta,Add XX Area. Add XX Mana when a red card is played. Duration: Triggers Z times.,XX|Area|Duration|Z,crawler
+card,FCC_Pugnala,Pugnala,Deal XX% more damage. Draw XX card when a yellow card is played. Duration: Triggers Z times.,XX%|XX|Duration|Z,crawler
+card,FCC_Ramba,Ramba,Add XX Amount. Add XX Amount when a purple card is played. Duration: Triggers Z times.,XX|Duration|Z,crawler
+card,FCC_Zi'Assunta,Zi'Assunta,Increase Hand by XX. Add XX Area when a red card is played. Gain XX Duration. Deal XX% more damage. Duration: Triggers Z times.,Hand|XX|Area|Duration|XX%|Z,crawler
+gem,GemConfig_AddType_Armor,Add Type Armor,Blue Trigger.,,
+gem,GemConfig_AddType_Attack,Add Type Attack,Red Trigger.,,
+gem,GemConfig_AddType_Defense,Add Type Defense,Blue Trigger.,,
+gem,GemConfig_AddType_Mana,Add Type Mana,Purple Trigger.,,
+gem,GemConfig_AddType_Rainbow,Add Type Rainbow,Rainbow.,,
+gem,GemConfig_AddType_Special,Add Type Special,Yellow Trigger.,,
+gem,GemConfig_Amount,Amount,Amount.,,
+gem,GemConfig_Arcane,Arcane,Mana Rebate.,,
+gem,GemConfig_Area,Area,Area.,,
+gem,GemConfig_Armor,Armor,Add 2 Armor.,2,
+gem,GemConfig_Bombard,Bombard,Bombard.,,
+gem,GemConfig_Boost,Boost,Growth.,,
+gem,GemConfig_Calcium,Calcium,Calcium.,,
+gem,GemConfig_Charge,Charge,Countdown.,,
+gem,GemConfig_CloneCard,Clone Card,Copy.,,
+gem,GemConfig_Demi,Demi,Decimate.,,
+gem,GemConfig_Destroy,Destroy,Destroy.,,
+gem,GemConfig_Discharge,Discharge,Easy Combo.,,
+gem,GemConfig_DoubleDamage,Double Damage,,,
+gem,GemConfig_Drain,Drain,Drain.,,
+gem,GemConfig_Draw,Draw,Draw XX card.,XX,
+gem,GemConfig_Duration,Duration,Duration.,,
+gem,GemConfig_Echo,Echo,Echo.,,
+gem,GemConfig_Evolve,Evolve,,,
+gem,GemConfig_FreeToPlay,Free To Play,Free To Play.,,
+gem,GemConfig_Hail,Hail,Freeze.,,
+gem,GemConfig_Heal,Heal,Restore Health.,,
+gem,GemConfig_Jingle,Jingle,Coin Count XX.,Coin Count XX,
+gem,GemConfig_Leader,Leader,Leader.,,
+gem,GemConfig_Luck,Luck,Luck.,,
+gem,GemConfig_MagicHat,Magic Hat,Magic Hat.,,
+gem,GemConfig_Magnetic,Magnetic,Magnetic.,Magnetic,
+gem,GemConfig_Mana_Minus1,Mana -1,,,
+gem,GemConfig_Mana_Minus2,Mana -2,,,
+gem,GemConfig_Mana_Plus1,Mana +1,,,
+gem,GemConfig_Mana_Plus2,Mana +2,,,
+gem,GemConfig_Midas,Midas,Midas.,,
+gem,GemConfig_Might,Might,Add 10% Might.,10% Might,
+gem,GemConfig_Mild,Mild,Mild.,,
+gem,GemConfig_Nduja,Nduja,Nduja.,,
+gem,GemConfig_Plunder,Plunder,Greed.,,
+gem,GemConfig_Preserve,Preserve,Fireproof.,,
+gem,GemConfig_Rally,Rally,Crawler Caller.,,
+gem,GemConfig_Refresh,Refresh,Refund.,,
+gem,GemConfig_Remote,Remote,Remote.,,
+gem,GemConfig_Retain,Retain,Retain.,,
+gem,GemConfig_ReturnToHand,Return To Hand,Return.,Return,
+gem,GemConfig_ReverseCombo,Reverse Combo,Reverse Combo.,,
+gem,GemConfig_SetCostType_Wild,Set Cost Type Wild,,,
+gem,GemConfig_SetCostType_XCost,Set Cost Type X Cost,X Mana.,,
+gem,GemConfig_Slayer,Slayer,Kill Count.,,
+gem,GemConfig_Spike,Spike,Armor Strike.,,
+gem,GemConfig_Sprightly,Sprightly,Recycle.,Recycle,
+gem,GemConfig_Steal,Steal,Mug.,Mug,
+gem,GemConfig_Swift,Swift,Quick Draw.,,
+gem,GemConfig_Thief,Thief,Big Coin Bag.,Big Coin Bag,
+gem,GemConfig_TripleDamage,Triple Damage,,,
+gem,GemConfig_Uncrackable,Uncrackable,Uncrackable.,,
+gem,GemConfig_UpgradeDamage,Upgrade Damage,Upgrade (NOT USED).,,
+gem,GemConfig_YinYang,Yin Yang,Yin : Add 1 Mana. \nYang : Draw 1 card.,Yin|Yang|1,

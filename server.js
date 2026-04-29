@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const http = require("http");
 const os = require("os");
-const { loadConfig } = require("./src/config");
+const { defaultUserDataDir, loadConfig } = require("./src/config");
 
 const DEFAULT_SAVE_PATH = path.join(
   os.homedir(),
@@ -30,13 +30,13 @@ function walk(value, visit) {
 }
 
 function normalizeCard(card, pileId, index, cardCosts = {}, context = {}) {
-  const cardId = card.CardConfigId || "UnknownCard";
-  const baseId = card.BaseCardConfigId || cardId;
+  const cardId = card.CardConfigId || card.cardId || "UnknownCard";
+  const baseId = card.BaseCardConfigId || card.baseId || cardId;
   const baseCost = getCardCost(cardId, baseId, cardCosts, context);
   const manaModifier = Number(card.ManaCostModifier || 0);
   const tempManaModifier = Number(card.TempManaCostModifier || 0);
   const confusedManaModifier = Number(card.ConfusedManaCostModifier || 0);
-  const gems = Array.isArray(card.GemIds) ? card.GemIds : [];
+  const gems = Array.isArray(card.GemIds) ? card.GemIds : Array.isArray(card.gems) ? card.gems : [];
   const gemSlotCapacity = getCardGemSlotCapacity(cardId, baseId, context.cardGemSlots);
   const openGemSlots = Math.max(0, gemSlotCapacity - gems.length);
   const cost = getEffectiveCardCost(baseCost, {
@@ -53,12 +53,12 @@ function normalizeCard(card, pileId, index, cardCosts = {}, context = {}) {
     baseId,
     baseCost,
     cost,
-    guid: card.CardGuid || "",
+    guid: card.CardGuid || card.guid || "",
     temporary: Boolean(card.IsTemporary),
-    broken: Boolean(card.IsBroken),
-    copyWithDestroy: Boolean(card.IsCopyWithDestroy),
+    broken: Boolean(card.IsBroken ?? card.broken),
+    copyWithDestroy: Boolean(card.IsCopyWithDestroy ?? card.copyWithDestroy),
     crackStage: card.CardCrackStage || 0,
-    limitBreaks: card.TimesLimitBroken || 0,
+    limitBreaks: card.TimesLimitBroken || card.limitBreaks || 0,
     manaModifier,
     tempManaModifier,
     confusedManaModifier,
@@ -171,15 +171,116 @@ function getDeckSnapshot(savePath, options = {}) {
   const raw = fs.readFileSync(savePath, "utf8");
   const parsed = JSON.parse(raw);
   const cardCosts = options.cardCosts || {};
-  const context = {
+  const context = getSaveContext(parsed);
+  return buildSnapshot({
+    source: "save",
+    sourcePath: savePath,
+    lastModified: fs.statSync(savePath).mtime.toISOString(),
+    pileNodes: findPileNodes(parsed),
+    cardCosts,
+    context,
+    profileId: parsed?.Data?.ProfileId || parsed?.Data?.GameSaveData?.ProfileId || "",
+  });
+}
+
+function getSaveContext(parsed) {
+  return {
     selectedPartyFccIds: getSelectedPartyFccIds(parsed),
     cardGemSlots: getCardGemSlots(parsed),
   };
+}
+
+function readSaveContext(savePath) {
+  try {
+    return getSaveContext(JSON.parse(fs.readFileSync(savePath, "utf8")));
+  } catch {
+    return {};
+  }
+}
+
+function getLiveDeckSnapshot(liveStatePath, cardCosts = {}, fallbackContext = {}) {
+  const raw = fs.readFileSync(liveStatePath, "utf8");
+  const parsed = JSON.parse(raw);
+  const stat = fs.statSync(liveStatePath);
+  const liveSelectedPartyFccIds = Array.isArray(parsed.selectedPartyFccIds)
+    ? parsed.selectedPartyFccIds.filter((id) => typeof id === "string")
+    : [];
+  const liveCardGemSlots = parsed.cardGemSlots && typeof parsed.cardGemSlots === "object" ? parsed.cardGemSlots : {};
+  const context = {
+    selectedPartyFccIds: liveSelectedPartyFccIds.length ? liveSelectedPartyFccIds : (fallbackContext.selectedPartyFccIds || []),
+    cardGemSlots: {
+      ...(fallbackContext.cardGemSlots || {}),
+      ...liveCardGemSlots,
+    },
+  };
+
+  return buildSnapshot({
+    source: parsed.source || "live",
+    sourcePath: liveStatePath,
+    lastModified: parsed.updatedAt || stat.mtime.toISOString(),
+    pileNodes: normalizeLivePileNodes(parsed),
+    cardCosts,
+    context,
+    profileId: parsed.profileId || "",
+  });
+}
+
+function getBestDeckSnapshot(savePath, options = {}) {
+  const cardCosts = options.cardCosts || {};
+  const liveStatePath = options.liveStatePath;
+  const maxLiveAgeMs = Number(options.maxLiveAgeMs ?? 5000);
+
+  if (liveStatePath && fs.existsSync(liveStatePath)) {
+    const stat = fs.statSync(liveStatePath);
+    const ageMs = Date.now() - stat.mtimeMs;
+    if (ageMs <= maxLiveAgeMs) {
+      const fallbackContext = readSaveContext(savePath);
+      return {
+        ...getLiveDeckSnapshot(liveStatePath, cardCosts, fallbackContext),
+        liveStateActive: true,
+        liveStateAgeMs: Math.max(0, Math.round(ageMs)),
+      };
+    }
+  }
+
+  return {
+    ...getDeckSnapshot(savePath, { cardCosts }),
+    liveStateActive: false,
+  };
+}
+
+function findPileNodes(parsed) {
   const piles = [];
-  const cards = [];
 
   walk(parsed, (node) => {
     if (typeof node.cardPileId !== "string" || !Array.isArray(node.cards)) return;
+    piles.push(node);
+  });
+
+  return piles;
+}
+
+function normalizeLivePileNodes(parsed) {
+  const sourcePiles = Array.isArray(parsed.piles)
+    ? parsed.piles
+    : Array.isArray(parsed.Piles)
+      ? parsed.Piles
+      : findPileNodes(parsed);
+  return sourcePiles
+    .filter((pile) => pile && typeof (pile.cardPileId || pile.pileId || pile.PileId) === "string" && Array.isArray(pile.cards || pile.Cards))
+    .map((pile) => ({
+      ...pile,
+      cardPileId: pile.cardPileId || pile.pileId || pile.PileId,
+      cards: pile.cards || pile.Cards,
+    }));
+}
+
+function buildSnapshot({ source, sourcePath, lastModified, pileNodes, cardCosts, context, profileId }) {
+  const piles = [];
+  const cards = [];
+
+  for (const node of pileNodes) {
+    if (typeof node.cardPileId !== "string" || !Array.isArray(node.cards)) continue;
 
     const pileCards = node.cards.map((card, index) =>
       normalizeCard(card, node.cardPileId, index, cardCosts, context),
@@ -191,7 +292,7 @@ function getDeckSnapshot(savePath, options = {}) {
       cards: pileCards,
     });
     cards.push(...pileCards);
-  });
+  }
 
   const counts = Array.from(
     cards.reduce((map, card) => {
@@ -223,9 +324,10 @@ function getDeckSnapshot(savePath, options = {}) {
   ).sort(compareCostBuckets);
 
   return {
-    savePath,
-    lastModified: fs.statSync(savePath).mtime.toISOString(),
-    profileId: parsed?.Data?.ProfileId || parsed?.Data?.GameSaveData?.ProfileId || "",
+    savePath: sourcePath,
+    source,
+    lastModified,
+    profileId,
     totalCards: cards.length,
     piles: piles.sort((a, b) => a.pileId.localeCompare(b.pileId)),
     cards,
@@ -325,9 +427,11 @@ function serveStatic(req, res, publicDir, generatedDir) {
 }
 
 function startServer(options = {}) {
-  const config = options.config || loadConfig(options.userDataDir);
+  const userDataDir = options.userDataDir || defaultUserDataDir();
+  const config = options.config || loadConfig(userDataDir);
   const port = Number(options.port ?? process.env.PORT ?? 5177);
   const savePath = options.savePath || process.env.VC_SAVE_PATH || config.savePath || DEFAULT_SAVE_PATH;
+  const liveStatePath = options.liveStatePath || process.env.VC_LIVE_STATE_PATH || path.join(defaultUserDataDir(), "live-state.json");
   const publicDir = options.publicDir || DEFAULT_PUBLIC_DIR;
   const generatedDir = options.generatedDir || config.generatedDir || path.join(publicDir, "assets");
   const artManifestPath = options.artManifestPath || path.join(generatedDir, "assets", "art-manifest.json");
@@ -337,6 +441,7 @@ function startServer(options = {}) {
   const cardTextPath = options.cardTextPath || path.join(generatedDir, "assets", "card-text.json");
   const gemMapPath = options.gemMapPath || path.join(generatedDir, "assets", "gem-map.json");
   const gemTextPath = options.gemTextPath || path.join(generatedDir, "assets", "gem-text.json");
+  const textMetaPath = options.textMetaPath || path.join(generatedDir, "assets", "text-meta.json");
   const fallbackArtManifestPath = path.join(publicDir, "assets", "art-manifest.json");
   const fallbackCardMapPath = path.join(publicDir, "assets", "card-map.json");
   const fallbackCardCostsPath = path.join(publicDir, "assets", "card-costs.json");
@@ -344,6 +449,7 @@ function startServer(options = {}) {
   const fallbackCardTextPath = path.join(publicDir, "assets", "card-text.json");
   const fallbackGemMapPath = path.join(publicDir, "assets", "gem-map.json");
   const fallbackGemTextPath = path.join(publicDir, "assets", "gem-text.json");
+  const fallbackTextMetaPath = path.join(publicDir, "assets", "text-meta.json");
 
   const server = http.createServer((req, res) => {
     if (req.url === "/api/deck") {
@@ -352,7 +458,7 @@ function startServer(options = {}) {
           cardCostsPath,
           readJsonIfExists(fallbackCardCostsPath, {}),
         );
-        sendJson(res, 200, getDeckSnapshot(savePath, { cardCosts }));
+        sendJson(res, 200, getBestDeckSnapshot(savePath, { cardCosts, liveStatePath }));
       } catch (error) {
         sendJson(res, 500, { error: error.message, savePath });
       }
@@ -371,6 +477,8 @@ function startServer(options = {}) {
         hasCardText: fs.existsSync(cardTextPath) || fs.existsSync(fallbackCardTextPath),
         hasGemMap: fs.existsSync(gemMapPath) || fs.existsSync(fallbackGemMapPath),
         hasGemText: fs.existsSync(gemTextPath) || fs.existsSync(fallbackGemTextPath),
+        liveStatePath,
+        hasLiveState: fs.existsSync(liveStatePath),
       });
       return;
     }
@@ -394,7 +502,7 @@ function startServer(options = {}) {
     }
 
     if (req.url === "/api/card-text") {
-      sendJson(res, 200, readJsonIfExists(cardTextPath, readJsonIfExists(fallbackCardTextPath, {})));
+      sendJson(res, 200, readJsonIfExists(fallbackCardTextPath, readJsonIfExists(cardTextPath, {})));
       return;
     }
 
@@ -404,7 +512,12 @@ function startServer(options = {}) {
     }
 
     if (req.url === "/api/gem-text") {
-      sendJson(res, 200, readJsonIfExists(gemTextPath, readJsonIfExists(fallbackGemTextPath, {})));
+      sendJson(res, 200, readJsonIfExists(fallbackGemTextPath, readJsonIfExists(gemTextPath, {})));
+      return;
+    }
+
+    if (req.url === "/api/text-meta") {
+      sendJson(res, 200, readJsonIfExists(fallbackTextMetaPath, readJsonIfExists(textMetaPath, {})));
       return;
     }
 
@@ -432,5 +545,7 @@ if (require.main === module) {
 
 module.exports = {
   getDeckSnapshot,
+  getBestDeckSnapshot,
+  getLiveDeckSnapshot,
   startServer,
 };

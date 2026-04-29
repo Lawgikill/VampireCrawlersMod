@@ -2,7 +2,6 @@ const { app, BrowserWindow, Menu, dialog, ipcMain } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
-const { autoUpdater } = require("electron-updater");
 
 const { startServer } = require("../server");
 const {
@@ -10,11 +9,20 @@ const {
   loadConfig,
   saveConfig,
 } = require("./config");
+const { installLiveBridge } = require("./liveBridgeInstaller");
 
 let mainWindow;
 let serverHandle;
 let config;
 let updateCheckInFlight = false;
+let autoUpdater;
+
+function getAutoUpdater() {
+  if (!autoUpdater) {
+    ({ autoUpdater } = require("electron-updater"));
+  }
+  return autoUpdater;
+}
 
 const singleInstanceLock = app.requestSingleInstanceLock();
 if (!singleInstanceLock) {
@@ -65,7 +73,7 @@ async function checkForUpdates(manual = false) {
   updateCheckInFlight = true;
   sendUpdateStatus({ state: "checking", message: "Checking for updates..." });
   try {
-    const result = await autoUpdater.checkForUpdates();
+    const result = await getAutoUpdater().checkForUpdates();
     return { ok: true, updateInfo: result?.updateInfo || null };
   } catch (error) {
     const message = `Update check failed: ${error.message}`;
@@ -92,6 +100,7 @@ function buildMenu() {
             if (!result.canceled && result.filePaths[0]) {
               config.gameDir = result.filePaths[0];
               saveConfig(config, app.getPath("userData"));
+              silentlyInstallOrUpdateLiveBridge("game folder selection");
             }
           },
         },
@@ -125,6 +134,16 @@ function buildMenu() {
             }
           },
         },
+        {
+          label: "Install/Update Live Bridge",
+          click: async () => {
+            try {
+              await installOrUpdateLiveBridge();
+            } catch (error) {
+              dialog.showErrorBox("Live Bridge Install Failed", error.message);
+            }
+          },
+        },
         { type: "separator" },
         {
           label: "Check for Updates",
@@ -150,57 +169,59 @@ function buildMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-autoUpdater.autoDownload = true;
+if (app.isPackaged) {
+  getAutoUpdater().autoDownload = true;
 
-autoUpdater.on("checking-for-update", () => {
-  sendUpdateStatus({ state: "checking", message: "Checking for updates..." });
-});
-
-autoUpdater.on("update-available", (info) => {
-  sendUpdateStatus({
-    state: "available",
-    message: `Update ${info.version} found. Downloading...`,
-    version: info.version,
-  });
-});
-
-autoUpdater.on("update-not-available", () => {
-  sendUpdateStatus({ state: "idle", message: "You are running the latest version." });
-});
-
-autoUpdater.on("download-progress", (progress) => {
-  sendUpdateStatus({
-    state: "downloading",
-    message: `Downloading update: ${Math.round(progress.percent || 0)}%`,
-    percent: progress.percent || 0,
-  });
-});
-
-autoUpdater.on("update-downloaded", async (info) => {
-  sendUpdateStatus({
-    state: "downloaded",
-    message: `Update ${info.version} is ready to install.`,
-    version: info.version,
+  getAutoUpdater().on("checking-for-update", () => {
+    sendUpdateStatus({ state: "checking", message: "Checking for updates..." });
   });
 
-  const result = await dialog.showMessageBox(mainWindow, {
-    type: "info",
-    buttons: ["Restart and Install", "Later"],
-    defaultId: 0,
-    cancelId: 1,
-    title: "Update Ready",
-    message: `Vampire Crawlers Deck Tracker ${info.version} is ready to install.`,
-    detail: "Restart the app now to finish updating.",
+  getAutoUpdater().on("update-available", (info) => {
+    sendUpdateStatus({
+      state: "available",
+      message: `Update ${info.version} found. Downloading...`,
+      version: info.version,
+    });
   });
 
-  if (result.response === 0) {
-    autoUpdater.quitAndInstall();
-  }
-});
+  getAutoUpdater().on("update-not-available", () => {
+    sendUpdateStatus({ state: "idle", message: "You are running the latest version." });
+  });
 
-autoUpdater.on("error", (error) => {
-  sendUpdateStatus({ state: "error", message: `Update error: ${error.message}` });
-});
+  getAutoUpdater().on("download-progress", (progress) => {
+    sendUpdateStatus({
+      state: "downloading",
+      message: `Downloading update: ${Math.round(progress.percent || 0)}%`,
+      percent: progress.percent || 0,
+    });
+  });
+
+  getAutoUpdater().on("update-downloaded", async (info) => {
+    sendUpdateStatus({
+      state: "downloaded",
+      message: `Update ${info.version} is ready to install.`,
+      version: info.version,
+    });
+
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: "info",
+      buttons: ["Restart and Install", "Later"],
+      defaultId: 0,
+      cancelId: 1,
+      title: "Update Ready",
+      message: `Vampire Crawlers Deck Tracker ${info.version} is ready to install.`,
+      detail: "Restart the app now to finish updating.",
+    });
+
+    if (result.response === 0) {
+      getAutoUpdater().quitAndInstall();
+    }
+  });
+
+  getAutoUpdater().on("error", (error) => {
+    sendUpdateStatus({ state: "error", message: `Update error: ${error.message}` });
+  });
+}
 
 function runProcess(command, args, cwd, onLine) {
   return new Promise((resolve, reject) => {
@@ -259,6 +280,8 @@ async function runLocalDataBuilder(projectRoot, paths, append) {
     paths.cardNamesPath,
     "--card-text",
     paths.cardTextPath,
+    "--text-meta",
+    paths.textMetaPath,
     "--gem-map",
     paths.gemMapPath,
     "--gem-text",
@@ -291,6 +314,7 @@ async function rebuildLocalData() {
   const cardCostsPath = path.join(generatedAssetsDir, "card-costs.json");
   const cardNamesPath = path.join(generatedAssetsDir, "card-names.json");
   const cardTextPath = path.join(generatedAssetsDir, "card-text.json");
+  const textMetaPath = path.join(generatedAssetsDir, "text-meta.json");
   const gemMapPath = path.join(generatedAssetsDir, "gem-map.json");
   const gemTextPath = path.join(generatedAssetsDir, "gem-text.json");
   const log = [];
@@ -313,6 +337,7 @@ async function rebuildLocalData() {
     cardCostsPath,
     cardNamesPath,
     cardTextPath,
+    textMetaPath,
     gemMapPath,
     gemTextPath,
   }, append);
@@ -320,6 +345,38 @@ async function rebuildLocalData() {
   config.firstRunComplete = true;
   saveConfig(config, app.getPath("userData"));
   return { ok: true, log };
+}
+
+async function installOrUpdateLiveBridge() {
+  const projectRoot = path.resolve(__dirname, "..");
+  const status = installLiveBridge(config.gameDir, projectRoot);
+  await dialog.showMessageBox(mainWindow, {
+    type: "info",
+    title: "Live Bridge Installed",
+    message: "The Vampire Crawlers live bridge was installed or updated.",
+    detail: [
+      "Start or restart Vampire Crawlers for BepInEx to load the bridge.",
+      status.hasBepInExLoader
+        ? "BepInEx loader files were found in the game folder."
+        : "The bridge plugin was installed, but BepInEx loader files were not found. Stage a complete live-bridge payload before release.",
+      status.installedPluginPath,
+    ].join("\n\n"),
+  });
+}
+
+function silentlyInstallOrUpdateLiveBridge(reason = "startup") {
+  try {
+    const projectRoot = path.resolve(__dirname, "..");
+    const status = installLiveBridge(config.gameDir, projectRoot);
+    console.log(`[live-bridge] Installed/updated during ${reason}: ${status.installedPluginPath}`);
+    if (!status.hasBepInExLoader) {
+      console.warn("[live-bridge] Bridge plugin installed, but BepInEx loader files were not found.");
+    }
+    return status;
+  } catch (error) {
+    console.warn(`[live-bridge] Silent install skipped during ${reason}: ${error.message}`);
+    return null;
+  }
 }
 
 ipcMain.handle("rebuild-art-cache", rebuildLocalData);
@@ -350,6 +407,7 @@ if (singleInstanceLock) app.whenReady().then(async () => {
     ...loadConfig(app.getPath("userData")),
   };
   saveConfig(config, app.getPath("userData"));
+  silentlyInstallOrUpdateLiveBridge("startup");
 
   buildMenu();
   serverHandle = await startServer({

@@ -1,4 +1,4 @@
-# Reverse Engineering Notes
+﻿# Reverse Engineering Notes
 
 These notes capture the Vampire Crawlers Unity/Odin serialization findings that matter for this tracker.
 
@@ -285,12 +285,20 @@ tracker builds practical display text with a layered approach:
    `_healAmount`, and `_reduceAmount`.
 4. Apply explicit overrides for cards/gems that the user has checked in-game.
 
-The source of truth for these overrides is:
+The source of truth for manual display overrides is:
 
 ```text
-tools\build_card_text_map.py
-tools\build_gem_text_map.py
+data\display-overrides.csv
 ```
+
+The builders still contain generic decoding rules and effect templates, but
+per-card or per-gem wording belongs in the CSV, not in hard-coded Python
+dictionaries. For rows present in the CSV, the CSV text wins.
+Blank CSV text is meaningful and means the card/gem should show no rules text.
+The CSV `gold` column is also source data; it lists the exact words/tokens the
+frontend should highlight in gold, separated with `|`.
+For card rows, the CSV `color` column is source data for the card color/type
+class shown in the frontend.
 
 Generated files are local artifacts and ignored:
 
@@ -324,3 +332,4 @@ Garlic -> Deal XX damage to the front row. / Disarm.
 Do not assume every number should be highlighted as a variable. Wings uses a
 literal `1`, so the frontend leaves it white. Percentage placeholders should be
 highlighted as a complete token, including the `%` symbol.
+

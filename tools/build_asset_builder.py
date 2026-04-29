@@ -32,6 +32,8 @@ def main():
         "fmod_toolkit",
         "--collect-data",
         "archspec",
+        "--add-data",
+        f"data{text_path_separator()}data",
         "--name",
         "vampire-crawlers-asset-builder",
         "--distpath",
@@ -39,6 +41,10 @@ def main():
         "tools\\build_local_data.py",
     ]
     raise SystemExit(subprocess.call(command))
+
+
+def text_path_separator():
+    return ";" if os.name == "nt" else ":"
 
 
 if __name__ == "__main__":

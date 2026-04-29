@@ -1,12 +1,12 @@
 # Codex Handoff
 
-This project is a read-only second-screen deck tracker for the Unity game **Vampire Crawlers**. The user wants to improve the in-game deck visibility without editing saves, patching game files, injecting into the process, or requiring other players to do technical setup.
+This project is a read-only second-screen deck tracker for the Unity game **Vampire Crawlers**. The tracker never edits saves. For true combat-live hand state, it can install/update a bundled BepInEx IL2CPP live bridge into the configured game folder.
 
-The current app reads the active save file, extracts the card piles already serialized by the game, maps cards to extracted local art, and displays a sortable compact deck view in Electron.
+The current app prefers the live bridge JSON when fresh, falls back to the active save file when the bridge is stale/missing, maps cards to extracted local art, and displays a sortable compact deck view in Electron.
 
 ## Current State
 
-- Version is currently `1.0.0`.
+- Version is currently `1.1.0`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`
@@ -15,6 +15,7 @@ The current app reads the active save file, extracts the card piles already seri
   - `npm run desktop`
 - Release build:
   - `npm run build-asset-builder`
+  - `npm run stage-live-bridge`
   - `npm run build:win`
 - Latest release artifacts are in `dist/`:
   - NSIS installer only
@@ -74,20 +75,22 @@ art\*.png
 
 1. `src/main.js` starts Electron and launches the local HTTP server from `server.js`.
 2. `src/config.js` auto-detects game install and save file.
-3. `server.js` reads the save file on each `/api/deck` request.
-4. `public/app.js` polls `/api/deck` every two seconds.
-5. Art is displayed from a generated local `card-map.json`.
-6. Cost data comes from `card-costs.json`.
-7. Display names come from generated local `card-names.json`.
-8. Card rules text comes from generated local `card-text.json`.
-9. Filled gem slot art comes from generated local `gem-map.json`.
-10. Gem rules text comes from generated local `gem-text.json`.
-11. `Rebuild Local Data` runs a bundled helper exe in packaged builds.
-12. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
+3. `src/main.js` silently installs/updates the packaged live bridge payload into the configured game folder.
+4. `server.js` reads fresh live bridge JSON on each `/api/deck` request when available; otherwise it falls back to the save file.
+5. `public/app.js` polls `/api/deck` every two seconds.
+6. Art is displayed from a generated local `card-map.json`.
+7. Cost data comes from `card-costs.json`.
+8. Display names come from generated local `card-names.json`.
+9. Card rules text comes from bundled app-owned `public/assets/card-text.json`.
+10. Filled gem slot art comes from generated local `gem-map.json`.
+11. Gem rules text comes from bundled app-owned `public/assets/gem-text.json`.
+12. Display metadata comes from bundled app-owned `public/assets/text-meta.json`.
+13. `Rebuild Local Data` runs a bundled helper exe in packaged builds.
+14. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
 
 ## Things That Are Known Fragile
 
-- The save file polling is only as real-time as the game's save writes. It is not process-memory live.
+- The live bridge is combat-live when BepInEx is installed and the game has active pile models. Save polling is only as real-time as the game's save writes and remains the fallback path.
 - The card art mapping is reverse-engineered from Unity assets and is not perfect for every future card/config.
 - Unity/Odin serialized `CardConfig` data is partially custom; do not assume `read_typetree()` will expose all fields.
 - Card IDs like `Card_A_1_MagicWand` are not reliable for mana cost. MagicWand's true base cost is `0`.
@@ -100,9 +103,10 @@ art\*.png
 - Filled gem slots render generated gem sprites and should not show a separate colored backing ring.
 - Evolved cards and base cards can differ. Do not fall back from an evolved `cardId` to `baseId` for cost unless you know it is correct.
 - `Card_M_0_Wings` is a special wild-cost card even though the serialized cost map contains a numeric value.
-- Card and gem rules text are reverse-engineered approximations with explicit overrides for observed in-game wording. Keep overrides in `tools/build_card_text_map.py` / `tools/build_gem_text_map.py`, regenerate local JSON, and avoid editing generated JSON as the source of truth.
-- The frontend intentionally hides some gem rule lines while keeping icons visible, currently `GemConfig_DoubleDamage` and `GemConfig_Evolve`.
-- The packaged app must include `public/assets/card-costs.json` but must not include extracted PNG art or generated `card-map.json`, `card-names.json`, `card-text.json`, `gem-map.json`, or `gem-text.json`.
+- Card/gem rules text, gold highlight tokens, and card color overrides live in `data/display-overrides.csv`. Regenerate local JSON and avoid editing generated JSON as the source of truth.
+- Blank gem text in `data/display-overrides.csv` intentionally hides that gem rule line while keeping the icon visible, currently including `GemConfig_DoubleDamage` and `GemConfig_Evolve`.
+- The packaged app must include `public/assets/card-costs.json`, `public/assets/card-text.json`, `public/assets/gem-text.json`, `public/assets/text-meta.json`, and `resources/live-bridge/**`, but must not include extracted PNG art or generated `card-map.json`, `card-names.json`, or `gem-map.json`.
+- App updates carry the live bridge payload. On the next launch, the app silently installs/updates it into the configured Steam game folder. File > Install/Update Live Bridge remains as a manual fallback.
 
 ## Quick Sanity Checks
 
@@ -112,7 +116,7 @@ Use these after cost logic changes:
 node -c server.js
 node -c src\main.js
 node -c public\app.js
-python -m py_compile tools\build_local_data.py tools\extract_art.py tools\build_card_map.py tools\build_card_cost_map.py tools\build_card_name_map.py tools\build_card_text_map.py tools\build_gem_map.py tools\build_gem_text_map.py
+python -m py_compile tools\build_local_data.py tools\extract_art.py tools\build_card_map.py tools\build_card_cost_map.py tools\build_card_name_map.py tools\build_card_text_map.py tools\build_gem_map.py tools\build_gem_text_map.py tools\build_text_meta.py tools\display_overrides.py
 ```
 
 Check live save cost behavior:
@@ -149,4 +153,4 @@ Card_A_3_NoFuture base=3 effective=3 gems=GemConfig_Evolve
 - Add a first-run friendly flow that automatically triggers local data rebuild if art is missing.
 - Add a small diagnostic export/log button.
 - Add tests for mana gem parsing, card cost lookup, and open gem slot display.
-- Consider BepInEx IL2CPP plugin only if save polling proves insufficient.
+- The BepInEx IL2CPP live bridge is implemented. Release prep should run `npm run stage-live-bridge`; use `python tools\stage_live_bridge_payload.py --with-bepinex` when a self-contained BepInEx loader payload should be included.

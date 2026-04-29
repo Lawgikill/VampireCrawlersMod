@@ -6,6 +6,7 @@ import build_card_cost_map
 import build_card_map
 import build_card_name_map
 import build_card_text_map
+import build_text_meta
 import build_gem_map
 import build_gem_text_map
 import extract_art
@@ -30,12 +31,14 @@ def main():
     parser.add_argument("--card-costs", type=Path, required=True)
     parser.add_argument("--card-names", type=Path, required=True)
     parser.add_argument("--card-text", type=Path, required=True)
+    parser.add_argument("--text-meta", type=Path, required=True)
     parser.add_argument("--gem-map", type=Path, required=True)
     parser.add_argument("--gem-text", type=Path, required=True)
     parser.add_argument("--min-size", default="16")
     args = parser.parse_args()
 
     game_data = args.game_dir / "Vampire Crawlers_Data"
+    display_overrides = Path(__file__).resolve().parents[1] / "data" / "display-overrides.csv"
 
     run_step(
         "extract_art",
@@ -91,6 +94,8 @@ def main():
             str(game_data),
             "--output",
             str(args.card_text),
+            "--text-overrides",
+            str(display_overrides),
         ],
     )
     run_step(
@@ -113,6 +118,18 @@ def main():
             str(game_data),
             "--output",
             str(args.gem_text),
+            "--text-overrides",
+            str(display_overrides),
+        ],
+    )
+    run_step(
+        "build_text_meta",
+        build_text_meta.main,
+        [
+            "--output",
+            str(args.text_meta),
+            "--display-overrides",
+            str(display_overrides),
         ],
     )
 

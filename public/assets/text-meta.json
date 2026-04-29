@@ -1,0 +1,943 @@
+{
+  "Card_A_0_Bone": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_0_CherryBomb": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_0_Cross": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_0_Garlic": {
+    "gold": [
+      "XX",
+      "Disarm"
+    ],
+    "color": "attack"
+  },
+  "Card_A_0_GorgeousMoon": {
+    "gold": [
+      "1"
+    ],
+    "color": "attack"
+  },
+  "Card_A_0_Knife": {
+    "gold": [
+      "XX",
+      "Crit"
+    ],
+    "color": "attack"
+  },
+  "Card_A_0_MagicWand": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_0_Pentagram": {
+    "gold": [
+      "Erase XX",
+      "Countdown"
+    ],
+    "color": "attack"
+  },
+  "Card_A_0_Whip": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_1_CherryBomb": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_1_FireWand": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_1_Garlic": {
+    "gold": [
+      "XX",
+      "Disarm"
+    ],
+    "color": "attack"
+  },
+  "Card_A_1_GattiAmari": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_1_KingBible": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_1_MagicWand": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_1_Pentagram": {
+    "gold": [
+      "Erase XX",
+      "Countdown"
+    ],
+    "color": "attack"
+  },
+  "Card_A_1_Runetracer": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_1_SoulEater": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_Axe": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_BloodyTear": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_Carrello": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_CelestialDusting": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_Cross": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_EightTheSparrow": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_GlassFandango": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_HolyWand": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_LightningRing": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_Pentagram": {
+    "gold": [
+      "Erase XX",
+      "Countdown"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_UnholyVespers": {
+    "gold": [
+      "XX",
+      "Knockback"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_ValkyrieTurner": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_2_ViciousHunger": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_Axe": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_DeathSpiral": {
+    "gold": [
+      "XX",
+      "Crit"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_HeavenSword": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_HellFire": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_NoFuture": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_Peachone": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_Pentagram": {
+    "gold": [
+      "Erase XX",
+      "Countdown"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_PhieraDerTuphello": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_SantaWater": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_ShadowPinion": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_SoulEater": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_ThousandEdge": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_3_VentoSacro": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_4_EbonyWings": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_4_Fuwalafuwaloo": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_4_LaBorra": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_4_Pentagram": {
+    "gold": [
+      "Erase XX",
+      "Countdown"
+    ],
+    "color": "attack"
+  },
+  "Card_A_4_PhieraDerTuphello": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_4_Phieraggi": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_4_Thunderloop": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_4_VentoSacro": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_5_Peachone": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_A_5_Pentagram": {
+    "gold": [
+      "Erase XX",
+      "Countdown"
+    ],
+    "color": "attack"
+  },
+  "Card_A_5_Vandalier": {
+    "gold": [
+      "XX",
+      "Knockback",
+      "Big Bird"
+    ],
+    "color": "attack"
+  },
+  "Card_A_6_EbonyWings": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_B_0_EmptyTome": {
+    "gold": [
+      "XX"
+    ],
+    "color": "buff"
+  },
+  "Card_B_0_RawMana": {
+    "gold": [
+      "XX"
+    ],
+    "color": "buff"
+  },
+  "Card_B_1_EmptyTome": {
+    "gold": [
+      "XX"
+    ],
+    "color": "buff"
+  },
+  "Card_B_2_EmptyTome": {
+    "gold": [
+      "XX"
+    ],
+    "color": "buff"
+  },
+  "Card_B_3_EmptyTome": {
+    "gold": [
+      "XX"
+    ],
+    "color": "buff"
+  },
+  "Card_D_0_Armor": {
+    "gold": [
+      "XX"
+    ],
+    "color": "defence"
+  },
+  "Card_D_1_Armor": {
+    "gold": [
+      "XX"
+    ],
+    "color": "defence"
+  },
+  "Card_D_2_Armor": {
+    "gold": [
+      "XX"
+    ],
+    "color": "defence"
+  },
+  "Card_D_3_Armor": {
+    "gold": [
+      "XX"
+    ],
+    "color": "defence"
+  },
+  "Card_D_3_ClockLancet": {
+    "gold": [
+      "XX Freeze"
+    ],
+    "color": "defence"
+  },
+  "Card_D_6_InfiniteCorridor": {
+    "gold": [
+      "XX"
+    ],
+    "color": "defence"
+  },
+  "Card_E_BagOfCoins": {
+    "gold": [
+      "XX"
+    ],
+    "color": "unknown"
+  },
+  "Card_E_CloverPetal": {
+    "gold": [
+      "XX"
+    ],
+    "color": "unknown"
+  },
+  "Card_E_CoinPurse": {
+    "gold": [
+      "XX"
+    ],
+    "color": "unknown"
+  },
+  "Card_E_LargeBagOfCoins": {
+    "gold": [
+      "XX"
+    ],
+    "color": "unknown"
+  },
+  "Card_E_LittleClover": {
+    "color": "unknown"
+  },
+  "Card_E_LittleHeart": {
+    "gold": [
+      "XX"
+    ],
+    "color": "unknown"
+  },
+  "Card_E_Orologion": {
+    "gold": [
+      "XX"
+    ],
+    "color": "unknown"
+  },
+  "Card_E_Rosary": {
+    "color": "unknown"
+  },
+  "Card_E_Vacuum": {
+    "gold": [
+      "XX"
+    ],
+    "color": "unknown"
+  },
+  "Card_M_0_RawMana": {
+    "gold": [
+      "XX"
+    ],
+    "color": "utility"
+  },
+  "Card_M_0_Wings": {
+    "color": "utility"
+  },
+  "Card_M_3_SongOfMana": {
+    "gold": [
+      "XX"
+    ],
+    "color": "utility"
+  },
+  "Card_M_4_SongOfMana": {
+    "gold": [
+      "XX"
+    ],
+    "color": "utility"
+  },
+  "Card_M_5_Mannajja": {
+    "gold": [
+      "XX"
+    ],
+    "color": "utility"
+  },
+  "Card_S_0_Candelabrador": {
+    "gold": [
+      "Area",
+      "XX%"
+    ],
+    "color": "support"
+  },
+  "Card_S_0_Crown": {
+    "color": "support"
+  },
+  "Card_S_0_HollowHeart": {
+    "color": "support"
+  },
+  "Card_S_0_Pummarola": {
+    "color": "support"
+  },
+  "Card_S_0_SkullOManic": {
+    "gold": [
+      "XX"
+    ],
+    "color": "support"
+  },
+  "Card_S_0_SkullOmanic": {
+    "gold": [
+      "XX"
+    ],
+    "color": "support"
+  },
+  "Card_S_0_SpellBinder": {
+    "gold": [
+      "Duration",
+      "XX"
+    ],
+    "color": "support"
+  },
+  "Card_S_0_Spinach": {
+    "gold": [
+      "Might",
+      "XX%"
+    ],
+    "color": "support"
+  },
+  "Card_S_0_StoneMask": {
+    "color": "support"
+  },
+  "Card_S_1_Attractorb": {
+    "gold": [
+      "XX"
+    ],
+    "color": "support"
+  },
+  "Card_S_1_Candelabrador": {
+    "gold": [
+      "Area",
+      "XX%"
+    ],
+    "color": "support"
+  },
+  "Card_S_1_Crown": {
+    "color": "support"
+  },
+  "Card_S_1_Duplicator": {
+    "color": "support"
+  },
+  "Card_S_1_GoldRing": {
+    "gold": [
+      "XX"
+    ],
+    "color": "support"
+  },
+  "Card_S_1_HollowHeart": {
+    "color": "support"
+  },
+  "Card_S_1_Pummarola": {
+    "color": "support"
+  },
+  "Card_S_1_SpellBinder": {
+    "gold": [
+      "Duration",
+      "XX"
+    ],
+    "color": "support"
+  },
+  "Card_S_1_Spinach": {
+    "gold": [
+      "Might",
+      "XX%"
+    ],
+    "color": "support"
+  },
+  "Card_S_1_StoneMask": {
+    "color": "support"
+  },
+  "Card_S_2_Attractorb": {
+    "gold": [
+      "XX"
+    ],
+    "color": "support"
+  },
+  "Card_S_2_Bracer": {
+    "gold": [
+      "Hand",
+      "XX"
+    ],
+    "color": "support"
+  },
+  "Card_S_2_Candelabrador": {
+    "gold": [
+      "Area",
+      "XX%"
+    ],
+    "color": "support"
+  },
+  "Card_S_2_Clover": {
+    "gold": [
+      "XX%"
+    ],
+    "color": "support"
+  },
+  "Card_S_2_Crown": {
+    "color": "support"
+  },
+  "Card_S_2_Duplicator": {
+    "color": "support"
+  },
+  "Card_S_2_HollowHeart": {
+    "gold": [
+      "XX"
+    ],
+    "color": "support"
+  },
+  "Card_S_2_Pummarola": {
+    "color": "support"
+  },
+  "Card_S_2_SilverRing": {
+    "gold": [
+      "XX"
+    ],
+    "color": "support"
+  },
+  "Card_S_2_Spinach": {
+    "gold": [
+      "Might",
+      "XX%"
+    ],
+    "color": "support"
+  },
+  "Card_S_2_StoneMask": {
+    "color": "support"
+  },
+  "Card_S_2_Tirajisu": {
+    "color": "support"
+  },
+  "Card_S_2_Tiramisu": {
+    "color": "support"
+  },
+  "Card_W_Bracelet": {
+    "gold": [
+      "XX"
+    ],
+    "color": "attack"
+  },
+  "Card_W_Combo": {
+    "color": "unknown"
+  },
+  "Card_W_GoldRing": {
+    "gold": [
+      "XX"
+    ],
+    "color": "unknown"
+  },
+  "Card_W_SilverRing": {
+    "gold": [
+      "XX"
+    ],
+    "color": "unknown"
+  },
+  "Card_W_WildDefence": {
+    "gold": [
+      "XX"
+    ],
+    "color": "defence"
+  },
+  "Card_W_Wings": {
+    "color": "utility"
+  },
+  "FCC_Antonio": {
+    "gold": [
+      "XX",
+      "XX%",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Arca": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Cavallo": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Christine": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Clerici": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Concetta": {
+    "gold": [
+      "XX",
+      "Area",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Dommario": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Gallo": {
+    "gold": [
+      "XX%",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Gennaro": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Giovanna": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Imelda": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Krochi": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Lama": {
+    "gold": [
+      "XX%",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Mana": {
+    "gold": [
+      "Hand",
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_ManaDuration": {
+    "gold": [
+      "XX",
+      "Area",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_MissingNo": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Mortaccio": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_OSole": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Pasqualina": {
+    "gold": [
+      "XX",
+      "Area",
+      "Hand",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Poe": {
+    "gold": [
+      "XX",
+      "Area",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Poppea": {
+    "gold": [
+      "Hand",
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Porta": {
+    "gold": [
+      "XX",
+      "Area",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Pugnala": {
+    "gold": [
+      "XX%",
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Ramba": {
+    "gold": [
+      "XX",
+      "Duration",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "FCC_Zi'Assunta": {
+    "gold": [
+      "Hand",
+      "XX",
+      "Area",
+      "Duration",
+      "XX%",
+      "Z"
+    ],
+    "color": "crawler"
+  },
+  "GemConfig_Armor": {
+    "gold": [
+      "2"
+    ]
+  },
+  "GemConfig_Draw": {
+    "gold": [
+      "XX"
+    ]
+  },
+  "GemConfig_Jingle": {
+    "gold": [
+      "Coin Count XX"
+    ]
+  },
+  "GemConfig_Magnetic": {
+    "gold": [
+      "Magnetic"
+    ]
+  },
+  "GemConfig_Might": {
+    "gold": [
+      "10% Might"
+    ]
+  },
+  "GemConfig_ReturnToHand": {
+    "gold": [
+      "Return"
+    ]
+  },
+  "GemConfig_Sprightly": {
+    "gold": [
+      "Recycle"
+    ]
+  },
+  "GemConfig_Steal": {
+    "gold": [
+      "Mug"
+    ]
+  },
+  "GemConfig_Thief": {
+    "gold": [
+      "Big Coin Bag"
+    ]
+  },
+  "GemConfig_YinYang": {
+    "gold": [
+      "Yin",
+      "Yang",
+      "1"
+    ]
+  }
+}

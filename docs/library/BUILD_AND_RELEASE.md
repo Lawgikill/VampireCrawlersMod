@@ -23,15 +23,30 @@ For a distributable Windows release:
 ```powershell
 python -m pip install pyinstaller UnityPy fmod_toolkit archspec pillow
 npm run build-asset-builder
+npm run stage-live-bridge
 npm run build:win
 ```
 
 Why two build steps?
 
 - `build-asset-builder` creates `bin\vampire-crawlers-asset-builder.exe`.
-- `build:win` packages that helper into Electron via `extraResources`.
+- `stage-live-bridge` stages the current bridge plugin DLL into `resources\live-bridge`.
+- `build:win` packages those helpers into Electron via `extraResources`.
 
 If you skip `build-asset-builder`, other users without Python installed will fail when pressing `Rebuild Local Data`.
+If you skip `stage-live-bridge`, users will not receive the latest live bridge plugin in the app installer.
+
+For a fully self-contained BepInEx release payload, stage from a clean BepInEx
+BE IL2CPP install before `build:win`:
+
+```powershell
+python tools\stage_live_bridge_payload.py --with-bepinex
+```
+
+This copies only `.doorstop_version`, `doorstop_config.ini`, `winhttp.dll`,
+`dotnet/**`, `BepInEx/core/**`, and the bridge plugin. It intentionally does
+not copy generated runtime folders such as `BepInEx\cache`,
+`BepInEx\interop`, logs, or user config.
 
 ## Expected Outputs
 
@@ -50,10 +65,33 @@ The helper should be packaged at:
 dist\win-unpacked\resources\asset-builder\vampire-crawlers-asset-builder.exe
 ```
 
+The live bridge payload should be packaged at:
+
+```text
+dist\win-unpacked\resources\live-bridge\BepInEx\plugins\VampireCrawlers.LiveBridge\VampireCrawlers.LiveBridge.dll
+```
+
+If `--with-bepinex` was used, the release payload should also include:
+
+```text
+dist\win-unpacked\resources\live-bridge\winhttp.dll
+dist\win-unpacked\resources\live-bridge\doorstop_config.ini
+dist\win-unpacked\resources\live-bridge\dotnet\
+dist\win-unpacked\resources\live-bridge\BepInEx\core\
+```
+
 The fallback cost table should be packaged at:
 
 ```text
 dist\win-unpacked\resources\app\public\assets\card-costs.json
+```
+
+The app-owned text assets should be packaged at:
+
+```text
+dist\win-unpacked\resources\app\public\assets\card-text.json
+dist\win-unpacked\resources\app\public\assets\gem-text.json
+dist\win-unpacked\resources\app\public\assets\text-meta.json
 ```
 
 The app should **not** package:
@@ -62,9 +100,7 @@ The app should **not** package:
 dist\win-unpacked\resources\app\public\assets\art\
 dist\win-unpacked\resources\app\public\assets\card-map.json
 dist\win-unpacked\resources\app\public\assets\card-names.json
-dist\win-unpacked\resources\app\public\assets\card-text.json
 dist\win-unpacked\resources\app\public\assets\gem-map.json
-dist\win-unpacked\resources\app\public\assets\gem-text.json
 dist\win-unpacked\resources\app\public\assets\art-manifest.json
 ```
 
@@ -89,6 +125,9 @@ Test-Path 'dist\win-unpacked\resources\app\public\assets\card-names.json'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\card-text.json'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\gem-map.json'
 Test-Path 'dist\win-unpacked\resources\app\public\assets\gem-text.json'
+Test-Path 'dist\win-unpacked\resources\app\public\assets\text-meta.json'
+Test-Path 'dist\win-unpacked\resources\live-bridge\BepInEx\plugins\VampireCrawlers.LiveBridge\VampireCrawlers.LiveBridge.dll'
+Test-Path 'dist\win-unpacked\resources\live-bridge\winhttp.dll'
 Test-Path 'dist\latest.yml'
 ```
 
@@ -101,9 +140,12 @@ card-costs.json: true
 art folder: false
 card-map.json: false
 card-names.json: false
-card-text.json: false
+card-text.json: true
 gem-map.json: false
-gem-text.json: false
+gem-text.json: true
+text-meta.json: true
+live bridge DLL: true
+BepInEx loader winhttp.dll: true if built with --with-bepinex, false for DLL-only payloads
 latest.yml: true
 ```
 
@@ -191,9 +233,7 @@ public/assets/art/
 public/assets/art-manifest.json
 public/assets/card-map.json
 public/assets/card-names.json
-public/assets/card-text.json
 public/assets/gem-map.json
-public/assets/gem-text.json
 public/assets/contact-sheet-*.png
 ```
 
@@ -201,6 +241,11 @@ Tracked intentionally:
 
 ```text
 public/assets/card-costs.json
+public/assets/card-text.json
+public/assets/gem-text.json
+public/assets/text-meta.json
+data/display-overrides.csv
+resources/live-bridge/BepInEx/plugins/VampireCrawlers.LiveBridge/VampireCrawlers.LiveBridge.dll
 bin/.gitkeep
 ```
 
