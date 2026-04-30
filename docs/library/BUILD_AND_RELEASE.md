@@ -23,6 +23,7 @@ For a distributable Windows release:
 ```powershell
 python -m pip install pyinstaller UnityPy fmod_toolkit archspec pillow
 npm run build-asset-builder
+dotnet build live-bridge\VampireCrawlers.LiveBridge\VampireCrawlers.LiveBridge.csproj /p:BepInExDir="C:\Program Files (x86)\Steam\steamapps\common\Vampire Crawlers\BepInEx"
 npm run stage-live-bridge
 npm run build:win
 ```
@@ -30,10 +31,12 @@ npm run build:win
 Why two build steps?
 
 - `build-asset-builder` creates `bin\vampire-crawlers-asset-builder.exe`.
+- `dotnet build ...VampireCrawlers.LiveBridge.csproj` creates the current live bridge DLL.
 - `stage-live-bridge` stages the current bridge plugin DLL into `resources\live-bridge`.
 - `build:win` packages those helpers into Electron via `extraResources`.
 
 If you skip `build-asset-builder`, other users without Python installed will fail when pressing `Rebuild Local Data`.
+If you skip the live bridge build after editing `live-bridge/**`, users will receive the previous bridge DLL.
 If you skip `stage-live-bridge`, users will not receive the latest live bridge plugin in the app installer.
 
 For a fully self-contained BepInEx release payload, stage from a clean BepInEx

@@ -20,6 +20,8 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
 
     private float _nextWriteAt;
     private float _nextErrorLogAt;
+    private GUIStyle _overlayStyle;
+    private string _handManaTotal = "HAND MANA TOTAL: --";
 
     public LiveBridgeBehaviour(IntPtr pointer) : base(pointer)
     {
@@ -34,6 +36,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
         {
             var state = CaptureState();
             if (state.Piles.Count == 0) return;
+            _handManaTotal = $"HAND MANA TOTAL: {FormatHandManaTotal(state)}";
 
             Directory.CreateDirectory(Path.GetDirectoryName(OutputPath));
             File.WriteAllText(OutputPath, JsonSerializer.Serialize(state, JsonOptions));
@@ -44,6 +47,41 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             _nextErrorLogAt = Time.realtimeSinceStartup + 5f;
             Plugin.BridgeLog?.LogWarning($"Live bridge capture/write failed: {error}");
         }
+    }
+
+    private void OnGUI()
+    {
+        if (_overlayStyle == null)
+        {
+            _overlayStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 16,
+                fontStyle = FontStyle.Bold,
+                normal =
+                {
+                    textColor = new Color(1f, 0.84f, 0.25f, 1f),
+                },
+            };
+        }
+
+        var width = 245f;
+        var height = 34f;
+        var rect = new Rect(Screen.width - width - 16f, 16f, width, height);
+        var background = new Color(0.02f, 0.03f, 0.025f, 0.78f);
+        var border = new Color(0.9f, 0.68f, 0.25f, 0.95f);
+
+        DrawRect(new Rect(rect.x - 1f, rect.y - 1f, rect.width + 2f, rect.height + 2f), border);
+        DrawRect(rect, background);
+        GUI.Label(rect, _handManaTotal, _overlayStyle);
+    }
+
+    private static void DrawRect(Rect position, Color color)
+    {
+        var previous = GUI.color;
+        GUI.color = color;
+        GUI.DrawTexture(position, Texture2D.whiteTexture);
+        GUI.color = previous;
     }
 
     private static LiveState CaptureState()
@@ -165,7 +203,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
     {
         if (value is CardModel cardModel)
         {
-            return new LiveCard
+            var card = new LiveCard
             {
                 CardConfigId = cardModel.CardConfig?.AssetId ?? "",
                 BaseCardConfigId = cardModel.BaseCardConfig?.AssetId ?? cardModel.CardConfig?.AssetId ?? "",
@@ -178,6 +216,8 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
                 TimesLimitBroken = cardModel.TimesLimitBroken,
                 GemIds = ReadGemIds(cardModel),
             };
+            card.Cost = GetEffectiveCostLabel(cardModel, card);
+            return card;
         }
 
         var config = ReadMember(value, "CardConfig")
@@ -202,7 +242,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             ?? ReadString(baseConfig, "_assetId")
             ?? cardId;
 
-        return new LiveCard
+        var fallbackCard = new LiveCard
         {
             CardConfigId = cardId ?? "",
             BaseCardConfigId = baseId ?? cardId ?? "",
@@ -212,6 +252,99 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             ConfusedManaCostModifier = ReadInt(value, "ConfusedManaCostModifier") ?? ReadInt(value, "_confuseManaCostModifier") ?? 0,
             GemIds = ReadGemIds(value),
         };
+        fallbackCard.Cost = GetEffectiveCostLabel(value, fallbackCard);
+        return fallbackCard;
+    }
+
+    private static string FormatHandManaTotal(LiveState state)
+    {
+        var hand = state.Piles.FirstOrDefault((pile) => pile.PileId == "HandPile");
+        if (hand == null) return "--";
+
+        var numericTotal = 0;
+        var extras = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var card in hand.Cards)
+        {
+            if (int.TryParse(card.Cost, out var cost))
+            {
+                numericTotal += cost;
+                continue;
+            }
+
+            var label = string.IsNullOrWhiteSpace(card.Cost) ? "Unknown" : card.Cost;
+            extras[label] = extras.TryGetValue(label, out var count) ? count + 1 : 1;
+        }
+
+        var parts = new List<string> { numericTotal.ToString() };
+        parts.AddRange(extras.OrderBy((entry) => entry.Key).Select((entry) => $"{entry.Value}{entry.Key}"));
+        return string.Join(" + ", parts);
+    }
+
+    private static string GetEffectiveCostLabel(object cardObject, LiveCard card)
+    {
+        if (HasWildCost(card)) return "W";
+
+        var config = ReadMember(cardObject, "CardConfig")
+            ?? ReadMember(cardObject, "cardConfig")
+            ?? ReadMember(cardObject, "_cardConfig")
+            ?? cardObject;
+
+        var baseCost =
+            InvokeInt(config, "GetManaCost")
+            ?? InvokeInt(config, "GetCost")
+            ?? ReadInt(config, "ManaCost")
+            ?? ReadInt(config, "manaCost")
+            ?? ReadInt(config, "_manaCost")
+            ?? ReadInt(cardObject, "BaseCost")
+            ?? ReadInt(cardObject, "baseCost");
+
+        if (baseCost == null)
+        {
+            baseCost =
+                ReadInt(cardObject, "ManaCost")
+                ?? ReadInt(cardObject, "Cost")
+                ?? InvokeInt(cardObject, "GetManaCost")
+                ?? InvokeInt(cardObject, "GetCost");
+        }
+
+        if (baseCost == null) return "Unknown";
+        var total = baseCost.Value
+            + card.ManaCostModifier
+            + card.TempManaCostModifier
+            + card.ConfusedManaCostModifier
+            + GetGemManaModifier(card.GemIds);
+        return total.ToString();
+    }
+
+    private static bool HasWildCost(LiveCard card)
+    {
+        return card.CardConfigId.StartsWith("Card_W_", StringComparison.Ordinal)
+            || card.CardConfigId.StartsWith("Card_E_", StringComparison.Ordinal)
+            || card.CardConfigId == "Card_M_0_Wings"
+            || card.GemIds.Any((gem) => gem == "GemConfig_SetCostType_Wild");
+    }
+
+    private static int GetGemManaModifier(List<string> gems)
+    {
+        var total = 0;
+        foreach (var gem in gems)
+        {
+            var normalized = gem.Replace("GemConfig_Mana_", "", StringComparison.Ordinal)
+                .Replace("GemConfig_Mana", "", StringComparison.Ordinal);
+            if (normalized.StartsWith("Plus", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(normalized["Plus".Length..], out var plus))
+            {
+                total += plus;
+            }
+            else if (normalized.StartsWith("Minus", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(normalized["Minus".Length..], out var minus))
+            {
+                total -= minus;
+            }
+        }
+
+        return total;
     }
 
     private static List<string> ReadGemIds(object value)
@@ -274,6 +407,17 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
         if (member == null) return null;
         return int.TryParse(member.ToString(), out var parsed) ? parsed : null;
     }
+
+    private static int? InvokeInt(object value, string name)
+    {
+        if (value == null) return null;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        var method = value.GetType().GetMethod(name, flags, null, Type.EmptyTypes, null);
+        if (method == null) return null;
+        var result = method.Invoke(value, Array.Empty<object>());
+        if (result == null) return null;
+        return int.TryParse(result.ToString(), out var parsed) ? parsed : null;
+    }
 }
 
 public sealed class LiveState
@@ -304,6 +448,7 @@ public sealed class LiveCard
     public int ManaCostModifier { get; set; }
     public int TempManaCostModifier { get; set; }
     public int ConfusedManaCostModifier { get; set; }
+    public string Cost { get; set; } = "Unknown";
     public bool IsBroken { get; set; }
     public bool IsCopyWithDestroy { get; set; }
     public int TimesLimitBroken { get; set; }
