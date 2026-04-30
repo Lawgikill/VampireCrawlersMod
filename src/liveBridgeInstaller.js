@@ -1,4 +1,5 @@
 const fs = require("fs");
+const crypto = require("crypto");
 const path = require("path");
 
 const BRIDGE_PLUGIN_RELATIVE_PATH = path.join(
@@ -43,6 +44,37 @@ function copyDirectoryContents(sourceDir, targetDir) {
   }
 }
 
+function hashFile(filePath) {
+  return crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+}
+
+function listPayloadFiles(root, current = root) {
+  if (!root || !fs.existsSync(current)) return [];
+  return fs.readdirSync(current, { withFileTypes: true }).flatMap((entry) => {
+    if (entry.name === "README.md") return [];
+    const fullPath = path.join(current, entry.name);
+    if (entry.isDirectory()) return listPayloadFiles(root, fullPath);
+    if (!entry.isFile()) return [];
+    return [path.relative(root, fullPath)];
+  });
+}
+
+function isLiveBridgeCurrent(payloadRoot, gameDir) {
+  if (!payloadRoot || !gameDir) return false;
+  const payloadFiles = listPayloadFiles(payloadRoot);
+  if (!payloadFiles.length) return false;
+
+  return payloadFiles.every((relativePath) => {
+    const sourcePath = path.join(payloadRoot, relativePath);
+    const targetPath = path.join(gameDir, relativePath);
+    if (!fs.existsSync(targetPath)) return false;
+    const sourceStat = fs.statSync(sourcePath);
+    const targetStat = fs.statSync(targetPath);
+    if (sourceStat.size !== targetStat.size) return false;
+    return hashFile(sourcePath) === hashFile(targetPath);
+  });
+}
+
 function getLiveBridgeStatus(gameDir, projectRoot) {
   const payloadRoot = getLiveBridgePayloadRoot(projectRoot);
   const installedPluginPath = gameDir ? path.join(gameDir, BRIDGE_PLUGIN_RELATIVE_PATH) : "";
@@ -52,6 +84,7 @@ function getLiveBridgeStatus(gameDir, projectRoot) {
     hasPayload: Boolean(payloadRoot),
     installedPluginPath,
     isInstalled: Boolean(installedPluginPath && fs.existsSync(installedPluginPath)),
+    isCurrent: isLiveBridgeCurrent(payloadRoot, gameDir),
     hasBepInExLoader: Boolean(
       gameDir
         && fs.existsSync(path.join(gameDir, "winhttp.dll"))

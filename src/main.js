@@ -9,7 +9,7 @@ const {
   loadConfig,
   saveConfig,
 } = require("./config");
-const { installLiveBridge } = require("./liveBridgeInstaller");
+const { getLiveBridgeStatus, installLiveBridge } = require("./liveBridgeInstaller");
 
 let mainWindow;
 let serverHandle;
@@ -236,6 +236,63 @@ function runProcess(command, args, cwd, onLine) {
   });
 }
 
+function localDataPaths() {
+  const generatedAssetsDir = path.join(config.generatedDir, "assets");
+  return {
+    generatedAssetsDir,
+    artDir: path.join(generatedAssetsDir, "art"),
+    manifestPath: path.join(generatedAssetsDir, "art-manifest.json"),
+    cardMapPath: path.join(generatedAssetsDir, "card-map.json"),
+    cardCostsPath: path.join(generatedAssetsDir, "card-costs.json"),
+    cardNamesPath: path.join(generatedAssetsDir, "card-names.json"),
+    cardTextPath: path.join(generatedAssetsDir, "card-text.json"),
+    textMetaPath: path.join(generatedAssetsDir, "text-meta.json"),
+    gemMapPath: path.join(generatedAssetsDir, "gem-map.json"),
+    gemTextPath: path.join(generatedAssetsDir, "gem-text.json"),
+  };
+}
+
+function readJsonIfExists(filePath, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+
+function countMissingMappedArt(mapPath) {
+  const map = readJsonIfExists(mapPath, null);
+  if (!map || typeof map !== "object") return 1;
+  return Object.values(map).reduce((count, relativePath) => {
+    if (!relativePath) return count + 1;
+    return fs.existsSync(path.join(config.generatedDir, relativePath)) ? count : count + 1;
+  }, 0);
+}
+
+function getLocalDataStatus() {
+  const paths = localDataPaths();
+  const requiredFiles = [
+    paths.manifestPath,
+    paths.cardMapPath,
+    paths.cardCostsPath,
+    paths.cardNamesPath,
+    paths.cardTextPath,
+    paths.textMetaPath,
+    paths.gemMapPath,
+    paths.gemTextPath,
+  ];
+  const missingFiles = requiredFiles.filter((filePath) => !fs.existsSync(filePath));
+  const missingCardArt = fs.existsSync(paths.cardMapPath) ? countMissingMappedArt(paths.cardMapPath) : 1;
+  const missingGemArt = fs.existsSync(paths.gemMapPath) ? countMissingMappedArt(paths.gemMapPath) : 1;
+
+  return {
+    ready: missingFiles.length === 0 && missingCardArt === 0 && missingGemArt === 0,
+    missingFiles,
+    missingCardArt,
+    missingGemArt,
+  };
+}
+
 async function runPython(args, cwd, onLine) {
   try {
     return await runProcess("python", args, cwd, onLine);
@@ -307,16 +364,7 @@ async function runLocalDataBuilder(projectRoot, paths, append) {
 
 async function rebuildLocalData() {
   const projectRoot = path.resolve(__dirname, "..");
-  const generatedAssetsDir = path.join(config.generatedDir, "assets");
-  const artDir = path.join(generatedAssetsDir, "art");
-  const manifestPath = path.join(generatedAssetsDir, "art-manifest.json");
-  const cardMapPath = path.join(generatedAssetsDir, "card-map.json");
-  const cardCostsPath = path.join(generatedAssetsDir, "card-costs.json");
-  const cardNamesPath = path.join(generatedAssetsDir, "card-names.json");
-  const cardTextPath = path.join(generatedAssetsDir, "card-text.json");
-  const textMetaPath = path.join(generatedAssetsDir, "text-meta.json");
-  const gemMapPath = path.join(generatedAssetsDir, "gem-map.json");
-  const gemTextPath = path.join(generatedAssetsDir, "gem-text.json");
+  const paths = localDataPaths();
   const log = [];
   const append = (line) => {
     log.push(line.trimEnd());
@@ -329,17 +377,17 @@ async function rebuildLocalData() {
     throw new Error("Vampire Crawlers install folder is not configured.");
   }
 
-  fs.mkdirSync(generatedAssetsDir, { recursive: true });
+  fs.mkdirSync(paths.generatedAssetsDir, { recursive: true });
   await runLocalDataBuilder(projectRoot, {
-    artDir,
-    manifestPath,
-    cardMapPath,
-    cardCostsPath,
-    cardNamesPath,
-    cardTextPath,
-    textMetaPath,
-    gemMapPath,
-    gemTextPath,
+    artDir: paths.artDir,
+    manifestPath: paths.manifestPath,
+    cardMapPath: paths.cardMapPath,
+    cardCostsPath: paths.cardCostsPath,
+    cardNamesPath: paths.cardNamesPath,
+    cardTextPath: paths.cardTextPath,
+    textMetaPath: paths.textMetaPath,
+    gemMapPath: paths.gemMapPath,
+    gemTextPath: paths.gemTextPath,
   }, append);
 
   config.firstRunComplete = true;
@@ -364,6 +412,13 @@ async function installOrUpdateLiveBridge() {
   });
 }
 
+function sendSetupProgress(status) {
+  mainWindow?.webContents.send("setup-progress", {
+    at: new Date().toISOString(),
+    ...status,
+  });
+}
+
 function silentlyInstallOrUpdateLiveBridge(reason = "startup") {
   try {
     const projectRoot = path.resolve(__dirname, "..");
@@ -379,7 +434,114 @@ function silentlyInstallOrUpdateLiveBridge(reason = "startup") {
   }
 }
 
+async function promptForGameDirIfNeeded() {
+  if (config.gameDir && fs.existsSync(path.join(config.gameDir, "Vampire Crawlers_Data", "globalgamemanagers.assets"))) {
+    return true;
+  }
+
+  sendSetupProgress({
+    state: "needs-input",
+    title: "Game folder needed",
+    message: "Select the Vampire Crawlers install folder to finish setup.",
+  });
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ["openDirectory"],
+    title: "Choose Vampire Crawlers install folder",
+  });
+  if (result.canceled || !result.filePaths[0]) return false;
+
+  config.gameDir = result.filePaths[0];
+  saveConfig(config, app.getPath("userData"));
+  return true;
+}
+
+async function promptForSavePathIfNeeded() {
+  if (config.savePath && fs.existsSync(config.savePath)) return true;
+
+  sendSetupProgress({
+    state: "needs-input",
+    title: "Save file needed",
+    message: "Select your Vampire Crawlers save file to finish setup.",
+  });
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ["openFile"],
+    title: "Choose Vampire Crawlers save file",
+    filters: [{ name: "Vampire Crawlers Save", extensions: ["save", "*"] }],
+  });
+  if (result.canceled || !result.filePaths[0]) return false;
+
+  config.savePath = result.filePaths[0];
+  saveConfig(config, app.getPath("userData"));
+  return true;
+}
+
+async function runStartupSetup() {
+  if (!mainWindow) return { ok: false, message: "Main window is not ready." };
+
+  sendSetupProgress({
+    state: "checking",
+    title: "Checking setup",
+    message: "Looking for Vampire Crawlers files...",
+  });
+
+  if (!(await promptForGameDirIfNeeded())) {
+    return {
+      ok: false,
+      needsInput: true,
+      message: "Vampire Crawlers install folder was not selected.",
+    };
+  }
+
+  if (!(await promptForSavePathIfNeeded())) {
+    return {
+      ok: false,
+      needsInput: true,
+      message: "Vampire Crawlers save file was not selected.",
+    };
+  }
+
+  const localDataStatus = getLocalDataStatus();
+  if (!localDataStatus.ready) {
+    sendSetupProgress({
+      state: "working",
+      title: "Preparing card art",
+      message: "Building local card art and game data. This can take a minute.",
+    });
+    await rebuildLocalData();
+  }
+
+  const projectRoot = path.resolve(__dirname, "..");
+  const bridgeStatus = getLiveBridgeStatus(config.gameDir, projectRoot);
+  if (!bridgeStatus.hasPayload) {
+    throw new Error("Live bridge payload is missing from this app build.");
+  }
+
+  if (!bridgeStatus.isCurrent) {
+    sendSetupProgress({
+      state: "working",
+      title: bridgeStatus.isInstalled ? "Updating live bridge" : "Installing live bridge",
+      message: "Copying the live bridge into the Vampire Crawlers install folder.",
+    });
+    installLiveBridge(config.gameDir, projectRoot);
+  }
+
+  sendSetupProgress({
+    state: "complete",
+    title: "Setup complete",
+    message: "Local art, save data, and live bridge are ready.",
+  });
+
+  return {
+    ok: true,
+    localData: getLocalDataStatus(),
+    liveBridge: getLiveBridgeStatus(config.gameDir, projectRoot),
+  };
+}
+
 ipcMain.handle("rebuild-art-cache", rebuildLocalData);
+ipcMain.handle("run-startup-setup", runStartupSetup);
 
 ipcMain.handle("hide-setup-panel-forever", async () => {
   const result = await dialog.showMessageBox(mainWindow, {
@@ -407,7 +569,6 @@ if (singleInstanceLock) app.whenReady().then(async () => {
     ...loadConfig(app.getPath("userData")),
   };
   saveConfig(config, app.getPath("userData"));
-  silentlyInstallOrUpdateLiveBridge("startup");
 
   buildMenu();
   serverHandle = await startServer({

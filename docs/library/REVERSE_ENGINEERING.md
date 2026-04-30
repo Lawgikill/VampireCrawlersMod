@@ -298,21 +298,36 @@ The source of truth for manual display overrides is:
 data\display-overrides.csv
 ```
 
-The builders still contain generic decoding rules and effect templates, but
-per-card or per-gem wording belongs in the CSV, not in hard-coded Python
-dictionaries. For rows present in the CSV, the CSV text wins.
-Blank CSV text is meaningful and means the card/gem should show no rules text.
-The CSV `gold` column is also source data; it lists the exact words/tokens the
-frontend should highlight in gold, separated with `|`.
-For card rows, the CSV `color` column is source data for the card color/type
-class shown in the frontend.
+The game ID-to-name mapping source is:
 
-Generated files are local artifacts and ignored:
+```text
+data\game-item-names.csv
+```
+
+`game-item-names.csv` stores `kind,id,name`. `display-overrides.csv` is
+deduplicated by `name` and stores `name,game_text,text,tooltip,gold,color`. The
+builders still contain generic decoding rules and effect templates, but manual
+wording belongs in the CSV, not in hard-coded Python dictionaries. For rows
+present in the CSV, the CSV `text` wins after the row name is expanded back to
+matching IDs through `game-item-names.csv`. Blank CSV text is meaningful and
+means the card/gem should show no rules text. `game_text` is reference text
+generated from the game-data decoder for comparison. The CSV `gold` column is
+also source data; it lists the exact words/tokens the frontend should highlight
+in gold, separated with `|`. The CSV `tooltip` column is optional helper copy
+for card rules hover tooltips; pipe-separated entries become separate lines. For
+card rows, the CSV `color` column is source data for the card color/type class
+shown in the frontend.
+
+Generated text outputs are tracked app-owned artifacts:
 
 ```text
 public\assets\card-text.json
 public\assets\gem-text.json
+public\assets\text-meta.json
 ```
+
+Extracted art, art manifests, and generated art maps remain local ignored
+artifacts because they are rebuilt from each user's installed game files.
 
 Known decoded examples:
 

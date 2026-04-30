@@ -39,6 +39,11 @@ const els = {
   evolutionDialog: document.querySelector("#evolutionDialog"),
   evolutionClose: document.querySelector("#evolutionClose"),
   evolutionRecipes: document.querySelector("#evolutionRecipes"),
+  startupSetupDialog: document.querySelector("#startupSetupDialog"),
+  startupSetupTitle: document.querySelector("#startupSetupTitle"),
+  startupSetupMessage: document.querySelector("#startupSetupMessage"),
+  startupSetupLog: document.querySelector("#startupSetupLog"),
+  startupSetupRetry: document.querySelector("#startupSetupRetry"),
   cardViewMode: document.querySelector("#cardViewMode"),
   cards: document.querySelector("#cards"),
 };
@@ -54,6 +59,12 @@ const COST_SEGMENT_LABELS = {
   crawler: "Crawler",
   unknown: "Unknown",
 };
+const EVOLUTION_OPEN_SLOT_EXEMPT_RESULTS = new Set([
+  "Card_A_5_Vandalier",
+  "Card_A_4_Phieraggi",
+]);
+const VANDALIER_RESULT_ID = "Card_A_5_Vandalier";
+const PHIERAGGI_RESULT_ID = "Card_A_4_Phieraggi";
 
 function cleanId(id) {
   return String(id || "")
@@ -109,6 +120,31 @@ function formatRulesTextHtml(value, card) {
     return text;
   }
   return highlightConfiguredTokens(text, card?.cardId || card?.baseId);
+}
+
+function rulesTooltipEntries(card) {
+  const entries = [];
+  if (state.textMeta[card?.cardId]?.tooltip) {
+    entries.push({ text: state.textMeta[card.cardId].tooltip, id: card.cardId });
+  } else if (state.textMeta[card?.baseId]?.tooltip) {
+    entries.push({ text: state.textMeta[card.baseId].tooltip, id: card.baseId });
+  }
+
+  (card?.gems || []).forEach((gem) => {
+    const text = state.textMeta[gem]?.tooltip || "";
+    if (text) entries.push({ text, id: gem });
+  });
+
+  return entries;
+}
+
+function formatRulesTooltipHtml(entries) {
+  return (entries || [])
+    .map((entry) => {
+      const text = escapeHtml(entry.text).replace(/\r?\n/g, "<br>");
+      return `<span>${highlightConfiguredTokens(text, entry.id)}</span>`;
+    })
+    .join("");
 }
 
 function formatGemRulesHtml(gems) {
@@ -201,6 +237,10 @@ function cardDisplayName(id) {
   const parsed = parseCardId(id);
   if (parsed) return parsed.name;
   return cleanId(id);
+}
+
+function normalizeMatchName(value) {
+  return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 function cardRulesText(id) {
@@ -453,40 +493,224 @@ function cardArtHtml(cardId, className = "recipe-card-art") {
   return `<img class="${className}" src="/${artPath}" alt="">`;
 }
 
-function renderRecipeOption(cardId) {
+function buildEvolutionInventory() {
+  const cards = state.snapshot?.cards || [];
+  const byId = new Map();
+  const byName = new Map();
+
+  cards.forEach((card) => {
+    const names = [
+      card.cardId,
+      card.baseId,
+      cardDisplayName(card.cardId),
+      cardDisplayName(card.baseId),
+    ].filter(Boolean);
+
+    const entry = {
+      card,
+      hasOpenSlot: Math.max(0, Number(card.openGemSlots) || 0) > 0,
+    };
+
+    [card.cardId, card.baseId].filter(Boolean).forEach((id) => {
+      const bucket = byId.get(id) || [];
+      bucket.push(entry);
+      byId.set(id, bucket);
+    });
+
+    names.map(normalizeMatchName).filter(Boolean).forEach((name) => {
+      const bucket = byName.get(name) || [];
+      bucket.push(entry);
+      byName.set(name, bucket);
+    });
+  });
+
+  return { byId, byName };
+}
+
+function evolutionEntriesForCardId(cardId, inventory) {
+  const byIdEntries = inventory.byId.get(cardId) || [];
+  const byNameEntries = inventory.byName.get(normalizeMatchName(cardDisplayName(cardId))) || [];
+  return [...byIdEntries, ...byNameEntries];
+}
+
+function evolutionOptionStatus(cardId, inventory, requiresOpenSlot) {
+  const entries = evolutionEntriesForCardId(cardId, inventory);
+  if (!entries.length) return "";
+  if (!requiresOpenSlot || entries.some((entry) => entry.hasOpenSlot)) return "owned";
+  return "";
+}
+
+function recipeRequiresOpenSlot(recipe, inputIndex) {
+  return inputIndex === 0 && !EVOLUTION_OPEN_SLOT_EXEMPT_RESULTS.has(recipe.resultId);
+}
+
+function getRecipeAvailability(recipe, inventory) {
+  if (recipe.resultId === VANDALIER_RESULT_ID) {
+    const groups = recipe.inputs.map((group) => {
+      const options = new Map((group || []).map((cardId) => [
+        cardId,
+        evolutionEntriesForCardId(cardId, inventory).length ? "owned" : "",
+      ]));
+      const entries = (group || []).flatMap((cardId) => evolutionEntriesForCardId(cardId, inventory));
+      return {
+        options,
+        available: Array.from(options.values()).some(Boolean),
+        hasOpenSlot: entries.some((entry) => entry.hasOpenSlot),
+      };
+    });
+    const hasAllInputs = groups.length > 0 && groups.every((group) => group.available);
+    const hasAnyOpenSlot = groups.some((group) => group.hasOpenSlot);
+
+    if (hasAllInputs && !hasAnyOpenSlot) {
+      groups.forEach((group) => {
+        group.options.forEach((status, cardId) => {
+          if (status) group.options.set(cardId, "blocked");
+        });
+      });
+    }
+
+    return {
+      groups,
+      complete: hasAllInputs && hasAnyOpenSlot,
+      blocked: hasAllInputs && !hasAnyOpenSlot,
+    };
+  }
+
+  if (recipe.resultId === PHIERAGGI_RESULT_ID) {
+    const weaponInputIndexes = new Set([0, 1]);
+    const groups = recipe.inputs.map((group, inputIndex) => {
+      const options = new Map((group || []).map((cardId) => [
+        cardId,
+        evolutionEntriesForCardId(cardId, inventory).length ? "owned" : "",
+      ]));
+      const entries = (group || []).flatMap((cardId) => evolutionEntriesForCardId(cardId, inventory));
+      return {
+        options,
+        available: Array.from(options.values()).some(Boolean),
+        hasOpenSlot: weaponInputIndexes.has(inputIndex) && entries.some((entry) => entry.hasOpenSlot),
+        isWeaponInput: weaponInputIndexes.has(inputIndex),
+      };
+    });
+    const hasAllInputs = groups.length > 0 && groups.every((group) => group.available);
+    const hasAnyWeaponOpenSlot = groups.some((group) => group.isWeaponInput && group.hasOpenSlot);
+
+    if (hasAllInputs && !hasAnyWeaponOpenSlot) {
+      groups.forEach((group) => {
+        if (!group.isWeaponInput) return;
+        group.options.forEach((status, cardId) => {
+          if (status) group.options.set(cardId, "blocked");
+        });
+      });
+    }
+
+    return {
+      groups,
+      complete: hasAllInputs && hasAnyWeaponOpenSlot,
+      blocked: hasAllInputs && !hasAnyWeaponOpenSlot,
+    };
+  }
+
+  const groups = recipe.inputs.map((group, inputIndex) => {
+    const requiresOpenSlot = recipeRequiresOpenSlot(recipe, inputIndex);
+    const options = new Map((group || []).map((cardId) => [
+      cardId,
+      evolutionOptionStatus(cardId, inventory, requiresOpenSlot),
+    ]));
+    return {
+      options,
+      available: Array.from(options.values()).some(Boolean),
+    };
+  });
+
+  return {
+    groups,
+    complete: groups.length > 0 && groups.every((group) => group.available),
+    blocked: false,
+  };
+}
+
+function markEvolutionCardState(states, cardId, stateValue) {
+  const nameKey = normalizeMatchName(cardDisplayName(cardId));
+  const keys = [cardId, nameKey].filter(Boolean);
+  const rank = { component: 1, ready: 2 };
+
+  keys.forEach((key) => {
+    if ((rank[stateValue] || 0) > (rank[states.get(key)] || 0)) {
+      states.set(key, stateValue);
+    }
+  });
+}
+
+function getEvolutionCardStates() {
+  const inventory = buildEvolutionInventory();
+  const states = new Map();
+
+  state.evolutions.forEach((recipe) => {
+    const availability = getRecipeAvailability(recipe, inventory);
+    recipe.inputs.forEach((group, groupIndex) => {
+      group.forEach((cardId) => {
+        const status = availability.groups[groupIndex]?.options?.get(cardId);
+        if (status !== "owned") return;
+        markEvolutionCardState(states, cardId, availability.complete ? "ready" : "component");
+      });
+    });
+  });
+
+  return states;
+}
+
+function evolutionStateForCard(card, states) {
+  const keys = [
+    card.cardId,
+    card.baseId,
+    normalizeMatchName(cardDisplayName(card.cardId)),
+    normalizeMatchName(cardDisplayName(card.baseId)),
+  ].filter(Boolean);
+  const rank = { component: 1, ready: 2 };
+  return keys.reduce((best, key) => {
+    const value = states.get(key) || "";
+    return (rank[value] || 0) > (rank[best] || 0) ? value : best;
+  }, "");
+}
+
+function renderRecipeOption(cardId, status = "") {
   return `
-    <span class="recipe-card-token" title="${escapeHtml(cardDisplayName(cardId))}">
+    <span class="recipe-card-token${status ? ` is-${status}` : ""}" title="${escapeHtml(cardDisplayName(cardId))}">
       ${cardArtHtml(cardId)}
       <span>${escapeHtml(cardDisplayName(cardId))}</span>
     </span>
   `;
 }
 
-function renderRecipeGroup(cardIds) {
+function renderRecipeGroup(cardIds, groupAvailability) {
   const ids = Array.isArray(cardIds) ? cardIds : [];
   return `
-    <span class="recipe-card-group${ids.length > 1 ? " has-alternates" : ""}">
-      ${ids.map(renderRecipeOption).join("")}
+    <span class="recipe-card-group${ids.length > 1 ? " has-alternates" : ""}${groupAvailability?.available ? " is-owned" : ""}">
+      ${ids.map((cardId) => renderRecipeOption(cardId, groupAvailability?.options?.get(cardId))).join("")}
     </span>
   `;
 }
 
 function renderEvolutionRecipes() {
+  const inventory = buildEvolutionInventory();
   els.evolutionRecipes.innerHTML = state.evolutions.length
-    ? state.evolutions.map((recipe) => `
-      <article class="evolution-recipe">
-        <div class="recipe-equation">
+    ? state.evolutions.map((recipe) => {
+      const availability = getRecipeAvailability(recipe, inventory);
+      return `
+      <article class="evolution-recipe${availability.complete ? " is-complete" : ""}${availability.blocked ? " is-blocked" : ""}">
+        <div class="recipe-equation recipe-input-count-${recipe.inputs.length}">
           ${recipe.inputs.map((group, index) => `
-            ${index ? `<span class="recipe-operator">+</span>` : ""}
-            ${renderRecipeGroup(group)}
+            ${index ? `<span class="recipe-operator recipe-operator-plus">+</span>` : ""}
+            ${renderRecipeGroup(group, availability.groups[index])}
           `).join("")}
-          <span class="recipe-operator">=</span>
+          <span class="recipe-operator recipe-operator-equals">=</span>
           <span class="recipe-result">
             ${renderRecipeOption(recipe.resultId)}
           </span>
         </div>
       </article>
-    `).join("")
+    `;
+    }).join("")
     : `<p class="muted">No evolution data loaded.</p>`;
 }
 
@@ -532,6 +756,7 @@ function renderCards(snapshot) {
   const allCardCount = snapshot.totalCards ?? snapshot.cards.length;
   const handCardCount = snapshot.cards.filter((card) => card.pileId === "HandPile").length;
   const cards = sortCards(visibleCards.filter(cardMatches));
+  const evolutionCardStates = getEvolutionCardStates();
   els.allCardsLabel.textContent = `ALL CARDS (${allCardCount})`;
   els.handCardsLabel.textContent = `CARDS IN HAND (${handCardCount})`;
   els.allCardsLabel.classList.toggle("is-active", state.cardViewMode === "all");
@@ -558,16 +783,27 @@ function renderCards(snapshot) {
       const hasEvolveGem = card.gems.includes("GemConfig_Evolve");
       const hasDescription = Boolean(rulesText || gemRulesHtml);
       const descriptionClass = hasEvolveGem ? "card-description card-description-clear" : "card-description";
+      const evolutionState = evolutionStateForCard(card, evolutionCardStates);
+      const evolutionMarker = evolutionState
+        ? `<span class="evolution-card-marker evolution-card-marker-${evolutionState}" title="${evolutionState === "ready" ? "Evolution ready" : "Evolution component"}"></span>`
+        : "";
+      const cardTitleClass = `card-title${evolutionState ? ` has-evolution-marker has-evolution-marker-${evolutionState}` : ""}`;
+      const rulesTooltipEntriesValue = rulesTooltipEntries(card);
+      const rulesTooltipHtml = formatRulesTooltipHtml(rulesTooltipEntriesValue);
+      const rulesTooltipTitle = rulesTooltipEntriesValue.map((entry) => entry.text).join("\n");
+      const rulesTooltipAttrs = rulesTooltipTitle ? ` title="${escapeHtml(rulesTooltipTitle)}"` : "";
+      const rulesTooltipElement = rulesTooltipHtml ? `<span class="card-rules-tooltip">${rulesTooltipHtml}</span>` : "";
 
       return `
         <article class="card-row ${cardTypeClass(card)}">
-          <div class="card-title">
+          <div class="${cardTitleClass}">
             ${renderManaCost(card.cost)}
             ${renderGemSlots(card)}
+            ${evolutionMarker}
             <span class="card-name">${escapeHtml(cardDisplayName(card.cardId))}</span>
           </div>
           ${artPath ? `<img class="card-art" src="/${artPath}" alt="">` : ""}
-          ${hasDescription ? `<p class="${descriptionClass}"><span>${rulesTextHtml}${gemRulesHtml ? `<span class="gem-rules">${gemRulesHtml}</span>` : ""}</span></p>` : ""}
+          ${hasDescription ? `<p class="${descriptionClass}"${rulesTooltipAttrs}><span>${rulesTextHtml}${gemRulesHtml ? `<span class="gem-rules">${gemRulesHtml}</span>` : ""}</span>${rulesTooltipElement}</p>` : ""}
           ${statusLinesHtml}
         </article>
       `;
@@ -584,6 +820,7 @@ function render(snapshot) {
   renderCosts(snapshot);
   renderCounts(snapshot);
   renderCards(snapshot);
+  if (els.evolutionDialog.open) renderEvolutionRecipes();
 }
 
 async function loadArtMap() {
@@ -687,6 +924,44 @@ function renderSetup(config) {
   els.hideSetupForever.hidden = !window.vampireCrawlers;
 }
 
+function showStartupSetup(status = {}) {
+  if (!els.startupSetupDialog) return;
+  els.startupSetupTitle.textContent = status.title || "Checking Setup";
+  els.startupSetupMessage.textContent = status.message || "Preparing Vampire Crawlers Deck Tracker...";
+  els.startupSetupDialog.classList.toggle("is-complete", status.state === "complete");
+  els.startupSetupDialog.classList.toggle("is-error", status.state === "error" || status.state === "needs-input");
+  if (els.startupSetupRetry) {
+    els.startupSetupRetry.hidden = !(status.state === "error" || status.state === "needs-input");
+  }
+  if (!els.startupSetupDialog.open && typeof els.startupSetupDialog.showModal === "function") {
+    els.startupSetupDialog.showModal();
+  } else if (!els.startupSetupDialog.open) {
+    els.startupSetupDialog.setAttribute("open", "");
+  }
+}
+
+function hideStartupSetup() {
+  if (!els.startupSetupDialog?.open) return;
+  els.startupSetupDialog.close();
+}
+
+function appendStartupSetupLog(line) {
+  if (!els.startupSetupLog) return;
+  els.startupSetupLog.hidden = false;
+  els.startupSetupLog.textContent += line;
+  els.startupSetupLog.scrollTop = els.startupSetupLog.scrollHeight;
+}
+
+async function reloadLocalAssets() {
+  await loadArtMap();
+  await loadCardNames();
+  await loadCardText();
+  await loadTextMeta();
+  await loadGemMap();
+  await loadGemText();
+  await loadConfig();
+}
+
 async function refresh() {
   try {
     const response = await fetch("/api/deck", { cache: "no-store" });
@@ -761,10 +1036,47 @@ window.addEventListener("resize", () => {
   if (state.snapshot) requestAnimationFrame(fitCardTitles);
 });
 
-Promise.all([loadArtMap(), loadCardNames(), loadCardText(), loadTextMeta(), loadGemMap(), loadGemText(), loadEvolutions()]).then(refresh);
-loadConfig();
-setInterval(refresh, 2000);
-setInterval(loadConfig, 10000);
+async function loadInitialData() {
+  await Promise.all([loadArtMap(), loadCardNames(), loadCardText(), loadTextMeta(), loadGemMap(), loadGemText(), loadEvolutions()]);
+  await loadConfig();
+  await refresh();
+}
+
+async function runStartupSetupFlow() {
+  showStartupSetup({
+    state: "checking",
+    title: "Checking Setup",
+    message: "Preparing Vampire Crawlers Deck Tracker...",
+  });
+  if (els.startupSetupLog) {
+    els.startupSetupLog.hidden = true;
+    els.startupSetupLog.textContent = "";
+  }
+  const result = await window.vampireCrawlers.runStartupSetup();
+  if (!result?.ok) throw new Error(result?.message || "Setup did not finish.");
+  await loadInitialData();
+  setTimeout(hideStartupSetup, 500);
+}
+
+async function bootstrap() {
+  if (window.vampireCrawlers?.runStartupSetup) {
+    try {
+      await runStartupSetupFlow();
+    } catch (error) {
+      showStartupSetup({
+        state: "error",
+        title: "Setup Needs Attention",
+        message: error.message,
+      });
+      await loadInitialData().catch(() => {});
+    }
+  } else {
+    await loadInitialData();
+  }
+
+  setInterval(refresh, 2000);
+  setInterval(loadConfig, 10000);
+}
 
 if (window.vampireCrawlers) {
   els.updatePanel.hidden = false;
@@ -786,12 +1098,36 @@ if (window.vampireCrawlers) {
     }
   });
 
+  window.vampireCrawlers.onSetupProgress((status) => {
+    showStartupSetup(status);
+  });
+
+  els.startupSetupDialog?.addEventListener("cancel", (event) => {
+    event.preventDefault();
+  });
+
+  els.startupSetupRetry?.addEventListener("click", async () => {
+    els.startupSetupRetry.disabled = true;
+    try {
+      await runStartupSetupFlow();
+    } catch (error) {
+      showStartupSetup({
+        state: "error",
+        title: "Setup Needs Attention",
+        message: error.message,
+      });
+    } finally {
+      els.startupSetupRetry.disabled = false;
+    }
+  });
+
   window.vampireCrawlers.onSetupLog((line) => {
     state.setupHiddenThisSession = false;
     els.setupPanel.hidden = false;
     els.setupLog.hidden = false;
     els.setupLog.textContent += line;
     els.setupLog.scrollTop = els.setupLog.scrollHeight;
+    appendStartupSetupLog(line);
   });
 
   async function rebuildLocalDataFromUi() {
@@ -800,13 +1136,7 @@ if (window.vampireCrawlers) {
     els.setupLog.textContent = "";
     try {
       await window.vampireCrawlers.rebuildArtCache();
-      await loadArtMap();
-      await loadCardNames();
-      await loadCardText();
-      await loadTextMeta();
-      await loadGemMap();
-      await loadGemText();
-      await loadConfig();
+      await reloadLocalAssets();
       if (state.snapshot) renderCards(state.snapshot);
     } catch (error) {
       els.setupLog.textContent += `\n${error.message}\n`;
@@ -824,3 +1154,5 @@ if (window.vampireCrawlers) {
 
   els.rebuildArt.addEventListener("click", rebuildLocalDataFromUi);
 }
+
+bootstrap();

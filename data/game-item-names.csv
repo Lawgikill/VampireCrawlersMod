@@ -1,0 +1,203 @@
+kind,id,name
+card,Card_A_0_Bone,Bone
+card,Card_A_0_CherryBomb,Cherry Bomb
+card,Card_A_0_Cross,Cross
+card,Card_A_0_Garlic,Garlic
+card,Card_A_0_GorgeousMoon,Gorgeous Moon
+card,Card_A_0_Knife,Knife
+card,Card_A_0_MagicWand,Magic Wand
+card,Card_A_0_Whip,Whip
+card,Card_A_1_CherryBomb,Cherry Bomb
+card,Card_A_1_FireWand,Fire Wand
+card,Card_A_1_Garlic,Garlic
+card,Card_A_1_GattiAmari,Gatti Amari
+card,Card_A_1_KingBible,King Bible
+card,Card_A_1_MagicWand,Magic Wand
+card,Card_A_1_Runetracer,Runetracer
+card,Card_A_1_SoulEater,Soul Eater
+card,Card_A_2_Axe,Axe
+card,Card_A_2_BloodyTear,Bloody Tear
+card,Card_A_2_Carrello,Carréllo
+card,Card_A_2_CelestialDusting,Celestial Dusting
+card,Card_A_2_Cross,Cross
+card,Card_A_2_EightTheSparrow,Eight The Sparrow
+card,Card_A_2_GlassFandango,Glass Fandango
+card,Card_A_2_HolyWand,Holy Wand
+card,Card_A_2_LightningRing,Lightning Ring
+card,Card_A_2_UnholyVespers,Unholy Vespers
+card,Card_A_2_ValkyrieTurner,Valkyrie Turner
+card,Card_A_2_ViciousHunger,Vicious Hunger
+card,Card_A_3_Axe,Axe
+card,Card_A_3_DeathSpiral,Death Spiral
+card,Card_A_3_HeavenSword,Heaven Sword
+card,Card_A_3_HellFire,Hellfire
+card,Card_A_3_NoFuture,NO FUTURE
+card,Card_A_3_Peachone,Peachone
+card,Card_A_3_PhieraDerTuphello,Phiera Der Tuphello
+card,Card_A_3_SantaWater,Santa Water
+card,Card_A_3_ShadowPinion,Shadow Pinion
+card,Card_A_3_SoulEater,Soul Eater
+card,Card_A_3_ThousandEdge,Thousand Edge
+card,Card_A_3_VentoSacro,Vento Sacro
+card,Card_A_4_EbonyWings,Ebony Wings
+card,Card_A_4_Fuwalafuwaloo,Fuwalafuwaloo
+card,Card_A_4_LaBorra,La Borra
+card,Card_A_4_Pentagram,Pentagram
+card,Card_A_4_PhieraDerTuphello,Phiera Der Tuphello
+card,Card_A_4_Phieraggi,Phieraggi
+card,Card_A_4_Thunderloop,Thunder Loop
+card,Card_A_4_VentoSacro,Vento Sacro
+card,Card_A_5_Peachone,Peachone
+card,Card_A_5_Pentagram,Pentagram
+card,Card_A_5_Vandalier,Vandalier
+card,Card_A_6_EbonyWings,Ebony Wings
+card,Card_B_0_EmptyTome,Empty Tome
+card,Card_B_0_RawMana,Raw Mana
+card,Card_B_1_EmptyTome,Light Tome
+card,Card_B_2_EmptyTome,Weighty Tome
+card,Card_B_3_EmptyTome,Ancient Tome
+card,Card_D_0_Armor,Armor
+card,Card_D_1_Armor,Golden Armor
+card,Card_D_2_Armor,Rainbow Armor
+card,Card_D_3_Armor,Hero's Armor
+card,Card_D_3_ClockLancet,Clock Lancet
+card,Card_D_6_InfiniteCorridor,Infinite Corridor
+card,Card_E_BagOfCoins,Big Coin Bag
+card,Card_E_CloverPetal,Clover Petal
+card,Card_E_CoinPurse,Coin Purse
+card,Card_E_LargeBagOfCoins,Rich Coin Bag
+card,Card_E_LittleClover,Little Clover
+card,Card_E_LittleHeart,Little Heart
+card,Card_E_Orologion,Orologion
+card,Card_E_Rosary,Rosary
+card,Card_E_Vacuum,Vacuum
+card,Card_M_0_RawMana,Raw Mana
+card,Card_M_0_Wings,Wings
+card,Card_M_3_SongOfMana,Song of Mana
+card,Card_M_4_SongOfMana,Song of Mana
+card,Card_M_5_Mannajja,Mannajja
+card,Card_S_0_Candelabrador,Candle
+card,Card_S_0_Crown,Crown
+card,Card_S_0_HollowHeart,Hollow Heart
+card,Card_S_0_Pummarola,Pummarola
+card,Card_S_0_SkullOManic,Skull O'Maniac
+card,Card_S_0_SkullOmanic,Skull O'Maniac
+card,Card_S_0_SpellBinder,Spellbinder
+card,Card_S_0_Spinach,Spinach
+card,Card_S_0_StoneMask,Stone Mask
+card,Card_S_1_Attractorb,Attractorb
+card,Card_S_1_Candelabrador,Candella
+card,Card_S_1_Crown,Crown
+card,Card_S_1_Duplicator,Duplicator
+card,Card_S_1_GoldRing,Gold Ring
+card,Card_S_1_HollowHeart,Hollow Heart
+card,Card_S_1_Pummarola,Pummarola
+card,Card_S_1_SpellBinder,Spellbinder
+card,Card_S_1_Spinach,Spinach
+card,Card_S_1_StoneMask,Stone Mask
+card,Card_S_2_Attractorb,Attractorb
+card,Card_S_2_Bracer,Bracer
+card,Card_S_2_Candelabrador,Candelabrador
+card,Card_S_2_Clover,Clover
+card,Card_S_2_Crown,Crystal Crown
+card,Card_S_2_Duplicator,Du-Duplicator
+card,Card_S_2_HollowHeart,Forever Heart
+card,Card_S_2_Pummarola,Pummadora
+card,Card_S_2_SilverRing,Silver Ring
+card,Card_S_2_Spinach,Sprig o' Spinach
+card,Card_S_2_StoneMask,Stone Mask
+card,Card_S_2_Tirajisu,Tirajisú
+card,Card_S_2_Tiramisu,Tirajisú
+card,Card_W_Bracelet,Bracelet
+card,Card_W_Combo,Friendship Amulet
+card,Card_W_GoldRing,Gold Ring
+card,Card_W_SilverRing,Silver Ring
+card,Card_W_WildDefence,Parm Aegis
+card,Card_W_Wings,Wings
+card,FCC_Ambrojoe,Ambrojoe
+card,FCC_Antonio,Antonio
+card,FCC_Arca,Arca
+card,FCC_Cavallo,Cavallo
+card,FCC_Christine,Christine
+card,FCC_Clerici,Clerici
+card,FCC_Concetta,Concetta
+card,FCC_Divano,Divano
+card,FCC_Dommario,Dommario
+card,FCC_Gallo,Gallo
+card,FCC_Gennaro,Gennaro
+card,FCC_Giovanna,Giovanna
+card,FCC_Imelda,Imelda
+card,FCC_Krochi,Krochi
+card,FCC_Lama,Lama
+card,FCC_Mana,Pasqualina
+card,FCC_ManaDuration,Dommario
+card,FCC_MissingNo,MissingN0
+card,FCC_Mortaccio,Mortaccio
+card,FCC_OSole,O'Sole
+card,FCC_Pasqualina,Pasqualina
+card,FCC_Poe,Poe
+card,FCC_Poppea,Poppea
+card,FCC_Porta,Porta
+card,FCC_Pugnala,Pugnala
+card,FCC_Ramba,Ramba
+card,FCC_Zi'Assunta,Zi'Assunta
+gem,GemConfig_AddType_Armor,Add Type Armor
+gem,GemConfig_AddType_Attack,Add Type Attack
+gem,GemConfig_AddType_Defense,Add Type Defense
+gem,GemConfig_AddType_Mana,Add Type Mana
+gem,GemConfig_AddType_Rainbow,Add Type Rainbow
+gem,GemConfig_AddType_Special,Add Type Special
+gem,GemConfig_Amount,Amount
+gem,GemConfig_Arcane,Arcane
+gem,GemConfig_Area,Area
+gem,GemConfig_Armor,Armor
+gem,GemConfig_Bombard,Bombard
+gem,GemConfig_Boost,Boost
+gem,GemConfig_Calcium,Calcium
+gem,GemConfig_Charge,Charge
+gem,GemConfig_CloneCard,Clone Card
+gem,GemConfig_Demi,Demi
+gem,GemConfig_Destroy,Destroy
+gem,GemConfig_Discharge,Discharge
+gem,GemConfig_DoubleDamage,Double Damage
+gem,GemConfig_Drain,Drain
+gem,GemConfig_Draw,Draw
+gem,GemConfig_Duration,Duration
+gem,GemConfig_Echo,Echo
+gem,GemConfig_Evolve,Evolve
+gem,GemConfig_FreeToPlay,Free To Play
+gem,GemConfig_Hail,Hail
+gem,GemConfig_Heal,Heal
+gem,GemConfig_Jingle,Jingle
+gem,GemConfig_Leader,Leader
+gem,GemConfig_Luck,Luck
+gem,GemConfig_MagicHat,Magic Hat
+gem,GemConfig_Magnetic,Magnetic
+gem,GemConfig_Mana_Minus1,Mana -1
+gem,GemConfig_Mana_Minus2,Mana -2
+gem,GemConfig_Mana_Plus1,Mana +1
+gem,GemConfig_Mana_Plus2,Mana +2
+gem,GemConfig_Midas,Midas
+gem,GemConfig_Might,Might
+gem,GemConfig_Mild,Mild
+gem,GemConfig_Nduja,Nduja
+gem,GemConfig_Plunder,Plunder
+gem,GemConfig_Preserve,Preserve
+gem,GemConfig_Rally,Rally
+gem,GemConfig_Refresh,Refresh
+gem,GemConfig_Remote,Remote
+gem,GemConfig_Retain,Retain
+gem,GemConfig_ReturnToHand,Return To Hand
+gem,GemConfig_ReverseCombo,Reverse Combo
+gem,GemConfig_SetCostType_Wild,Set Cost Type Wild
+gem,GemConfig_SetCostType_XCost,Set Cost Type X Cost
+gem,GemConfig_Slayer,Slayer
+gem,GemConfig_Spike,Spike
+gem,GemConfig_Sprightly,Sprightly
+gem,GemConfig_Steal,Steal
+gem,GemConfig_Swift,Swift
+gem,GemConfig_Thief,Thief
+gem,GemConfig_TripleDamage,Triple Damage
+gem,GemConfig_Uncrackable,Uncrackable
+gem,GemConfig_UpgradeDamage,Upgrade Damage
+gem,GemConfig_YinYang,Yin Yang

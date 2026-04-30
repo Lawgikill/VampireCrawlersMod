@@ -22,6 +22,7 @@
       "XX",
       "Disarm"
     ],
+    "tooltip": "Disarm : High chance of preventing a single enemy attack.",
     "color": "attack"
   },
   "Card_A_0_GorgeousMoon": {
@@ -35,18 +36,12 @@
       "XX",
       "Crit"
     ],
+    "tooltip": "Crit : Has a chance to do multiplied damage.",
     "color": "attack"
   },
   "Card_A_0_MagicWand": {
     "gold": [
       "XX"
-    ],
-    "color": "attack"
-  },
-  "Card_A_0_Pentagram": {
-    "gold": [
-      "Erase XX",
-      "Countdown"
     ],
     "color": "attack"
   },
@@ -73,6 +68,7 @@
       "XX",
       "Disarm"
     ],
+    "tooltip": "Disarm : High chance of preventing a single enemy attack.",
     "color": "attack"
   },
   "Card_A_1_GattiAmari": {
@@ -90,13 +86,6 @@
   "Card_A_1_MagicWand": {
     "gold": [
       "XX"
-    ],
-    "color": "attack"
-  },
-  "Card_A_1_Pentagram": {
-    "gold": [
-      "Erase XX",
-      "Countdown"
     ],
     "color": "attack"
   },
@@ -166,13 +155,6 @@
     ],
     "color": "attack"
   },
-  "Card_A_2_Pentagram": {
-    "gold": [
-      "Erase XX",
-      "Countdown"
-    ],
-    "color": "attack"
-  },
   "Card_A_2_UnholyVespers": {
     "gold": [
       "XX",
@@ -226,13 +208,6 @@
   "Card_A_3_Peachone": {
     "gold": [
       "XX"
-    ],
-    "color": "attack"
-  },
-  "Card_A_3_Pentagram": {
-    "gold": [
-      "Erase XX",
-      "Countdown"
     ],
     "color": "attack"
   },
@@ -466,7 +441,7 @@
     "gold": [
       "XX"
     ],
-    "color": "utility"
+    "color": "buff"
   },
   "Card_M_0_Wings": {
     "color": "utility"
@@ -658,13 +633,13 @@
     "gold": [
       "XX"
     ],
-    "color": "unknown"
+    "color": "support"
   },
   "Card_W_SilverRing": {
     "gold": [
       "XX"
     ],
-    "color": "unknown"
+    "color": "support"
   },
   "Card_W_WildDefence": {
     "gold": [
@@ -793,7 +768,6 @@
   "FCC_ManaDuration": {
     "gold": [
       "XX",
-      "Area",
       "Duration",
       "Z"
     ],
@@ -825,9 +799,8 @@
   },
   "FCC_Pasqualina": {
     "gold": [
-      "XX",
-      "Area",
       "Hand",
+      "XX",
       "Duration",
       "Z"
     ],
@@ -888,11 +861,6 @@
     ],
     "color": "crawler"
   },
-  "GemConfig_Armor": {
-    "gold": [
-      "2"
-    ]
-  },
   "GemConfig_Draw": {
     "gold": [
       "XX"
@@ -938,6 +906,7 @@
       "Yin",
       "Yang",
       "1"
-    ]
+    ],
+    "tooltip": "Yin : Even Mana - Gain 1 Mana. \nYang : Odd Mana - Draw 1 card."
   }
 }

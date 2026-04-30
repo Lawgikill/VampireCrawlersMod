@@ -98,6 +98,18 @@
       </div>
     </dialog>
 
+    <dialog id="startupSetupDialog" class="startup-setup-dialog" aria-labelledby="startupSetupTitle">
+      <div class="startup-setup-modal">
+        <h2 id="startupSetupTitle">Checking Setup</h2>
+        <p id="startupSetupMessage">Preparing Vampire Crawlers Deck Tracker...</p>
+        <div class="startup-progress" aria-hidden="true">
+          <span></span>
+        </div>
+        <pre id="startupSetupLog" hidden></pre>
+        <button id="startupSetupRetry" type="button" hidden>Retry Setup</button>
+      </div>
+    </dialog>
+
     <script src="/app.js"></script>
   </body>
 </html>

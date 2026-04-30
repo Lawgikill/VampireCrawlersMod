@@ -249,6 +249,7 @@ public/assets/evolutions.json
 public/assets/gem-text.json
 public/assets/text-meta.json
 data/display-overrides.csv
+data/game-item-names.csv
 data/evolutions.csv
 resources/live-bridge/BepInEx/plugins/VampireCrawlers.LiveBridge/VampireCrawlers.LiveBridge.dll
 bin/.gitkeep

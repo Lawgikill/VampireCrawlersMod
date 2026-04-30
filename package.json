@@ -1,6 +1,6 @@
 {
   "name": "vampire-crawlers-deck-tracker",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": true,
   "author": "Vampire Crawlers Deck Tracker contributors",
   "description": "Read-only second-screen deck tracker for Vampire Crawlers saves.",
@@ -12,6 +12,7 @@
     "extract-art": "python tools\\extract_art.py --min-size 16",
     "build-card-map": "python tools\\build_card_map.py",
     "build-card-cost-map": "python tools\\build_card_cost_map.py",
+    "build-evolutions": "python tools\\build_evolutions.py",
     "build-text-meta": "python tools\\build_text_meta.py",
     "build-local-data": "python tools\\build_local_data.py",
     "stage-live-bridge": "python tools\\stage_live_bridge_payload.py",

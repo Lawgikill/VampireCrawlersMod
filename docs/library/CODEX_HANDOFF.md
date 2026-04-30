@@ -6,7 +6,7 @@ The current app prefers the live bridge JSON when fresh, falls back to the activ
 
 ## Current State
 
-- Version is currently `1.1.1`.
+- Version is currently `1.1.2`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`
@@ -30,7 +30,7 @@ The current app prefers the live bridge JSON when fresh, falls back to the activ
 - When rebuilding for other users, always build the asset helper first.
 - Do not produce or publish portable builds; the supported release format is the full installer.
 - Upload `latest.yml` with each GitHub Release or installed apps will not see updates.
-- The Local setup panel can be hidden forever via `hideSetupPanel` in config; do not remove the File menu rebuild command.
+- Startup setup now runs automatically in Electron: it prompts only for missing game/save paths, rebuilds missing local art/data, and installs or updates the live bridge behind a blocking progress modal. The Local setup panel can still be hidden forever via `hideSetupPanel` in config; do not remove the File menu rebuild command.
 - Be direct about uncertainty. Earlier we treated card ID numbers as mana costs and that was wrong.
 - Keep generated game art out of the shipped app.
 
@@ -75,19 +75,20 @@ art\*.png
 
 1. `src/main.js` starts Electron and launches the local HTTP server from `server.js`.
 2. `src/config.js` auto-detects game install and save file.
-3. `src/main.js` silently installs/updates the packaged live bridge payload into the configured game folder.
-4. `server.js` reads fresh live bridge JSON on each `/api/deck` request when available; otherwise it falls back to the save file.
-5. `public/app.js` polls `/api/deck` every two seconds.
-6. Art is displayed from a generated local `card-map.json`.
-7. Cost data comes from `card-costs.json`.
-8. Display names come from generated local `card-names.json`.
-9. Card rules text comes from bundled app-owned `public/assets/card-text.json`.
-10. Filled gem slot art comes from generated local `gem-map.json`.
-11. Gem rules text comes from bundled app-owned `public/assets/gem-text.json`.
-12. Display metadata comes from bundled app-owned `public/assets/text-meta.json`.
-13. Evolution cheat sheet data comes from bundled app-owned `public/assets/evolutions.json`.
-14. `Rebuild Local Data` runs a bundled helper exe in packaged builds.
-15. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
+3. `public/app.js` asks the main process to run startup setup through `run-startup-setup`.
+4. Startup setup prompts only for missing game/save paths, rebuilds generated local data if required, and installs/updates the live bridge if the bundled payload differs from the game folder.
+5. `server.js` reads fresh live bridge JSON on each `/api/deck` request when available; otherwise it falls back to the save file.
+6. `public/app.js` polls `/api/deck` every two seconds after setup finishes.
+7. Art is displayed from a generated local `card-map.json`.
+8. Cost data comes from `card-costs.json`.
+9. Display names come from generated local `card-names.json`.
+10. Card rules text comes from bundled app-owned `public/assets/card-text.json`.
+11. Filled gem slot art comes from generated local `gem-map.json`.
+12. Gem rules text comes from bundled app-owned `public/assets/gem-text.json`.
+13. Display metadata comes from bundled app-owned `public/assets/text-meta.json`.
+14. Evolution cheat sheet data comes from bundled app-owned `public/assets/evolutions.json`.
+15. `Rebuild Local Data` runs a bundled helper exe in packaged builds.
+16. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
 
 ## Things That Are Known Fragile
 
@@ -105,11 +106,12 @@ art\*.png
 - Filled gem slots render generated gem sprites and should not show a separate colored backing ring.
 - Evolved cards and base cards can differ. Do not fall back from an evolved `cardId` to `baseId` for cost unless you know it is correct.
 - `Card_M_0_Wings` is a special wild-cost card even though the serialized cost map contains a numeric value.
-- Card/gem rules text, gold highlight tokens, and card color overrides live in `data/display-overrides.csv`. Regenerate local JSON and avoid editing generated JSON as the source of truth.
-- Evolution recipes live in `data/evolutions.csv` and ship through `public/assets/evolutions.json`. The CSV uses `+` for required recipe parts and `|` for alternatives.
+- Game item ID-to-name mapping lives in `data/game-item-names.csv`. Card/gem rules text, optional rules tooltips, gold highlight tokens, and card color overrides live in the name-based `data/display-overrides.csv`. Regenerate local JSON and avoid editing generated JSON as the source of truth.
+- Evolution recipes live in the name-based `data/evolutions.csv` and ship through `public/assets/evolutions.json`. The CSV uses `+` for required recipe parts and `|` for alternatives, and `tools/build_evolutions.py` resolves names through `data/game-item-names.csv`.
+- The evolution chart highlights owned components from the live deck snapshot. Normal first inputs require an open gem slot. Vandalier is special: Peachone and Ebony Wings both highlight if both are present and at least one has an open slot; if both are present but both are gemmed, both use the blocked/orange highlight. Phieraggi uses the same two-weapon rule for Eight The Sparrow and Phiera Der Tuphello; Tirajisú is presence-only.
 - Blank gem text in `data/display-overrides.csv` intentionally hides that gem rule line while keeping the icon visible, currently including `GemConfig_DoubleDamage` and `GemConfig_Evolve`.
 - The packaged app must include `public/assets/card-costs.json`, `public/assets/card-text.json`, `public/assets/evolutions.json`, `public/assets/gem-text.json`, `public/assets/text-meta.json`, and `resources/live-bridge/**`, but must not include extracted PNG art or generated `card-map.json`, `card-names.json`, or `gem-map.json`.
-- App updates carry the live bridge payload. On the next launch, the app silently installs/updates it into the configured Steam game folder. File > Install/Update Live Bridge remains as a manual fallback.
+- App updates carry the live bridge payload. On the next launch, startup setup installs/updates it into the configured Steam game folder when the bundled payload differs. File > Install/Update Live Bridge remains as a manual fallback.
 
 ## Quick Sanity Checks
 
@@ -119,7 +121,7 @@ Use these after cost logic changes:
 node -c server.js
 node -c src\main.js
 node -c public\app.js
-python -m py_compile tools\build_local_data.py tools\extract_art.py tools\build_card_map.py tools\build_card_cost_map.py tools\build_card_name_map.py tools\build_card_text_map.py tools\build_gem_map.py tools\build_gem_text_map.py tools\build_text_meta.py tools\display_overrides.py
+python -m py_compile tools\build_local_data.py tools\extract_art.py tools\build_card_map.py tools\build_card_cost_map.py tools\build_card_name_map.py tools\build_card_text_map.py tools\build_evolutions.py tools\build_gem_map.py tools\build_gem_text_map.py tools\build_text_meta.py tools\display_overrides.py
 ```
 
 Check live save cost behavior:
@@ -153,8 +155,7 @@ Card_B_2_EmptyTome base=2 effective=W gems=GemConfig_SetCostType_Wild
 
 ## Good Next Tasks
 
-- Improve the setup UI so it explains what `Rebuild Local Data` is doing.
-- Add a first-run friendly flow that automatically triggers local data rebuild if art is missing.
 - Add a small diagnostic export/log button.
-- Add tests for mana gem parsing, card cost lookup, and open gem slot display.
+- Add tests for mana gem parsing, card cost lookup, open gem slot display, startup setup, and evolution availability.
+- Consider a visible "waiting for live game data" status when the bridge is installed but no fresh live-state JSON has been emitted yet.
 - The BepInEx IL2CPP live bridge is implemented. Release prep should run `npm run stage-live-bridge`; use `python tools\stage_live_bridge_payload.py --with-bepinex` when a self-contained BepInEx loader payload should be included.

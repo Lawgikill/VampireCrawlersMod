@@ -11,8 +11,9 @@ Responsibilities:
 - Creates the desktop window.
 - Loads/saves config using `src/config.js`.
 - Starts the local HTTP server from `server.js` on a random port in desktop mode.
+- Provides the `run-startup-setup` IPC handler used by the renderer's blocking first-run/update setup modal.
 - Provides the `rebuild-art-cache` IPC handler used by the renderer's **Rebuild Local Data** button.
-- Silently installs/updates the packaged live-bridge payload into the configured game folder on app startup and after game folder selection.
+- Automatically installs/updates the packaged live-bridge payload during startup setup when the configured game folder is known.
 - Provides the File > Install/Update Live Bridge action as a manual fallback.
 - Runs either the bundled local data helper or a Python fallback.
 
@@ -23,8 +24,9 @@ Important functions:
 - `runPython()`
 - `getAssetBuilderPath()`
 - `runLocalDataBuilder()`
+- `runStartupSetup()`
 - `installOrUpdateLiveBridge()`
-- IPC handler: `rebuild-art-cache`
+- IPC handlers: `run-startup-setup`, `rebuild-art-cache`
 
 The bundled helper is expected at one of:
 
@@ -49,11 +51,13 @@ Packaged releases place it at:
 resources\live-bridge\
 ```
 
-On startup, and after a user chooses a game folder, the app silently copies that
-payload into the configured Vampire Crawlers game folder. This means an app
-update can carry a new bridge/BepInEx payload and the next app launch will
-install/update it in the Steam game directory. `File > Install/Update Live
-Bridge` remains as a manual fallback.
+During startup setup, the renderer opens a blocking progress modal and asks the
+main process to verify local readiness. The main process prompts only if the
+game install folder or save file cannot be detected. If generated local data is
+missing or any mapped card/gem art file is missing, setup runs the bundled asset
+builder automatically. If the live bridge payload differs from the game folder,
+setup copies the payload automatically. `File > Install/Update Live Bridge`
+remains as a manual fallback.
 
 ### Config
 
@@ -67,7 +71,11 @@ Responsibilities:
 - Define `generatedDir`, currently `%APPDATA%\VampireCrawlersDeckTracker\generated`.
 - Store `hideSetupPanel`, which hides the Local setup panel by default after the user confirms **Hide Forever**.
 
-The app allows choosing the game install and save file from the File menu. The File menu also exposes **Rebuild Local Data** for rebuilding extracted local art, card cost data, card art mappings, and display names even if the Local setup panel is hidden. Changes are saved, but the current implementation does not restart the server automatically after changing paths.
+The app allows choosing the game install and save file from the File menu. The
+File menu also exposes **Rebuild Local Data** for rebuilding extracted local art,
+card cost data, card art mappings, and display names even if the Local setup
+panel is hidden. Server requests read the current config object, so saved path
+changes are reflected without restarting the local server.
 
 ### HTTP Server
 
@@ -264,22 +272,33 @@ Manual card/gem display overrides live in:
 data/display-overrides.csv
 ```
 
-This CSV is a full editable mapping sheet with:
+Game ID-to-name mapping lives in:
 
 ```text
-kind,id,name,text,gold,color
+data/game-item-names.csv
 ```
 
-The text builders consume `kind`, `id`, and `text`; `name` is there so humans
-can find rows without memorizing IDs. The frontend display metadata is built
-from `gold` and `color`, using pipe-separated highlight tokens such as `XX|Crit` or `Area|XX%`. For
-every row in this CSV, `text` is the source of truth. Blank `text` means
-intentionally show no rules text. Blank `gold` means no gold-highlighted terms.
-For card rows, `color` overrides the frontend card color/type class. Supported
-values are `attack`, `support`, `buff`, `utility`, `crawler`, `defence`, and
-`unknown`; aliases such as `red`, `yellow`, `purple`, `green`, `blue`, and
-`gray` are also accepted by the frontend. Do not add per-card or per-gem
-override dictionaries back into the Python builders.
+`game-item-names.csv` is the mapping layer with `kind,id,name`. It can contain
+multiple IDs for the same display name. `display-overrides.csv` is the
+human-edited, deduplicated name sheet with:
+
+```text
+name,game_text,text,tooltip,gold,color
+```
+
+The text builders expand `name` back to matching game IDs through
+`game-item-names.csv`. `game_text` is comparison/reference text from the current
+game-data decoder; `text` is the app override source of truth. Blank `text`
+means intentionally show no rules text. Blank `gold` means no gold-highlighted
+terms. The frontend display metadata is built from `gold` and `color`, using
+pipe-separated highlight tokens such as `XX|Crit` or `Area|XX%`. For card rows,
+`tooltip` is optional helper copy shown when hovering over the rendered card
+rules text; keep multiple helper entries pipe-separated in the CSV if needed.
+`color` overrides the frontend card color/type class. Supported values are
+`attack`, `support`, `buff`, `utility`, `crawler`, `defence`, and `unknown`;
+aliases such as `red`, `yellow`, `purple`, `green`, `blue`, and `gray` are also
+accepted by the frontend. Do not add per-card or per-gem override dictionaries
+back into the Python builders.
 
 The frontend highlights rule placeholders and selected keywords such as `XX`,
 `XX%`, `Crit`, `Disarm`, `Duration`, `Area`, and `Might` in gold. `Wings` is a
@@ -318,18 +337,40 @@ The app consumes:
 public/assets/evolutions.json
 ```
 
-The CSV uses `+` for required recipe parts and `|` for alternatives inside a
-part. For example:
+The CSV is name-based with:
 
 ```text
-Card_A_0_MagicWand|Card_A_1_MagicWand+Card_B_0_EmptyTome|Card_B_1_EmptyTome|Card_B_2_EmptyTome|Card_B_3_EmptyTome
+input_names,result_name,source_note
 ```
 
-means any listed Magic Wand variant plus any listed Tome variant evolves into
-the row's result card. The frontend renders this as a visual recipe modal using
-existing card art from `card-map.json` and display names from `card-names.json`.
-Keep the CSV human-editable and regenerate/update the JSON whenever recipes are
-changed.
+It uses `+` for required recipe parts and `|` for alternatives inside a part.
+For example:
+
+```text
+Magic Wand + Empty Tome|Light Tome|Weighty Tome|Ancient Tome,Holy Wand,PDF best-match
+```
+
+means Magic Wand plus any listed Tome variant evolves into Holy Wand.
+`tools/build_evolutions.py` expands those names back to representative card IDs
+through `data/game-item-names.csv` and writes `public/assets/evolutions.json`.
+The frontend renders this as a visual recipe modal using existing card art from
+`card-map.json` and display names from `card-names.json`. Keep the CSV
+human-editable and regenerate/update the JSON whenever recipes are changed.
+
+The evolution chart also highlights components from the current deck snapshot.
+For normal evolutions, the first input is the evolving attack card and only
+counts as available if a matching card has an open gem slot for the Evolve gem.
+Later inputs count as available when present. `Card_A_5_Vandalier` is a special
+two-weapon union: if Peachone and Ebony Wings are both present and at least one
+has an open gem slot, both highlight as available; if both are present but both
+are gemmed, both highlight in the blocked/orange state. `Card_A_4_Phieraggi`
+uses the same two-weapon rule for Eight The Sparrow and Phiera Der Tuphello;
+Tirajisú is a normal presence-only input.
+
+The main deck grid uses the same evolution availability rules to show a small
+gold marker on card title bars. A standard single marker means the card is a
+usable evolution component; the paired marker means it belongs to a recipe where
+all required components are currently available.
 
 ## Packaging
 

@@ -3,6 +3,7 @@ const path = require("path");
 const http = require("http");
 const os = require("os");
 const { defaultUserDataDir, loadConfig } = require("./src/config");
+const { getLiveBridgeStatus } = require("./src/liveBridgeInstaller");
 
 const DEFAULT_SAVE_PATH = path.join(
   os.homedir(),
@@ -435,8 +436,6 @@ function startServer(options = {}) {
   const userDataDir = options.userDataDir || defaultUserDataDir();
   const config = options.config || loadConfig(userDataDir);
   const port = Number(options.port ?? process.env.PORT ?? 5177);
-  const savePath = options.savePath || process.env.VC_SAVE_PATH || config.savePath || DEFAULT_SAVE_PATH;
-  const liveStatePath = options.liveStatePath || process.env.VC_LIVE_STATE_PATH || path.join(defaultUserDataDir(), "live-state.json");
   const publicDir = options.publicDir || DEFAULT_PUBLIC_DIR;
   const generatedDir = options.generatedDir || config.generatedDir || path.join(publicDir, "assets");
   const artManifestPath = options.artManifestPath || path.join(generatedDir, "assets", "art-manifest.json");
@@ -455,10 +454,14 @@ function startServer(options = {}) {
   const fallbackGemMapPath = path.join(publicDir, "assets", "gem-map.json");
   const fallbackGemTextPath = path.join(publicDir, "assets", "gem-text.json");
   const fallbackTextMetaPath = path.join(publicDir, "assets", "text-meta.json");
+  const getSavePath = () => options.savePath || process.env.VC_SAVE_PATH || config.savePath || DEFAULT_SAVE_PATH;
+  const getLiveStatePath = () => options.liveStatePath || process.env.VC_LIVE_STATE_PATH || path.join(defaultUserDataDir(), "live-state.json");
 
   const server = http.createServer((req, res) => {
     if (req.url === "/api/deck") {
       try {
+        const savePath = getSavePath();
+        const liveStatePath = getLiveStatePath();
         const cardCosts = readJsonIfExists(
           cardCostsPath,
           readJsonIfExists(fallbackCardCostsPath, {}),
@@ -471,11 +474,14 @@ function startServer(options = {}) {
     }
 
     if (req.url === "/api/config") {
+      const savePath = getSavePath();
+      const liveStatePath = getLiveStatePath();
+      const liveBridgeStatus = getLiveBridgeStatus(config.gameDir, path.resolve(__dirname));
       sendJson(res, 200, {
         ...config,
         savePath,
         hasSave: fs.existsSync(savePath),
-        hasGame: Boolean(config.gameDir && fs.existsSync(config.gameDir)),
+        hasGame: Boolean(config.gameDir && fs.existsSync(path.join(config.gameDir, "Vampire Crawlers_Data", "globalgamemanagers.assets"))),
         hasArt: fs.existsSync(cardMapPath) || fs.existsSync(fallbackCardMapPath),
         hasCardCosts: fs.existsSync(cardCostsPath) || fs.existsSync(fallbackCardCostsPath),
         hasCardNames: fs.existsSync(cardNamesPath) || fs.existsSync(fallbackCardNamesPath),
@@ -484,6 +490,7 @@ function startServer(options = {}) {
         hasGemText: fs.existsSync(gemTextPath) || fs.existsSync(fallbackGemTextPath),
         liveStatePath,
         hasLiveState: fs.existsSync(liveStatePath),
+        liveBridge: liveBridgeStatus,
       });
       return;
     }
@@ -535,8 +542,8 @@ function startServer(options = {}) {
       const address = server.address();
       const url = `http://127.0.0.1:${address.port}`;
       console.log(`Vampire Crawlers deck tracker: ${url}`);
-      console.log(`Reading: ${savePath}`);
-      resolve({ server, url, port: address.port, config, savePath });
+      console.log(`Reading: ${getSavePath()}`);
+      resolve({ server, url, port: address.port, config, savePath: getSavePath() });
     });
   });
 }
