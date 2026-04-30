@@ -72,7 +72,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
 
             var width = 245f;
             var height = 34f;
-            var rect = new Rect(Screen.width - width - 16f, 16f, width, height);
+            var rect = new Rect(Screen.width - width - 16f, Screen.height * 0.78f, width, height);
             GUI.Label(rect, _handManaTotal, _overlayStyle);
         }
         catch (Exception error)

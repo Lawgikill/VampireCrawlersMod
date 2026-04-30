@@ -59,8 +59,8 @@ builder automatically. If the live bridge payload differs from the game folder,
 setup copies the payload automatically. `File > Install/Update Live Bridge`
 remains as a manual fallback.
 
-The live bridge also draws a tiny in-game IMGUI overlay in the upper-right
-corner showing `HAND MANA TOTAL`. This is intentionally narrow in scope: the
+The live bridge also draws a tiny in-game IMGUI overlay in the right-side combat
+UI area showing `HAND MANA TOTAL`. This is intentionally narrow in scope: the
 Electron app remains the main tracker UI, while the plugin provides only a few
 high-value in-game hints.
 

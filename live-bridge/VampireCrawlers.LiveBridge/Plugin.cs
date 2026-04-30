@@ -11,7 +11,7 @@ public sealed class Plugin : BasePlugin
 {
     public const string PluginGuid = "com.vampirecrawlers.decktracker.livebridge";
     public const string PluginName = "Vampire Crawlers Live Bridge";
-    public const string PluginVersion = "0.2.1";
+    public const string PluginVersion = "0.2.2";
     internal static ManualLogSource BridgeLog { get; private set; }
 
     public override void Load()

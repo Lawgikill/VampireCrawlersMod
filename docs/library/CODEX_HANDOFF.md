@@ -6,7 +6,7 @@ The current app prefers the live bridge JSON when fresh, falls back to the activ
 
 ## Current State
 
-- Version is currently `1.1.5`.
+- Version is currently `1.1.6`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`
@@ -93,7 +93,7 @@ art\*.png
 ## Things That Are Known Fragile
 
 - The live bridge is combat-live when BepInEx is installed and the game has active pile models. Save polling is only as real-time as the game's save writes and remains the fallback path.
-- The live bridge plugin also draws a small in-game `HAND MANA TOTAL` overlay in the upper-right corner using Unity IMGUI.
+- The live bridge plugin also draws a small in-game `HAND MANA TOTAL` overlay in the right-side combat UI area using Unity IMGUI.
 - The card art mapping is reverse-engineered from Unity assets and is not perfect for every future card/config.
 - Unity/Odin serialized `CardConfig` data is partially custom; do not assume `read_typetree()` will expose all fields.
 - Card IDs like `Card_A_1_MagicWand` are not reliable for mana cost. MagicWand's true base cost is `0`.
