@@ -6,7 +6,7 @@ The current app prefers the live bridge JSON when fresh, falls back to the activ
 
 ## Current State
 
-- Version is currently `1.1.4`.
+- Version is currently `1.1.5`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`

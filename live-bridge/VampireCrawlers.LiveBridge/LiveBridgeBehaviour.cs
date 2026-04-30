@@ -22,6 +22,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
     private float _nextErrorLogAt;
     private GUIStyle _overlayStyle;
     private string _handManaTotal = "HAND MANA TOTAL: --";
+    private bool _overlayDisabled;
 
     public LiveBridgeBehaviour(IntPtr pointer) : base(pointer)
     {
@@ -51,37 +52,34 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
 
     private void OnGUI()
     {
-        if (_overlayStyle == null)
+        if (_overlayDisabled) return;
+
+        try
         {
-            _overlayStyle = new GUIStyle(GUI.skin.label)
+            if (_overlayStyle == null)
             {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 16,
-                fontStyle = FontStyle.Bold,
-                normal =
+                _overlayStyle = new GUIStyle(GUI.skin.label)
                 {
-                    textColor = new Color(1f, 0.84f, 0.25f, 1f),
-                },
-            };
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 16,
+                    fontStyle = FontStyle.Bold,
+                    normal =
+                    {
+                        textColor = new Color(1f, 0.84f, 0.25f, 1f),
+                    },
+                };
+            }
+
+            var width = 245f;
+            var height = 34f;
+            var rect = new Rect(Screen.width - width - 16f, 16f, width, height);
+            GUI.Label(rect, _handManaTotal, _overlayStyle);
         }
-
-        var width = 245f;
-        var height = 34f;
-        var rect = new Rect(Screen.width - width - 16f, 16f, width, height);
-        var background = new Color(0.02f, 0.03f, 0.025f, 0.78f);
-        var border = new Color(0.9f, 0.68f, 0.25f, 0.95f);
-
-        DrawRect(new Rect(rect.x - 1f, rect.y - 1f, rect.width + 2f, rect.height + 2f), border);
-        DrawRect(rect, background);
-        GUI.Label(rect, _handManaTotal, _overlayStyle);
-    }
-
-    private static void DrawRect(Rect position, Color color)
-    {
-        var previous = GUI.color;
-        GUI.color = color;
-        GUI.DrawTexture(position, Texture2D.whiteTexture);
-        GUI.color = previous;
+        catch (Exception error)
+        {
+            _overlayDisabled = true;
+            Plugin.BridgeLog?.LogWarning($"Live bridge overlay disabled after draw failure: {error}");
+        }
     }
 
     private static LiveState CaptureState()
