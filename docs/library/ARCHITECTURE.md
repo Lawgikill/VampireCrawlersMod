@@ -77,6 +77,9 @@ card cost data, card art mappings, and display names even if the Local setup
 panel is hidden. Server requests read the current config object, so saved path
 changes are reflected without restarting the local server.
 
+The Help menu exposes **Report Bug**, which opens a native dialog directing
+users to report bugs, issues, or questions to `@Lawgikill` on Discord.
+
 ### HTTP Server
 
 File: `server.js`

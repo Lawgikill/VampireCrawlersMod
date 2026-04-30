@@ -164,6 +164,21 @@ function buildMenu() {
         { role: "zoomOut" },
       ],
     },
+    {
+      label: "Help",
+      submenu: [
+        {
+          label: "Report Bug",
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: "info",
+              title: "Report Bug",
+              message: "Please report all bugs, issues, or questions to @Lawgikill on Discord.",
+            });
+          },
+        },
+      ],
+    },
   ];
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
