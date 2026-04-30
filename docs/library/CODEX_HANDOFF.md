@@ -6,7 +6,7 @@ The current app prefers the live bridge JSON when fresh, falls back to the activ
 
 ## Current State
 
-- Version is currently `1.1.6`.
+- Version is currently `1.1.7`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`
@@ -93,7 +93,7 @@ art\*.png
 ## Things That Are Known Fragile
 
 - The live bridge is combat-live when BepInEx is installed and the game has active pile models. Save polling is only as real-time as the game's save writes and remains the fallback path.
-- The live bridge plugin also draws a small in-game `HAND MANA TOTAL` overlay in the right-side combat UI area using Unity IMGUI.
+- The live bridge plugin also draws a small two-line in-game hand-mana overlay near the lower right combat UI area using Unity IMGUI.
 - The card art mapping is reverse-engineered from Unity assets and is not perfect for every future card/config.
 - Unity/Odin serialized `CardConfig` data is partially custom; do not assume `read_typetree()` will expose all fields.
 - Card IDs like `Card_A_1_MagicWand` are not reliable for mana cost. MagicWand's true base cost is `0`.
@@ -109,6 +109,7 @@ art\*.png
 - `Card_M_0_Wings` is a special wild-cost card even though the serialized cost map contains a numeric value.
 - Game item ID-to-name mapping lives in `data/game-item-names.csv`. Card/gem rules text, optional rules tooltips, gold highlight tokens, and card color overrides live in the name-based `data/display-overrides.csv`. Regenerate local JSON and avoid editing generated JSON as the source of truth.
 - Evolution recipes live in the name-based `data/evolutions.csv` and ship through `public/assets/evolutions.json`. The CSV uses `+` for required recipe parts and `|` for alternatives, and `tools/build_evolutions.py` resolves names through `data/game-item-names.csv`.
+- Release prep must regenerate app-owned JSON from CSV before packaging: `tools/build_card_text_map.py`, `tools/build_gem_text_map.py`, `tools/build_text_meta.py`, and `tools/build_evolutions.py`.
 - The evolution chart highlights owned components from the live deck snapshot. Normal first inputs require an open gem slot. Vandalier is special: Peachone and Ebony Wings both highlight if both are present and at least one has an open slot; if both are present but both are gemmed, both use the blocked/orange highlight. Phieraggi uses the same two-weapon rule for Eight The Sparrow and Phiera Der Tuphello; Tirajisú is presence-only.
 - Blank gem text in `data/display-overrides.csv` intentionally hides that gem rule line while keeping the icon visible, currently including `GemConfig_DoubleDamage` and `GemConfig_Evolve`.
 - The packaged app must include `public/assets/card-costs.json`, `public/assets/card-text.json`, `public/assets/evolutions.json`, `public/assets/gem-text.json`, `public/assets/text-meta.json`, and `resources/live-bridge/**`, but must not include extracted PNG art or generated `card-map.json`, `card-names.json`, or `gem-map.json`.

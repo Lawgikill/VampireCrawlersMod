@@ -655,40 +655,50 @@
       "XX",
       "XX%",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Deal XX% more damage when a red card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Arca": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Add XX Mana when a purple card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Cavallo": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Add XX Amount when a yellow card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Christine": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Prevent XX enemies from attacking when a purple card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Clerici": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Heal XX after encounter when a blue card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Concetta": {
@@ -696,64 +706,80 @@
       "XX",
       "Area",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Add XX Area when a red card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Dommario": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Deal XX damage when a purple card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Gallo": {
     "gold": [
       "XX%",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Gain XX% more coins when a wild card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Gennaro": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Deal XX damage when a red card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Giovanna": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Draw XX card when a purple card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Imelda": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Gain XX XP Growth when a yellow card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Krochi": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Add XX Revival when a wild card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Lama": {
     "gold": [
       "XX%",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Deal XX% more damage when a blue card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Mana": {
@@ -761,40 +787,50 @@
       "Hand",
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Increase Hand by XX when a purple card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_ManaDuration": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Deal XX damage when a purple card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_MissingNo": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Draw XX card when a red card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Mortaccio": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Add XX Amount when a blue card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_OSole": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Add XX Luck when a red card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Pasqualina": {
@@ -802,8 +838,10 @@
       "Hand",
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Increase Hand by XX when a purple card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Poe": {
@@ -811,8 +849,10 @@
       "XX",
       "Area",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Draw XX card when a blue card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Poppea": {
@@ -820,8 +860,10 @@
       "Hand",
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Gain XX Duration when a yellow card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Porta": {
@@ -829,8 +871,10 @@
       "XX",
       "Area",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Add XX Mana when a red card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Pugnala": {
@@ -838,16 +882,20 @@
       "XX%",
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Draw XX card when a yellow card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Ramba": {
     "gold": [
       "XX",
       "Duration",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Add XX Amount when a purple card is played. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Zi'Assunta": {
@@ -857,8 +905,10 @@
       "Area",
       "Duration",
       "XX%",
-      "Z"
+      "Z",
+      "Crawler"
     ],
+    "tooltip": "Add XX Area when a red card is played. Gain XX Duration. Deal XX% more damage. \nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "GemConfig_Draw": {

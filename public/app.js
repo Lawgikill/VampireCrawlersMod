@@ -629,6 +629,10 @@ function getRecipeAvailability(recipe, inventory) {
   };
 }
 
+function getRecipeResultStatus(recipe, inventory) {
+  return evolutionEntriesForCardId(recipe.resultId, inventory).length ? "owned" : "";
+}
+
 function markEvolutionCardState(states, cardId, stateValue) {
   const nameKey = normalizeMatchName(cardDisplayName(cardId));
   const keys = [cardId, nameKey].filter(Boolean);
@@ -696,6 +700,7 @@ function renderEvolutionRecipes() {
   els.evolutionRecipes.innerHTML = state.evolutions.length
     ? state.evolutions.map((recipe) => {
       const availability = getRecipeAvailability(recipe, inventory);
+      const resultStatus = getRecipeResultStatus(recipe, inventory);
       return `
       <article class="evolution-recipe${availability.complete ? " is-complete" : ""}${availability.blocked ? " is-blocked" : ""}">
         <div class="recipe-equation recipe-input-count-${recipe.inputs.length}">
@@ -705,7 +710,7 @@ function renderEvolutionRecipes() {
           `).join("")}
           <span class="recipe-operator recipe-operator-equals">=</span>
           <span class="recipe-result">
-            ${renderRecipeOption(recipe.resultId)}
+            ${renderRecipeOption(recipe.resultId, resultStatus)}
           </span>
         </div>
       </article>

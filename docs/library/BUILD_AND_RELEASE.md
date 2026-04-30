@@ -21,6 +21,10 @@ This updates both `package.json` and `package-lock.json`.
 For a distributable Windows release:
 
 ```powershell
+python tools\build_card_text_map.py
+python tools\build_gem_text_map.py
+python tools\build_text_meta.py
+python tools\build_evolutions.py
 python -m pip install pyinstaller UnityPy fmod_toolkit archspec pillow
 npm run build-asset-builder
 dotnet build live-bridge\VampireCrawlers.LiveBridge\VampireCrawlers.LiveBridge.csproj /p:BepInExDir="C:\Program Files (x86)\Steam\steamapps\common\Vampire Crawlers\BepInEx"
@@ -28,13 +32,18 @@ npm run stage-live-bridge
 npm run build:win
 ```
 
-Why two build steps?
+Why these build steps?
 
+- The four Python builders regenerate the app-owned display JSON from the
+  editable CSVs before packaging.
 - `build-asset-builder` creates `bin\vampire-crawlers-asset-builder.exe`.
 - `dotnet build ...VampireCrawlers.LiveBridge.csproj` creates the current live bridge DLL.
 - `stage-live-bridge` stages the current bridge plugin DLL into `resources\live-bridge`.
 - `build:win` packages those helpers into Electron via `extraResources`.
 
+If you skip the CSV-to-JSON builders, changes in `data/display-overrides.csv`,
+`data/game-item-names.csv`, or `data/evolutions.csv` may not be reflected in the
+installed app.
 If you skip `build-asset-builder`, other users without Python installed will fail when pressing `Rebuild Local Data`.
 If you skip the live bridge build after editing `live-bridge/**`, users will receive the previous bridge DLL.
 If you skip `stage-live-bridge`, users will not receive the latest live bridge plugin in the app installer.

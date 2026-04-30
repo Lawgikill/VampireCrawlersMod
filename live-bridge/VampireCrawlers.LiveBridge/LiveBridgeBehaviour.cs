@@ -21,7 +21,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
     private float _nextWriteAt;
     private float _nextErrorLogAt;
     private GUIStyle _overlayStyle;
-    private string _handManaTotal = "HAND MANA TOTAL: --";
+    private string _handManaTotal = "HAND MANA\nTOTAL: --";
     private bool _overlayDisabled;
 
     public LiveBridgeBehaviour(IntPtr pointer) : base(pointer)
@@ -37,7 +37,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
         {
             var state = CaptureState();
             if (state.Piles.Count == 0) return;
-            _handManaTotal = $"HAND MANA TOTAL: {FormatHandManaTotal(state)}";
+            _handManaTotal = $"HAND MANA\nTOTAL: {FormatHandManaTotal(state)}";
 
             Directory.CreateDirectory(Path.GetDirectoryName(OutputPath));
             File.WriteAllText(OutputPath, JsonSerializer.Serialize(state, JsonOptions));
@@ -70,9 +70,9 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
                 };
             }
 
-            var width = 245f;
-            var height = 34f;
-            var rect = new Rect(Screen.width - width - 16f, Screen.height * 0.78f, width, height);
+            var width = 150f;
+            var height = 46f;
+            var rect = new Rect(Screen.width - width - 238f, Screen.height * 0.78f, width, height);
             GUI.Label(rect, _handManaTotal, _overlayStyle);
         }
         catch (Exception error)
