@@ -302,19 +302,55 @@ _crackingConfig.Stage
 
 If cracked/shattered cards still report stage `0`, inspect card view/controller
 objects rather than only `CardModel`; the crack renderer may be view-owned.
+This is now the active diagnostic path. The bridge builds a GUID-keyed map from
+`Nosebleed.Pancake.View.CardView` instances to their owned `CardModel`, then
+adds these fields to each live card:
+
+```text
+CardViewType
+CardViewName
+CardViewDiagnostics
+CardViewComponents
+```
+
+`CardViewDiagnostics` reflects fields/properties whose name or type suggests a
+crack/shatter/break/damage/visual/overlay/stamp role. `CardViewComponents`
+lists matching child components and their enabled/active state. Use these fields
+when a visible crack or shatter appears in-game but `CardCrackStage`,
+`IsBroken`, and `TimesLimitBroken` remain unchanged.
 
 ## Experimental Play-Card Bridge
 
-The app-to-game command channel is currently a diagnostic scaffold, not an
-enabled automation feature. `play-card` commands are written by the Node server
-to `%APPDATA%\VampireCrawlersDeckTracker\command.json`, then consumed by the
+The app-to-game command channel is now confirmed for real card play. `play-card`
+commands are written by the Node server to
+`%APPDATA%\VampireCrawlersDeckTracker\command.json`, then consumed by the
 BepInEx bridge. The bridge matches a hand card by GUID, hand index, or card ID,
-then writes a dry-run result to `command-result.json`.
+then invokes:
 
-Do not implement actual card play by manually removing cards from piles or
-subtracting mana. The correct next step is to use the dry-run candidate list and
-BepInEx logs to identify the game's real play-card/controller method, then call
-that method through the same flow the game UI uses.
+```text
+Nosebleed.Pancake.Models.CardModel.TryPlayCard()
+```
+
+This method was confirmed live through the app: clicking a hand card in the
+tracker plays that exact card in-game. Do not reimplement play by manually
+removing cards from piles or subtracting mana. `TryPlayCard()` is the game's
+entrypoint and should remain the bridge target unless future game updates prove
+otherwise.
+
+The frontend no longer renders a separate `PLAY` button. Instead, the card
+article itself is clickable only for live hand cards. Keyboard activation was
+intentionally removed. The command result remains useful for failures and
+diagnostics:
+
+```text
+InvocationMethod
+InvocationReturnValue
+InvocationError
+```
+
+The app polls `command-result.json` until the matching command ID appears; a
+single delayed/stale result previously left `pendingCommandId` stuck until View
+> Reload.
 
 ## Live Overlay Rendering
 

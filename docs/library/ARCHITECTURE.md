@@ -77,15 +77,18 @@ control work. The app/server writes:
 %APPDATA%\VampireCrawlersDeckTracker\command.json
 ```
 
-The bridge polls this file and writes dry-run results to:
+The bridge polls this file and writes command results to:
 
 ```text
 %APPDATA%\VampireCrawlersDeckTracker\command-result.json
 ```
 
-As of this writing, `play-card` commands are diagnostic only: the bridge matches
-the requested hand card and returns/logs candidate game methods, but does not
-invoke game actions or mutate combat state.
+`play-card` commands now perform real game actions. The frontend sends a
+`play-card` command for the clicked hand card, the bridge matches the live
+`CardModel` by GUID, and the bridge invokes the game's own
+`CardModel.TryPlayCard()` method. The result file records the invoked method,
+return value, and any invocation error. A `dryRun` flag remains available for
+diagnostic commands.
 
 ### Config
 
@@ -139,7 +142,7 @@ Important behavior:
 - Static path resolution checks `public` first, then generated assets for `/assets/...`.
 - Generated assets fill in `/assets/...` paths that are not shipped in `public/`; `public` is checked first.
 - `/api/live-command` accepts experimental bridge commands and writes the command file consumed by the BepInEx plugin.
-- `/api/live-command-result` reads the most recent bridge command result. The current `play-card` flow is a dry-run diagnostic, not real card play.
+- `/api/live-command-result` reads the most recent bridge command result, including the invoked game method and any invocation error for `play-card`.
 
 ### Frontend
 
@@ -158,7 +161,7 @@ Responsibilities:
 - Filter by cost bucket, switch between all cards and cards in hand, and sort the visible card grid.
 - Render generated card rules text and gem rules text inside the card description plate.
 - Render the evolution cheat sheet modal from `public/assets/evolutions.json`.
-- In live-bridge mode, show an experimental **Play** button on hand cards. This sends a dry-run `play-card` command to the bridge and displays the command result/candidate count. It does not currently play cards in-game.
+- In live-bridge mode, cards in hand are clickable. Clicking a hand card sends a real `play-card` command to the bridge. The app keeps success quiet, surfaces errors in the toolbar, and polls the command result until the matching command ID is observed so stale results do not leave the UI latched.
 
 Current default sort:
 
@@ -214,8 +217,11 @@ Each save card can include:
 ```
 
 `IsBroken` and `CardCrackStage` are distinct. `IsBroken` is a gameplay/model
-flag. `CardCrackStage` is intended to capture the visual cracked/shattered card
-state when the live bridge can read it from the runtime object.
+flag. `CardCrackStage` is intended to capture model-owned cracked/shattered
+state when available. Live testing showed the visible crack can still be absent
+from `CardModel`, so the bridge also exports `CardViewType`, `CardViewName`,
+`CardViewDiagnostics`, and `CardViewComponents` from the matching
+`Nosebleed.Pancake.View.CardView` when present.
 
 ## Cost Logic
 

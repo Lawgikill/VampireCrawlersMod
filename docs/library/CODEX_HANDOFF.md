@@ -6,7 +6,7 @@ The current app prefers the live bridge JSON when fresh, falls back to the activ
 
 ## Current State
 
-- Version is currently `1.1.9`.
+- Version is currently `1.1.10`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`
@@ -89,16 +89,16 @@ art\*.png
 14. Evolution cheat sheet data comes from bundled app-owned `public/assets/evolutions.json`.
 15. `Rebuild Local Data` runs a bundled helper exe in packaged builds.
 16. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
-17. In live-bridge mode, the frontend can send experimental dry-run bridge commands through `/api/live-command`.
+17. In live-bridge mode, clicking a hand card sends a `play-card` bridge command through `/api/live-command`.
 18. The BepInEx bridge polls `%APPDATA%\VampireCrawlersDeckTracker\command.json` and writes `%APPDATA%\VampireCrawlersDeckTracker\command-result.json`.
 
 ## Things That Are Known Fragile
 
 - The live bridge is combat-live when BepInEx is installed and the game has active pile models. Save polling is only as real-time as the game's save writes and remains the fallback path.
 - The live bridge plugin also draws a small two-line in-game hand-mana overlay near the lower right combat UI area. IMGUI text worked, but IMGUI backgrounds did not: `GUI.DrawTexture` threw `NotSupportedException`, and `GUI.Label`/`GUI.Box` style backgrounds were not visible. The working overlay is now a `ScreenSpaceOverlay` Unity UI `Canvas` with an opaque `Image` panel and `Text` child, styled to resemble the **End Turn** button.
-- The app-to-game bridge command channel is diagnostic only. `play-card` commands match a live hand card and log/return candidate play-related methods; they do not currently invoke gameplay.
+- The app-to-game bridge command channel is live for card play. `play-card` commands match a live hand card by GUID and invoke `Nosebleed.Pancake.Models.CardModel.TryPlayCard()`. The command result records `InvocationMethod`, `InvocationReturnValue`, and `InvocationError`. Keep `dryRun` support for future diagnostics.
 - `CardGuid` needs to serialize as a real value for command targeting. If it falls back to a type name, use the command result plus hand index only as a temporary diagnostic.
-- Cracked/shattered card visuals appear to be separate from `IsBroken`. The bridge now exports `CardCrackStage` via reflection fallbacks when available; `server.js` already normalizes it as `crackStage`.
+- Cracked/shattered card visuals appear to be separate from `IsBroken`. The bridge exports `CardCrackStage` via model reflection fallbacks when available and now also exports `CardViewType`, `CardViewName`, `CardViewDiagnostics`, and `CardViewComponents` from the matching `CardView` to find view-owned crack/shatter state.
 - The card art mapping is reverse-engineered from Unity assets and is not perfect for every future card/config.
 - Unity/Odin serialized `CardConfig` data is partially custom; do not assume `read_typetree()` will expose all fields.
 - Card IDs like `Card_A_1_MagicWand` are not reliable for mana cost. MagicWand's true base cost is `0`.
@@ -164,7 +164,7 @@ Card_B_2_EmptyTome base=2 effective=W gems=GemConfig_SetCostType_Wild
 ## Good Next Tasks
 
 - Add a small diagnostic export/log button.
-- Use the current dry-run `play-card` command result to identify the real in-game play-card method before enabling any mutating bridge command.
+- Continue investigating cracked/shattered visuals through the new `CardViewDiagnostics` and `CardViewComponents` fields; the first observed cracked Clock Lancet still reported `CardCrackStage: 0` on `CardModel`.
 - Add tests for mana gem parsing, card cost lookup, open gem slot display, startup setup, and evolution availability.
 - Consider a visible "waiting for live game data" status when the bridge is installed but no fresh live-state JSON has been emitted yet.
 - The BepInEx IL2CPP live bridge is implemented. Release prep should run `npm run stage-live-bridge`; use `python tools\stage_live_bridge_payload.py --with-bepinex` when a self-contained BepInEx loader payload should be included.

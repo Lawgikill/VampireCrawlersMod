@@ -110,27 +110,127 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
     {
         var hand = state.Piles.FirstOrDefault((pile) => pile.PileId == "HandPile");
         var matched = FindCommandCard(hand, command);
+        var runtimeCard = FindRuntimeCommandCard(command);
         var candidates = FindPlayCardCandidates();
-        var message = matched == null
-            ? $"No matching hand card found for {command.CardConfigId} at index {command.Index}."
-            : $"Matched {matched.CardConfigId} in hand. Play invocation is not enabled yet; inspect candidates to choose the real game API.";
+        var referenceOwners = runtimeCard == null
+            ? new List<string>()
+            : FindCardReferenceOwners(runtimeCard).Take(80).ToList();
+        var ownerCandidates = FindOwnerCandidateMethods(referenceOwners).Take(120).ToList();
+        var invocation = command.DryRun || runtimeCard == null
+            ? null
+            : TryInvokePlayCard(runtimeCard);
+        var message = BuildPlayCardResultMessage(command, matched, runtimeCard, invocation);
 
         Plugin.BridgeLog?.LogInfo($"Received play-card command for {command.CardConfigId} index={command.Index} guid={command.CardGuid}. {message}");
+        if (runtimeCard != null)
+        {
+            Plugin.BridgeLog?.LogInfo($"Matched runtime card model: {runtimeCard.GetType().FullName} guid={FormatGuidValue(runtimeCard.Guid)} config={runtimeCard.CardConfig?.AssetId}");
+        }
+        if (invocation != null)
+        {
+            Plugin.BridgeLog?.LogInfo($"Play-card invocation: {invocation.Method} ok={invocation.Ok} return={invocation.ReturnValue} error={invocation.Error}");
+        }
         foreach (var candidate in candidates.Take(20))
         {
             Plugin.BridgeLog?.LogInfo($"Play-card candidate: {candidate}");
+        }
+        foreach (var owner in referenceOwners.Take(20))
+        {
+            Plugin.BridgeLog?.LogInfo($"Play-card card owner: {owner}");
+        }
+        foreach (var candidate in ownerCandidates.Take(30))
+        {
+            Plugin.BridgeLog?.LogInfo($"Play-card owner candidate: {candidate}");
         }
 
         return new BridgeCommandResult
         {
             Id = command.Id,
             Type = command.Type,
-            Ok = matched != null,
-            DryRun = true,
+            Ok = invocation?.Ok ?? matched != null,
+            DryRun = command.DryRun,
             Message = message,
             MatchedCard = matched,
             CandidateMethods = candidates,
+            RuntimeCardType = runtimeCard?.GetType().FullName ?? "",
+            RuntimeCardGuid = runtimeCard == null ? "" : FormatGuidValue(runtimeCard.Guid),
+            ReferenceOwners = referenceOwners,
+            OwnerCandidateMethods = ownerCandidates,
+            InvocationMethod = invocation?.Method ?? "",
+            InvocationReturnValue = invocation?.ReturnValue ?? "",
+            InvocationError = invocation?.Error ?? "",
         };
+    }
+
+    private static string BuildPlayCardResultMessage(BridgeCommand command, LiveCard matched, CardModel runtimeCard, PlayCardInvocation invocation)
+    {
+        if (matched == null)
+        {
+            return $"No matching hand card found for {command.CardConfigId} at index {command.Index}.";
+        }
+
+        if (runtimeCard == null)
+        {
+            return $"Matched {matched.CardConfigId} in JSON state, but no runtime CardModel was found.";
+        }
+
+        if (command.DryRun)
+        {
+            return $"Matched {matched.CardConfigId} in hand. Dry run only; no gameplay method invoked.";
+        }
+
+        if (invocation == null)
+        {
+            return $"Matched {matched.CardConfigId} in hand, but no invocation result was produced.";
+        }
+
+        return invocation.Ok
+            ? $"Invoked {invocation.Method} for {matched.CardConfigId}. Return: {invocation.ReturnValue}."
+            : $"Failed to invoke {invocation.Method} for {matched.CardConfigId}: {invocation.Error}";
+    }
+
+    private static PlayCardInvocation TryInvokePlayCard(CardModel runtimeCard)
+    {
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        var method = runtimeCard.GetType().GetMethod("TryPlayCard", flags, null, Type.EmptyTypes, null);
+        if (method == null)
+        {
+            return new PlayCardInvocation
+            {
+                Method = "CardModel.TryPlayCard()",
+                Ok = false,
+                Error = "Method not found on runtime card model.",
+            };
+        }
+
+        try
+        {
+            var result = method.Invoke(runtimeCard, Array.Empty<object>());
+            return new PlayCardInvocation
+            {
+                Method = $"{runtimeCard.GetType().FullName}.TryPlayCard()",
+                Ok = true,
+                ReturnValue = result?.ToString() ?? "void/null",
+            };
+        }
+        catch (TargetInvocationException error)
+        {
+            return new PlayCardInvocation
+            {
+                Method = $"{runtimeCard.GetType().FullName}.TryPlayCard()",
+                Ok = false,
+                Error = error.InnerException?.Message ?? error.Message,
+            };
+        }
+        catch (Exception error)
+        {
+            return new PlayCardInvocation
+            {
+                Method = $"{runtimeCard.GetType().FullName}.TryPlayCard()",
+                Ok = false,
+                Error = error.Message,
+            };
+        }
     }
 
     private static LiveCard FindCommandCard(LivePile hand, BridgeCommand command)
@@ -157,6 +257,47 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
 
         return hand.Cards.FirstOrDefault((card) =>
             string.Equals(card.CardConfigId, command.CardConfigId, StringComparison.Ordinal));
+    }
+
+    private static CardModel FindRuntimeCommandCard(BridgeCommand command)
+    {
+        var handPile = First<HandPileModel>()?.CardPile;
+        if (handPile?._cards == null) return null;
+
+        if (!string.IsNullOrWhiteSpace(command.CardGuid))
+        {
+            for (var index = 0; index < handPile._cards.Count; index++)
+            {
+                var card = handPile._cards[index];
+                if (card == null) continue;
+                if (string.Equals(FormatGuidValue(card.Guid), command.CardGuid, StringComparison.OrdinalIgnoreCase))
+                {
+                    return card;
+                }
+            }
+        }
+
+        if (command.Index >= 0 && command.Index < handPile._cards.Count)
+        {
+            var card = handPile._cards[command.Index];
+            if (card != null
+                && (string.IsNullOrWhiteSpace(command.CardConfigId)
+                    || string.Equals(card.CardConfig?.AssetId, command.CardConfigId, StringComparison.Ordinal)))
+            {
+                return card;
+            }
+        }
+
+        for (var index = 0; index < handPile._cards.Count; index++)
+        {
+            var card = handPile._cards[index];
+            if (card != null && string.Equals(card.CardConfig?.AssetId, command.CardConfigId, StringComparison.Ordinal))
+            {
+                return card;
+            }
+        }
+
+        return null;
     }
 
     private static List<string> FindPlayCardCandidates()
@@ -197,6 +338,162 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             || methodName.Contains("Afford", StringComparison.OrdinalIgnoreCase)
             || methodName.Contains("Move", StringComparison.OrdinalIgnoreCase);
         return hasCardContext && hasActionContext;
+    }
+
+    private static List<string> FindCardReferenceOwners(CardModel targetCard)
+    {
+        var owners = new SortedSet<string>(StringComparer.Ordinal);
+        var targetGuid = FormatGuidValue(targetCard.Guid);
+        var targetConfigId = targetCard.CardConfig?.AssetId ?? "";
+
+        foreach (var component in UnityEngine.Object.FindObjectsOfType<MonoBehaviour>())
+        {
+            if (component == null) continue;
+            var type = component.GetType();
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+            foreach (var field in type.GetFields(flags))
+            {
+                var value = SafeReadField(field, component);
+                if (ContainsCardReference(value, targetCard, targetGuid, targetConfigId))
+                {
+                    owners.Add($"{type.FullName ?? type.Name}.{field.Name}");
+                }
+            }
+
+            foreach (var property in type.GetProperties(flags))
+            {
+                if (property.GetIndexParameters().Length > 0) continue;
+                var value = SafeReadProperty(property, component);
+                if (ContainsCardReference(value, targetCard, targetGuid, targetConfigId))
+                {
+                    owners.Add($"{type.FullName ?? type.Name}.{property.Name}");
+                }
+            }
+        }
+
+        return owners.ToList();
+    }
+
+    private static List<string> FindOwnerCandidateMethods(List<string> referenceOwners)
+    {
+        var ownerTypeNames = referenceOwners
+            .Select((owner) =>
+            {
+                var lastDot = owner.LastIndexOf('.');
+                return lastDot <= 0 ? owner : owner[..lastDot];
+            })
+            .Where((name) => !string.IsNullOrWhiteSpace(name))
+            .ToHashSet(StringComparer.Ordinal);
+        var candidates = new SortedSet<string>(StringComparer.Ordinal);
+
+        foreach (var component in UnityEngine.Object.FindObjectsOfType<MonoBehaviour>())
+        {
+            if (component == null) continue;
+            var type = component.GetType();
+            var typeName = type.FullName ?? type.Name;
+            if (!ownerTypeNames.Contains(typeName)) continue;
+
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+            foreach (var method in type.GetMethods(flags))
+            {
+                if (!LooksLikeOwnerPlayMethod(method.Name)) continue;
+                var parameters = string.Join(", ", method.GetParameters().Select((parameter) =>
+                    $"{parameter.ParameterType.Name} {parameter.Name}"));
+                candidates.Add($"{typeName}.{method.Name}({parameters})");
+            }
+        }
+
+        return candidates.ToList();
+    }
+
+    private static bool LooksLikeOwnerPlayMethod(string methodName)
+    {
+        if (methodName.StartsWith("get_", StringComparison.Ordinal)
+            || methodName.StartsWith("set_", StringComparison.Ordinal)
+            || methodName.StartsWith("add_", StringComparison.Ordinal)
+            || methodName.StartsWith("remove_", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        return methodName.Contains("Play", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Click", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Pointer", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Select", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Submit", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Use", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Cast", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Drag", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Drop", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Press", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Release", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Interact", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Card", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Hand", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool ContainsCardReference(object value, CardModel targetCard, string targetGuid, string targetConfigId)
+    {
+        if (value == null) return false;
+        if (ReferenceEquals(value, targetCard)) return true;
+        if (IsMatchingCardModel(value, targetGuid, targetConfigId)) return true;
+        if (value is string) return false;
+        if (value is not IEnumerable enumerable) return false;
+
+        var checkedItems = 0;
+        foreach (var item in enumerable)
+        {
+            if (item == null) continue;
+            if (ReferenceEquals(item, targetCard) || IsMatchingCardModel(item, targetGuid, targetConfigId))
+            {
+                return true;
+            }
+
+            checkedItems++;
+            if (checkedItems >= 200) return false;
+        }
+
+        return false;
+    }
+
+    private static bool IsMatchingCardModel(object value, string targetGuid, string targetConfigId)
+    {
+        if (value is not CardModel cardModel) return false;
+        var guid = FormatGuidValue(cardModel.Guid);
+        if (!string.IsNullOrWhiteSpace(targetGuid)
+            && string.Equals(guid, targetGuid, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return string.IsNullOrWhiteSpace(targetGuid)
+            && !string.IsNullOrWhiteSpace(targetConfigId)
+            && string.Equals(cardModel.CardConfig?.AssetId, targetConfigId, StringComparison.Ordinal);
+    }
+
+    private static object SafeReadField(FieldInfo field, object owner)
+    {
+        try
+        {
+            return field.GetValue(owner);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static object SafeReadProperty(PropertyInfo property, object owner)
+    {
+        try
+        {
+            return property.GetValue(owner);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static void WriteCommandResult(BridgeCommandResult result)
@@ -345,13 +642,14 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
     private static LiveState CaptureState()
     {
         var best = new LiveState();
+        var visualStates = BuildCardVisualStatesByGuid();
 
-        AddPile(best, "HandPile", First<HandPileModel>()?.CardPile);
-        AddPile(best, "DrawPile", First<DrawPileModel>()?.CardPileModel);
-        AddPile(best, "DiscardPile", First<DiscardPileModel>()?.CardPile);
-        AddPile(best, "ComboPile", First<ComboPileModel>()?.CardPile);
-        AddPile(best, "FccPile", First<FccPileModel>()?.CardPile);
-        AddPile(best, "ThrowingPile", First<ThrowingPileModel>()?.CardPile);
+        AddPile(best, "HandPile", First<HandPileModel>()?.CardPile, visualStates);
+        AddPile(best, "DrawPile", First<DrawPileModel>()?.CardPileModel, visualStates);
+        AddPile(best, "DiscardPile", First<DiscardPileModel>()?.CardPile, visualStates);
+        AddPile(best, "ComboPile", First<ComboPileModel>()?.CardPile, visualStates);
+        AddPile(best, "FccPile", First<FccPileModel>()?.CardPile, visualStates);
+        AddPile(best, "ThrowingPile", First<ThrowingPileModel>()?.CardPile, visualStates);
 
         if (best.Piles.Count > 0)
         {
@@ -366,12 +664,12 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             var typeName = component.GetType().Name;
             if (!LooksLikePileOwner(typeName)) continue;
 
-            AddPile(best, component, "HandPile", "_handPile", "_handPileView", "HandPileView");
-            AddPile(best, component, "DrawPile", "_drawPile", "_drawPileView", "DrawPileView");
-            AddPile(best, component, "DiscardPile", "_discardPile", "_discardPileView", "DiscardPileView");
-            AddPile(best, component, "ComboPile", "_comboPile", "_comboPileView", "ComboPileView");
-            AddPile(best, component, "FccPile", "_fccPile", "_fccPileView", "FccPileView");
-            AddPile(best, component, "ThrowingPile", "_throwingPileModel", "_throwingPileView", "ThrowingPileModel");
+            AddPile(best, component, "HandPile", visualStates, "_handPile", "_handPileView", "HandPileView");
+            AddPile(best, component, "DrawPile", visualStates, "_drawPile", "_drawPileView", "DrawPileView");
+            AddPile(best, component, "DiscardPile", visualStates, "_discardPile", "_discardPileView", "DiscardPileView");
+            AddPile(best, component, "ComboPile", visualStates, "_comboPile", "_comboPileView", "ComboPileView");
+            AddPile(best, component, "FccPile", visualStates, "_fccPile", "_fccPileView", "FccPileView");
+            AddPile(best, component, "ThrowingPile", visualStates, "_throwingPileModel", "_throwingPileView", "ThrowingPileModel");
         }
 
         best.UpdatedAt = DateTimeOffset.UtcNow.ToString("O");
@@ -384,12 +682,12 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
         return items == null || items.Length == 0 ? null : items[0];
     }
 
-    private static void AddPile(LiveState state, string pileId, CardPileModel pile)
+    private static void AddPile(LiveState state, string pileId, CardPileModel pile, Dictionary<string, LiveCardVisualState> visualStates)
     {
         if (pile == null) return;
         if (state.Piles.Any((entry) => entry.PileId == pileId)) return;
 
-        state.Piles.Add(new LivePile(pileId, ReadCards(pile)));
+        state.Piles.Add(new LivePile(pileId, ReadCards(pile, visualStates)));
     }
 
     private static bool LooksLikePileOwner(string typeName)
@@ -400,7 +698,12 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             || typeName.Contains("Run", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void AddPile(LiveState state, object owner, string pileId, params string[] candidateNames)
+    private static void AddPile(
+        LiveState state,
+        object owner,
+        string pileId,
+        Dictionary<string, LiveCardVisualState> visualStates,
+        params string[] candidateNames)
     {
         if (state.Piles.Any((pile) => pile.PileId == pileId)) return;
 
@@ -408,7 +711,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
         {
             var candidate = ReadMember(owner, name);
             var model = UnwrapPileModel(candidate);
-            var cards = ReadCards(model);
+            var cards = ReadCards(model, visualStates);
             if (cards.Count == 0 && !pileId.Equals("HandPile", StringComparison.Ordinal)) continue;
 
             state.Piles.Add(new LivePile(pileId, cards));
@@ -427,14 +730,134 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             ?? value;
     }
 
-    private static List<LiveCard> ReadCards(object pile)
+    private static Dictionary<string, LiveCardVisualState> BuildCardVisualStatesByGuid()
+    {
+        var visualStates = new Dictionary<string, LiveCardVisualState>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var component in UnityEngine.Object.FindObjectsOfType<MonoBehaviour>())
+        {
+            if (component == null) continue;
+            var typeName = component.GetType().FullName ?? component.GetType().Name;
+            if (!typeName.Contains("CardView", StringComparison.OrdinalIgnoreCase)) continue;
+
+            var cardModel = ReadMember(component, "CardModel") as CardModel
+                ?? ReadMember(component, "_cardModel") as CardModel
+                ?? ReadMember(component, "cardModel") as CardModel;
+            if (cardModel == null) continue;
+
+            var guid = FormatGuidValue(cardModel.Guid);
+            if (string.IsNullOrWhiteSpace(guid)) continue;
+
+            visualStates[guid] = InspectCardView(component);
+        }
+
+        return visualStates;
+    }
+
+    private static LiveCardVisualState InspectCardView(MonoBehaviour cardView)
+    {
+        var visualState = new LiveCardVisualState
+        {
+            CardViewType = cardView.GetType().FullName ?? cardView.GetType().Name,
+            CardViewName = ReadUnityName(cardView) ?? "",
+        };
+
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        foreach (var field in cardView.GetType().GetFields(flags))
+        {
+            if (!LooksLikeVisualDiagnostic(field.Name, field.FieldType.Name)) continue;
+            var value = SafeReadField(field, cardView);
+            AddDiagnostic(visualState.Diagnostics, field.Name, value);
+        }
+
+        foreach (var property in cardView.GetType().GetProperties(flags))
+        {
+            if (property.GetIndexParameters().Length > 0) continue;
+            if (!LooksLikeVisualDiagnostic(property.Name, property.PropertyType.Name)) continue;
+            var value = SafeReadProperty(property, cardView);
+            AddDiagnostic(visualState.Diagnostics, property.Name, value);
+        }
+
+        foreach (var child in cardView.GetComponentsInChildren<UnityEngine.Component>(true))
+        {
+            if (child == null) continue;
+            var typeName = child.GetType().FullName ?? child.GetType().Name;
+            var objectName = ReadUnityName(child) ?? "";
+            if (!LooksLikeVisualDiagnostic(objectName, typeName)) continue;
+
+            var active = child.gameObject == null
+                ? ""
+                : $" activeSelf={child.gameObject.activeSelf} activeInHierarchy={child.gameObject.activeInHierarchy}";
+            var enabled = child is Behaviour behaviour ? $" enabled={behaviour.enabled}" : "";
+            visualState.Components.Add($"{typeName} name={objectName}{enabled}{active}");
+            if (visualState.Components.Count >= 40) break;
+        }
+
+        return visualState;
+    }
+
+    private static bool LooksLikeVisualDiagnostic(string name, string typeName)
+    {
+        var combined = $"{name} {typeName}";
+        return combined.Contains("crack", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("shatter", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("break", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("broken", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("damage", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("visual", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("overlay", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("stamp", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AddDiagnostic(Dictionary<string, string> diagnostics, string key, object value)
+    {
+        if (diagnostics.Count >= 80 || diagnostics.ContainsKey(key)) return;
+        diagnostics[key] = FormatDiagnosticValue(value);
+    }
+
+    private static string FormatDiagnosticValue(object value)
+    {
+        if (value == null) return "null";
+        if (value is string text) return text;
+        if (value is bool or byte or sbyte or short or ushort or int or uint or long or ulong or float or double or decimal)
+        {
+            return value.ToString();
+        }
+
+        var type = value.GetType();
+        if (type.IsEnum) return value.ToString();
+
+        if (value is GameObject gameObject)
+        {
+            return $"{type.FullName} name={gameObject.name} activeSelf={gameObject.activeSelf} activeInHierarchy={gameObject.activeInHierarchy}";
+        }
+
+        if (value is Behaviour behaviour)
+        {
+            return $"{type.FullName} name={behaviour.name} enabled={behaviour.enabled} activeSelf={behaviour.gameObject.activeSelf} activeInHierarchy={behaviour.gameObject.activeInHierarchy}";
+        }
+
+        if (value is UnityEngine.Component component)
+        {
+            return $"{type.FullName} name={component.name} activeSelf={component.gameObject.activeSelf} activeInHierarchy={component.gameObject.activeInHierarchy}";
+        }
+
+        if (value is UnityEngine.Object unityObject)
+        {
+            return $"{type.FullName} name={unityObject.name}";
+        }
+
+        return value.ToString();
+    }
+
+    private static List<LiveCard> ReadCards(object pile, Dictionary<string, LiveCardVisualState> visualStates)
     {
         if (pile is CardPileModel cardPileModel)
         {
             var typedCards = new List<LiveCard>();
             for (var index = 0; index < cardPileModel._cards.Count; index++)
             {
-                typedCards.Add(ReadCard(cardPileModel._cards[index]));
+                typedCards.Add(ReadCard(cardPileModel._cards[index], visualStates));
             }
             return typedCards;
         }
@@ -450,14 +873,14 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
 
         foreach (var item in enumerable)
         {
-            var card = ReadCard(item);
+            var card = ReadCard(item, visualStates);
             if (!string.IsNullOrWhiteSpace(card.CardConfigId)) cards.Add(card);
         }
 
         return cards;
     }
 
-    private static LiveCard ReadCard(object value)
+    private static LiveCard ReadCard(object value, Dictionary<string, LiveCardVisualState> visualStates)
     {
         if (value is CardModel cardModel)
         {
@@ -476,6 +899,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
                 GemIds = ReadGemIds(cardModel),
             };
             card.Cost = GetEffectiveCostLabel(cardModel, card);
+            AttachVisualState(card, visualStates);
             return card;
         }
 
@@ -513,7 +937,24 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             GemIds = ReadGemIds(value),
         };
         fallbackCard.Cost = GetEffectiveCostLabel(value, fallbackCard);
+        AttachVisualState(fallbackCard, visualStates);
         return fallbackCard;
+    }
+
+    private static void AttachVisualState(LiveCard card, Dictionary<string, LiveCardVisualState> visualStates)
+    {
+        if (card == null
+            || visualStates == null
+            || string.IsNullOrWhiteSpace(card.CardGuid)
+            || !visualStates.TryGetValue(card.CardGuid, out var visualState))
+        {
+            return;
+        }
+
+        card.CardViewType = visualState.CardViewType;
+        card.CardViewName = visualState.CardViewName;
+        card.CardViewDiagnostics = visualState.Diagnostics;
+        card.CardViewComponents = visualState.Components;
     }
 
     private static string FormatHandManaTotal(LiveState state)
@@ -766,17 +1207,38 @@ public sealed class LiveCard
     public int TimesLimitBroken { get; set; }
     public int CardCrackStage { get; set; }
     public List<string> GemIds { get; set; } = new();
+    public string CardViewType { get; set; } = "";
+    public string CardViewName { get; set; } = "";
+    public Dictionary<string, string> CardViewDiagnostics { get; set; } = new();
+    public List<string> CardViewComponents { get; set; } = new();
+}
+
+public sealed class LiveCardVisualState
+{
+    public string CardViewType { get; set; } = "";
+    public string CardViewName { get; set; } = "";
+    public Dictionary<string, string> Diagnostics { get; set; } = new();
+    public List<string> Components { get; set; } = new();
 }
 
 public sealed class BridgeCommand
 {
     public string Id { get; set; } = "";
     public string Type { get; set; } = "";
+    public bool DryRun { get; set; }
     public string CardGuid { get; set; } = "";
     public string CardConfigId { get; set; } = "";
     public string PileId { get; set; } = "";
     public int Index { get; set; } = -1;
     public string IssuedAt { get; set; } = "";
+}
+
+public sealed class PlayCardInvocation
+{
+    public string Method { get; set; } = "";
+    public bool Ok { get; set; }
+    public string ReturnValue { get; set; } = "";
+    public string Error { get; set; } = "";
 }
 
 public sealed class BridgeCommandResult
@@ -789,4 +1251,11 @@ public sealed class BridgeCommandResult
     public string UpdatedAt { get; set; } = "";
     public LiveCard MatchedCard { get; set; }
     public List<string> CandidateMethods { get; set; } = new();
+    public string RuntimeCardType { get; set; } = "";
+    public string RuntimeCardGuid { get; set; } = "";
+    public List<string> ReferenceOwners { get; set; } = new();
+    public List<string> OwnerCandidateMethods { get; set; } = new();
+    public string InvocationMethod { get; set; } = "";
+    public string InvocationReturnValue { get; set; } = "";
+    public string InvocationError { get; set; } = "";
 }

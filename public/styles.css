@@ -935,6 +935,20 @@ button:disabled {
     inset 0 -16px 34px rgba(0, 0, 0, 0.16);
 }
 
+.playable-card {
+  cursor: pointer;
+}
+
+.playable-card:hover {
+  border-color: color-mix(in srgb, var(--card-edge, var(--line)), #ffffff 45%);
+  filter: brightness(1.04);
+}
+
+.playable-card.is-command-pending {
+  cursor: wait;
+  opacity: 0.82;
+}
+
 .card-type-attack {
   --card-base: #a71713;
   --card-edge: #f0b35a;
@@ -1007,33 +1021,6 @@ button:disabled {
   text-shadow:
     1px 1px 0 rgba(0, 0, 0, 0.9),
     0 0 4px rgba(0, 0, 0, 0.55);
-}
-
-.card-play-command {
-  flex: 0 0 auto;
-  min-width: 40px;
-  min-height: 22px;
-  margin-left: 6px;
-  border-color: rgba(255, 236, 161, 0.85);
-  border-radius: 4px;
-  background: #101412;
-  color: #ffe98c;
-  padding: 0 7px;
-  font-size: 10px;
-  font-weight: 900;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.card-play-command:hover,
-.card-play-command:focus-visible {
-  border-color: #fff2ac;
-  filter: brightness(1.12);
-}
-
-.card-play-command:disabled {
-  cursor: wait;
-  opacity: 0.55;
 }
 
 .card-title.has-evolution-marker {

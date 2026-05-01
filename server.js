@@ -509,6 +509,7 @@ function startServer(options = {}) {
         const command = {
           id: body.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
           type: body.type || "play-card",
+          dryRun: Boolean(body.dryRun),
           cardGuid: body.cardGuid || "",
           cardConfigId: body.cardConfigId || "",
           pileId: body.pileId || "",

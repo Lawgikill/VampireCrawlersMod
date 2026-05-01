@@ -13,6 +13,7 @@ const state = {
   cardViewMode: "all",
   config: null,
   pendingCommandId: "",
+  pendingCommandStartedAt: 0,
   setupHiddenThisSession: false,
 };
 
@@ -801,18 +802,17 @@ function renderCards(snapshot) {
       const rulesTooltipAttrs = rulesTooltipTitle ? ` title="${escapeHtml(rulesTooltipTitle)}"` : "";
       const rulesTooltipElement = rulesTooltipHtml ? `<span class="card-rules-tooltip">${rulesTooltipHtml}</span>` : "";
       const canSendLiveCommand = snapshot.liveStateActive && card.pileId === "HandPile";
-      const playButton = canSendLiveCommand
-        ? `<button class="card-play-command" type="button" data-live-command="play-card" data-card-id="${escapeHtml(card.cardId)}" data-card-guid="${escapeHtml(card.guid)}" data-pile-id="${escapeHtml(card.pileId)}" data-card-index="${card.index}" title="Experimental: inspect play-card bridge">Play</button>`
+      const commandAttrs = canSendLiveCommand
+        ? ` data-live-command="play-card" data-card-id="${escapeHtml(card.cardId)}" data-card-guid="${escapeHtml(card.guid)}" data-pile-id="${escapeHtml(card.pileId)}" data-card-index="${card.index}" title="Play ${escapeHtml(cardDisplayName(card.cardId))}"`
         : "";
 
       return `
-        <article class="card-row ${cardTypeClass(card)}">
+        <article class="card-row ${cardTypeClass(card)}${canSendLiveCommand ? " playable-card" : ""}"${commandAttrs}>
           <div class="${cardTitleClass}">
             ${renderManaCost(card.cost)}
             ${renderGemSlots(card)}
             ${evolutionMarker}
             <span class="card-name">${escapeHtml(cardDisplayName(card.cardId))}</span>
-            ${playButton}
           </div>
           ${artPath ? `<img class="card-art" src="/${artPath}" alt="">` : ""}
           ${hasDescription ? `<p class="${descriptionClass}"${rulesTooltipAttrs}><span>${rulesTextHtml}${gemRulesHtml ? `<span class="gem-rules">${gemRulesHtml}</span>` : ""}</span>${rulesTooltipElement}</p>` : ""}
@@ -825,18 +825,32 @@ function renderCards(snapshot) {
   requestAnimationFrame(fitCardTitles);
 }
 
+function clearPendingPlayCommand() {
+  els.cards.querySelectorAll(".is-command-pending").forEach((card) => {
+    card.classList.remove("is-command-pending");
+    card.removeAttribute("aria-disabled");
+  });
+  state.pendingCommandId = "";
+  state.pendingCommandStartedAt = 0;
+}
+
 async function sendPlayCardCommand(button) {
   const command = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     type: button.dataset.liveCommand || "play-card",
+    dryRun: false,
     cardGuid: button.dataset.cardGuid || "",
     cardConfigId: button.dataset.cardId || "",
     pileId: button.dataset.pileId || "",
     index: Number(button.dataset.cardIndex),
   };
+  if (state.pendingCommandId) return;
+
   state.pendingCommandId = command.id;
-  els.commandStatus.textContent = `Sent ${cardDisplayName(command.cardConfigId)} command`;
-  button.disabled = true;
+  state.pendingCommandStartedAt = Date.now();
+  els.commandStatus.textContent = "";
+  button.classList.add("is-command-pending");
+  button.setAttribute("aria-disabled", "true");
 
   try {
     const response = await fetch("/api/live-command", {
@@ -846,10 +860,10 @@ async function sendPlayCardCommand(button) {
     });
     const result = await response.json();
     if (!response.ok || !result.ok) throw new Error(result.error || "Command was not accepted.");
-    setTimeout(checkLiveCommandResult, 700);
+    setTimeout(checkLiveCommandResult, 350);
   } catch (error) {
     els.commandStatus.textContent = error.message;
-    button.disabled = false;
+    clearPendingPlayCommand();
   }
 }
 
@@ -859,16 +873,30 @@ async function checkLiveCommandResult() {
   try {
     const response = await fetch("/api/live-command-result", { cache: "no-store" });
     const result = await response.json();
-    if (result.Id && result.Id !== state.pendingCommandId) return;
+    if (!result.Id || result.Id !== state.pendingCommandId) {
+      if (Date.now() - state.pendingCommandStartedAt < 5000) {
+        setTimeout(checkLiveCommandResult, 250);
+        return;
+      }
 
-    const candidates = Array.isArray(result.CandidateMethods) ? result.CandidateMethods.length : 0;
-    els.commandStatus.textContent = result.Message
-      ? `${result.DryRun ? "Dry run: " : ""}${result.Message}${candidates ? ` (${candidates} candidates)` : ""}`
-      : "Command result received.";
+      els.commandStatus.textContent = "Bridge did not confirm the card command.";
+      clearPendingPlayCommand();
+      return;
+    }
+
+    els.commandStatus.textContent = result.Ok && !result.InvocationError
+      ? ""
+      : result.Message || result.InvocationError || "Command failed.";
     console.info("Live bridge command result", result);
-    state.pendingCommandId = "";
+    clearPendingPlayCommand();
   } catch (error) {
+    if (Date.now() - state.pendingCommandStartedAt < 5000) {
+      setTimeout(checkLiveCommandResult, 500);
+      return;
+    }
+
     els.commandStatus.textContent = error.message;
+    clearPendingPlayCommand();
   }
 }
 
@@ -1070,9 +1098,9 @@ els.clearCostFilter.addEventListener("click", () => {
 });
 
 els.cards.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-live-command]");
-  if (!button || !els.cards.contains(button) || button.disabled) return;
-  sendPlayCardCommand(button);
+  const card = event.target.closest("[data-live-command]");
+  if (!card || !els.cards.contains(card) || card.getAttribute("aria-disabled") === "true") return;
+  sendPlayCardCommand(card);
 });
 
 els.evolutionsButton.addEventListener("click", () => {
