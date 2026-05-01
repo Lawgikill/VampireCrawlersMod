@@ -786,9 +786,38 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
         CachedUiManaText = null;
         CachedManaTextDiagnostics.Clear();
 
+        if (TryFindDisplayedManaText<TMP_Text>(UnityEngine.Object.FindObjectsOfType<TMP_Text>(), "TMP")
+            || TryFindDisplayedManaText<Text>(UnityEngine.Object.FindObjectsOfType<Text>(), "UI"))
+        {
+            state.DisplayedMana = CachedDisplayedMana;
+            if (CachedDisplayedMana != null) state.CurrentMana = CachedDisplayedMana;
+            if (EnableVerboseDiagnostics)
+            {
+                foreach (var entry in CachedManaTextDiagnostics)
+                {
+                    state.ManaDiagnostics[entry.Key] = entry.Value;
+                }
+            }
+
+            return;
+        }
+
         var candidates = 0;
         ScanTextComponents<TMP_Text>(UnityEngine.Object.FindObjectsOfType<TMP_Text>(), "TMP", ref candidates);
         ScanTextComponents<Text>(UnityEngine.Object.FindObjectsOfType<Text>(), "UI", ref candidates);
+
+        bool TryFindDisplayedManaText<T>(IEnumerable<T> components, string source) where T : UnityEngine.Component
+        {
+            if (components == null) return false;
+
+            foreach (var component in components)
+            {
+                if (!TryCaptureDisplayedManaFromTextComponent(component, source, "DisplayedMana.Direct")) continue;
+                return true;
+            }
+
+            return false;
+        }
 
         void ScanTextComponents<T>(IEnumerable<T> components, string source, ref int candidateCount) where T : UnityEngine.Component
         {
@@ -804,20 +833,15 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
                 if (!LooksLikeManaTextValue(text)) continue;
 
                 candidateCount++;
-                if (candidateCount > 80) return;
+                if (candidateCount > 200) return;
 
                 var objectPath = BuildTransformPath(component.transform, 8);
                 var key = $"ActiveText[{candidateCount}]";
                 var line = $"{source}:{component.GetType().FullName ?? component.GetType().Name}:{objectPath} text={text}{FormatRectTransform(component.transform)}";
                 if (EnableVerboseDiagnostics) CachedManaTextDiagnostics[key] = line;
 
-                if (int.TryParse(text, out var parsedMana)
-                    && LooksLikeDisplayedManaTextPath(objectPath))
+                if (TryCaptureDisplayedManaFromTextComponent(component, source, "DisplayedMana.Resolved"))
                 {
-                    CachedDisplayedMana = parsedMana;
-                    if (component is TMP_Text tmpText) CachedManaText = tmpText;
-                    if (component is Text uiText) CachedUiManaText = uiText;
-                    if (EnableVerboseDiagnostics) CachedManaTextDiagnostics["DisplayedMana.Resolved"] = line;
                     break;
                 }
             }
@@ -832,6 +856,30 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
                 state.ManaDiagnostics[entry.Key] = entry.Value;
             }
         }
+    }
+
+    private static bool TryCaptureDisplayedManaFromTextComponent(UnityEngine.Component component, string source, string diagnosticKey)
+    {
+        if (component == null || component.gameObject == null || !component.gameObject.activeInHierarchy) return false;
+        if (component is Behaviour behaviour && !behaviour.enabled) return false;
+        if (IsLiveBridgeObject(component.transform)) return false;
+
+        var text = ReadTextLikeValue(component).Trim();
+        if (!int.TryParse(text, out var parsedMana)) return false;
+
+        var objectPath = BuildTransformPath(component.transform, 12);
+        if (!LooksLikeDisplayedManaTextPath(objectPath, component.transform)) return false;
+
+        CachedDisplayedMana = parsedMana;
+        if (component is TMP_Text tmpText) CachedManaText = tmpText;
+        if (component is Text uiText) CachedUiManaText = uiText;
+        if (EnableVerboseDiagnostics)
+        {
+            CachedManaTextDiagnostics[diagnosticKey] =
+                $"{source}:{component.GetType().FullName ?? component.GetType().Name}:{objectPath} text={text}{FormatRectTransform(component.transform)}";
+        }
+
+        return true;
     }
 
     private static bool TryReadCachedManaText(out int mana)
@@ -877,11 +925,30 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
         return text.Equals("W", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool LooksLikeDisplayedManaTextPath(string path)
+    private static bool LooksLikeDisplayedManaTextPath(string path, Transform transform)
     {
-        return path.Contains("_manaDisplay", StringComparison.OrdinalIgnoreCase)
-            && path.Contains("ManaOrb", StringComparison.OrdinalIgnoreCase)
-            && path.Contains("_manaCountText", StringComparison.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(path)) return false;
+
+        var hasManaCountText = path.Contains("_manaCountText", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("manaCountText", StringComparison.OrdinalIgnoreCase)
+            || TransformAncestryContains(transform, "manaCountText");
+        if (!hasManaCountText) return false;
+
+        return path.Contains("ManaOrb", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("_manaDisplay", StringComparison.OrdinalIgnoreCase)
+            || TransformAncestryContains(transform, "ManaOrb")
+            || TransformAncestryContains(transform, "_manaDisplay");
+    }
+
+    private static bool TransformAncestryContains(Transform transform, string value)
+    {
+        while (transform != null)
+        {
+            if ((transform.name ?? "").Contains(value, StringComparison.OrdinalIgnoreCase)) return true;
+            transform = transform.parent;
+        }
+
+        return false;
     }
 
     private static bool IsLiveBridgeObject(Transform transform)

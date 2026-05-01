@@ -11,7 +11,7 @@ BRIDGE_DLL = (
     / "live-bridge"
     / "VampireCrawlers.LiveBridge"
     / "bin"
-    / "Debug"
+    / "Release"
     / "net6.0"
     / "VampireCrawlers.LiveBridge.dll"
 )
