@@ -62,14 +62,14 @@ Little Clover,Increase Luck.,Increase Luck.,,,unknown
 Little Heart,Heal XX HP. Heals HP.,Heal XX HP. Heals HP.,,XX,unknown
 Orologion,Deal XX damage. Freeze the front row.,Deal XX damage. Freeze the front row.,,XX,unknown
 Rosary,Deal massive damage to the front row.,Deal massive damage to the front row.,,,unknown
-Vacuum,Draw XX card. Coin Purse.,Draw XX card. Coin Purse.,,XX,unknown
+Vacuum,Draw XX card. Coin Purse.,Draw XX cards. Destroy.,Destroy : Card burns up on use.\nWild : Combo with any cards.,XX|Destroy|Wild,unknown
 Wings,Reduce Mana cost of next card played by 1.,Reduce Mana cost\nof next card played\nby 1.,,,utility
 Song of Mana,Deal XX damage. Attack all enemies with a wave of mana. Create a {db.Cards.Card_B_0_RawMana.Name} card.,Deal XX damage to multiple enemies.\nRaw Mana.,Raw Mana : Chance to add 2 mana cards to your Hand.,XX|Raw Mana,utility
 Mannajja,Deal XX damage. Attack all enemies with a wave of mana. Create multiple {db.Cards.Card_B_0_RawMana.Name} cards.,Deal XX damage to multiple enemies.\nRaw Mana.,Raw Mana : Chance to add 2 mana cards to your Hand.,XX|Raw Mana,utility
 Candle,Increase area by XX. Projectiles hit additional times.,Area : Attacks deal XX% splash damage.,,Area|XX%,support
 Crown,Gain additional XP.,Gain additional XP.,,,support
 Hollow Heart,Increase Max Health.,Increase Max Health.,,,support
-Pummarola,Heals after Battle.,Heals after Battle.,,,support
+Pummarola,Heals after Battle.,Recovery : Heal XX after encounter.,,Recovery|XX,defence
 Skull O'Maniac,Gain XX Curse. Increase enemy damage.,Gain XX Curse. Increase enemy damage.,,XX,support
 Spellbinder,Increase duration by XX. How many abilities trigger before leaving.,Duration : Crawlers trigger XX more abilities before leaving.,,Duration|XX,support
 Spinach,Increase damage.,Might : Deal XX% more damage.,,Might|XX%,support

@@ -449,8 +449,11 @@
   },
   "Card_E_Vacuum": {
     "gold": [
-      "XX"
+      "XX",
+      "Destroy",
+      "Wild"
     ],
+    "tooltip": "Destroy : Card burns up on use.\nWild : Combo with any cards.",
     "color": "unknown"
   },
   "Card_M_0_RawMana": {
@@ -500,7 +503,11 @@
     "color": "support"
   },
   "Card_S_0_Pummarola": {
-    "color": "support"
+    "gold": [
+      "Recovery",
+      "XX"
+    ],
+    "color": "defence"
   },
   "Card_S_0_SkullOManic": {
     "gold": [
@@ -560,7 +567,11 @@
     "color": "support"
   },
   "Card_S_1_Pummarola": {
-    "color": "support"
+    "gold": [
+      "Recovery",
+      "XX"
+    ],
+    "color": "defence"
   },
   "Card_S_1_SpellBinder": {
     "gold": [

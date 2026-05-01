@@ -162,6 +162,8 @@ Responsibilities:
 - Render generated card rules text and gem rules text inside the card description plate.
 - Render the evolution cheat sheet modal from `public/assets/evolutions.json`.
 - In live-bridge mode, cards in hand are clickable. Clicking a hand card sends a real `play-card` command to the bridge. The app keeps success quiet, surfaces errors in the toolbar, and polls the command result until the matching command ID is observed so stale results do not leave the UI latched.
+- In live-bridge mode, the app also displays `CURRENT MANA` from the bridge's promoted `CurrentMana` field. The bridge obtains this from the visible mana orb text at `_manaDisplay oldschool (plinth)/oldschool (angel)/ManaOrb/_manaFiller/_manaCountText`, not from `PlayerModel.CachedMana`, which was observed to report stale or zero values.
+- Combo mana-cost highlighting and cracked/shattered overlays are latched in the frontend until the unique set of cards in hand changes. This smooths over the game's visual/text signals flickering between bridge captures while still clearing the state when cards are played or drawn.
 
 Current default sort:
 
@@ -212,16 +214,26 @@ Each save card can include:
   "GemIds": ["GemConfig_Mana_Plus2"],
   "IsTemporary": false,
   "IsBroken": false,
-  "CardCrackStage": 0
+  "CardCrackStage": 0,
+  "BreakableCrackState": "Cracked",
+  "BreakableCrackStage": 0,
+  "BreakableTimesPlayedThisTurn": 3,
+  "CardCrackSprite": "shatter 1"
 }
 ```
 
 `IsBroken` and `CardCrackStage` are distinct. `IsBroken` is a gameplay/model
 flag. `CardCrackStage` is intended to capture model-owned cracked/shattered
 state when available. Live testing showed the visible crack can still be absent
-from `CardModel`, so the bridge also exports `CardViewType`, `CardViewName`,
-`CardViewDiagnostics`, and `CardViewComponents` from the matching
-`Nosebleed.Pancake.View.CardView` when present.
+from `CardModel`, so the bridge inspects the matching
+`Nosebleed.Pancake.View.CardView` when present. For normal cards, the visible
+crack/shatter state has been observed on
+`Nosebleed.Pancake.GameLogic.BreakableCard`; the bridge promotes
+`BreakableCrackState`, `BreakableCrackStage`,
+`BreakableTimesPlayedThisTurn`, and `CardCrackSprite` into first-class live
+card fields. Raw card-view diagnostics are now gated behind
+`EnableVerboseDiagnostics` in `LiveBridgeBehaviour` because shipping them every
+bridge tick made the game slightly jittery.
 
 ## Cost Logic
 
@@ -356,6 +368,11 @@ CSV-to-display ownership is:
 - All three expand display names through `data/game-item-names.csv` using `tools/display_overrides.py`.
 - `tools/build_evolutions.py` reads `data/evolutions.csv` and resolves names through `data/game-item-names.csv`.
 - `tools/build_local_data.py` passes the project `data/display-overrides.csv` into the local card/gem text and metadata builders when users rebuild local data from the app.
+
+Audit note, 2026-05-01: all editable CSV display sources are wired into app
+display generation. The release build must regenerate `card-text.json`,
+`gem-text.json`, `text-meta.json`, and `evolutions.json` before packaging so
+CSV changes are reflected in the app.
 
 The frontend highlights rule placeholders and selected keywords such as `XX`,
 `XX%`, `Crit`, `Disarm`, `Duration`, `Area`, `Crawler`, and `Might` in gold. `Wings` is a

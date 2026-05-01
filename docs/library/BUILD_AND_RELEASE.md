@@ -8,13 +8,20 @@ For code-only changes, run syntax/unit-style checks and stop. When the user asks
 
 ## Versioning
 
-Use npm patch versioning unless the user asks otherwise:
+Use npm patch versioning for fixes unless the user asks otherwise:
 
 ```powershell
 npm version patch --no-git-tag-version
 ```
 
 This updates both `package.json` and `package-lock.json`.
+
+Use npm minor versioning for user-visible feature releases, such as new bridge
+state, app-to-game controls, or substantial UI changes:
+
+```powershell
+npm version minor --no-git-tag-version
+```
 
 ## Release Build Sequence
 

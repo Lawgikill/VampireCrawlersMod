@@ -302,22 +302,70 @@ _crackingConfig.Stage
 
 If cracked/shattered cards still report stage `0`, inspect card view/controller
 objects rather than only `CardModel`; the crack renderer may be view-owned.
-This is now the active diagnostic path. The bridge builds a GUID-keyed map from
-`Nosebleed.Pancake.View.CardView` instances to their owned `CardModel`, then
-adds these fields to each live card:
+The bridge builds a GUID-keyed map from `Nosebleed.Pancake.View.CardView`
+instances to their owned `CardModel`, then promotes the useful visual fields
+onto each live card. Raw `CardViewDiagnostics` and `CardViewComponents` are now
+behind `EnableVerboseDiagnostics` in `LiveBridgeBehaviour`; leave that flag off
+for releases because broad reflection and large JSON payloads caused slight
+game jitter.
+
+Live testing on a visibly cracked combo-pile Spellbinder showed that
+`CardModel` still reported `IsBroken = false`, `TimesLimitBroken = 0`, and
+`CardCrackStage = 0`. The useful state was attached to the card view as:
 
 ```text
-CardViewType
-CardViewName
-CardViewDiagnostics
-CardViewComponents
+Nosebleed.Pancake.GameLogic.BreakableCard
+BreakableCard.CrackState = Cracked
+BreakableCard._cardCrackState = Cracked
+BreakableCard.TimesPlayedThisTurn = 3
+BreakableCard.CardCrackStage = 0
+_cardCrackRenderer enabled = true
+CardCrack sprite = shatter 1
 ```
 
-`CardViewDiagnostics` reflects fields/properties whose name or type suggests a
-crack/shatter/break/damage/visual/overlay/stamp role. `CardViewComponents`
-lists matching child components and their enabled/active state. Use these fields
-when a visible crack or shatter appears in-game but `CardCrackStage`,
-`IsBroken`, and `TimesLimitBroken` remain unchanged.
+The bridge promotes the stable parts of this probe into live card fields:
+
+```text
+BreakableCrackState
+BreakableCrackStage
+BreakableTimesPlayedThisTurn
+CardCrackSprite
+```
+
+Treat `BreakableCrackState` as the primary signal for visible crack state unless
+future tests show a separate value for full shatter.
+
+The frontend latches crack/shatter overlays until the unique set of hand cards
+changes. This compensates for the game briefly dropping view signals between
+bridge captures without keeping stale overlays after cards are played or drawn.
+
+## Current Mana
+
+The reliable current-mana source is the visible blue mana orb text, not the
+player model cache. `PlayerModel.CachedMana` was observed reporting `0` while
+the in-game orb showed `4`.
+
+The bridge reads:
+
+```text
+Player/Canvas/ShakeContainer/_manaDisplay oldschool (plinth)/oldschool (angel)/ManaOrb/_manaFiller/_manaCountText
+```
+
+and exports that value as `DisplayedMana` and `CurrentMana`. The bridge caches
+the text component after discovery so normal captures only read the text value.
+
+## Combo Highlight State
+
+The direct combo candidate signal is the card view cost text containing the
+orange-glow material markup, for example:
+
+```text
+<font="MainFont" material="MainFont Material Orange Glow">1</font>
+```
+
+The bridge exports this as `IsComboCostHighlighted` and `ComboCostText`.
+Because the game can flicker that text state between captures, the frontend
+latches combo mana-cost highlighting until the unique set of hand cards changes.
 
 ## Experimental Play-Card Bridge
 

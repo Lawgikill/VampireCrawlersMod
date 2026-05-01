@@ -6,7 +6,7 @@ The current app prefers the live bridge JSON when fresh, falls back to the activ
 
 ## Current State
 
-- Version is currently `1.1.10`.
+- Version is currently `1.2.0`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`
@@ -91,6 +91,7 @@ art\*.png
 16. Users can run `Rebuild Local Data` from the File menu even after hiding the Local setup panel.
 17. In live-bridge mode, clicking a hand card sends a `play-card` bridge command through `/api/live-command`.
 18. The BepInEx bridge polls `%APPDATA%\VampireCrawlersDeckTracker\command.json` and writes `%APPDATA%\VampireCrawlersDeckTracker\command-result.json`.
+19. Current player mana is exported as `CurrentMana`/`DisplayedMana` from the visible mana orb text. Do not use `PlayerModel.CachedMana`; it was observed reporting `0` while the in-game orb showed `4`.
 
 ## Things That Are Known Fragile
 
@@ -98,7 +99,8 @@ art\*.png
 - The live bridge plugin also draws a small two-line in-game hand-mana overlay near the lower right combat UI area. IMGUI text worked, but IMGUI backgrounds did not: `GUI.DrawTexture` threw `NotSupportedException`, and `GUI.Label`/`GUI.Box` style backgrounds were not visible. The working overlay is now a `ScreenSpaceOverlay` Unity UI `Canvas` with an opaque `Image` panel and `Text` child, styled to resemble the **End Turn** button.
 - The app-to-game bridge command channel is live for card play. `play-card` commands match a live hand card by GUID and invoke `Nosebleed.Pancake.Models.CardModel.TryPlayCard()`. The command result records `InvocationMethod`, `InvocationReturnValue`, and `InvocationError`. Keep `dryRun` support for future diagnostics.
 - `CardGuid` needs to serialize as a real value for command targeting. If it falls back to a type name, use the command result plus hand index only as a temporary diagnostic.
-- Cracked/shattered card visuals appear to be separate from `IsBroken`. The bridge exports `CardCrackStage` via model reflection fallbacks when available and now also exports `CardViewType`, `CardViewName`, `CardViewDiagnostics`, and `CardViewComponents` from the matching `CardView` to find view-owned crack/shatter state.
+- Cracked/shattered card visuals are separate from `IsBroken` in observed live runs. A cracked Spellbinder reported `CardModel.IsBroken = false`, `TimesLimitBroken = 0`, and `CardCrackStage = 0`, while its `Nosebleed.Pancake.GameLogic.BreakableCard` reported `CrackState = Cracked`, `TimesPlayedThisTurn = 3`, and a `_cardCrack` image sprite named `shatter 1`. The bridge now exports promoted `BreakableCrackState`, `BreakableCrackStage`, `BreakableTimesPlayedThisTurn`, and `CardCrackSprite` fields. Raw `CardViewDiagnostics`/`CardViewComponents` are available only when `EnableVerboseDiagnostics` is enabled because normal-mode diagnostics caused light game jitter.
+- Combo mana-cost highlights and cracked/shattered overlays are frontend-latched until the unique set of hand cards changes. This handles bridge-visible UI flicker while resetting naturally when cards are played or drawn.
 - The card art mapping is reverse-engineered from Unity assets and is not perfect for every future card/config.
 - Unity/Odin serialized `CardConfig` data is partially custom; do not assume `read_typetree()` will expose all fields.
 - Card IDs like `Card_A_1_MagicWand` are not reliable for mana cost. MagicWand's true base cost is `0`.
@@ -116,6 +118,7 @@ art\*.png
 - The CSV display pipeline is split by builder: `build_card_text_map.py`, `build_gem_text_map.py`, and `build_text_meta.py` all consume `display-overrides.csv` through `tools/display_overrides.py`; name resolution comes from `game-item-names.csv`. `build_local_data.py` also passes the project display override CSV into those builders for user-triggered local rebuilds.
 - Evolution recipes live in the name-based `data/evolutions.csv` and ship through `public/assets/evolutions.json`. The CSV uses `+` for required recipe parts and `|` for alternatives, and `tools/build_evolutions.py` resolves names through `data/game-item-names.csv`.
 - Release prep must regenerate app-owned JSON from CSV before packaging: `tools/build_card_text_map.py`, `tools/build_gem_text_map.py`, `tools/build_text_meta.py`, and `tools/build_evolutions.py`.
+- CSV audit, 2026-05-01: `display-overrides.csv` feeds card text, gem text, highlights, tooltips, and colors; `game-item-names.csv` resolves display names back to IDs for those builders and for evolutions; `evolutions.csv` feeds `public/assets/evolutions.json`.
 - The evolution chart highlights owned components from the live deck snapshot. Normal first inputs require an open gem slot. Vandalier is special: Peachone and Ebony Wings both highlight if both are present and at least one has an open slot; if both are present but both are gemmed, both use the blocked/orange highlight. Phieraggi uses the same two-weapon rule for Eight The Sparrow and Phiera Der Tuphello; Tirajisú is presence-only.
 - Blank gem text in `data/display-overrides.csv` intentionally hides that gem rule line while keeping the icon visible, currently including `GemConfig_DoubleDamage` and `GemConfig_Evolve`.
 - The packaged app must include `public/assets/card-costs.json`, `public/assets/card-text.json`, `public/assets/evolutions.json`, `public/assets/gem-text.json`, `public/assets/text-meta.json`, and `resources/live-bridge/**`, but must not include extracted PNG art or generated `card-map.json`, `card-names.json`, or `gem-map.json`.
@@ -164,7 +167,7 @@ Card_B_2_EmptyTome base=2 effective=W gems=GemConfig_SetCostType_Wild
 ## Good Next Tasks
 
 - Add a small diagnostic export/log button.
-- Continue investigating cracked/shattered visuals through the new `CardViewDiagnostics` and `CardViewComponents` fields; the first observed cracked Clock Lancet still reported `CardCrackStage: 0` on `CardModel`.
+- If cracked/shattered visuals need further investigation, temporarily enable `EnableVerboseDiagnostics` in `LiveBridgeBehaviour`; leave it off for releases.
 - Add tests for mana gem parsing, card cost lookup, open gem slot display, startup setup, and evolution availability.
 - Consider a visible "waiting for live game data" status when the bridge is installed but no fresh live-state JSON has been emitted yet.
 - The BepInEx IL2CPP live bridge is implemented. Release prep should run `npm run stage-live-bridge`; use `python tools\stage_live_bridge_payload.py --with-bepinex` when a self-contained BepInEx loader payload should be included.

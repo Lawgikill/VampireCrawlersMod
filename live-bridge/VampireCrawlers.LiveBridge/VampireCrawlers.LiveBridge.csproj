@@ -45,6 +45,10 @@
       <HintPath>$(BepInExDir)\interop\UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(BepInExDir)\interop\Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Pancake">
       <HintPath>$(BepInExDir)\interop\Pancake.dll</HintPath>
       <Private>false</Private>

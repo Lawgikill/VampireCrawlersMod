@@ -15,6 +15,10 @@ const state = {
   pendingCommandId: "",
   pendingCommandStartedAt: 0,
   setupHiddenThisSession: false,
+  handVisualLatchSignature: "",
+  latchedComboHighlights: new Set(),
+  latchedShatterStages: new Map(),
+  previousIsInCombat: null,
 };
 
 const els = {
@@ -36,6 +40,7 @@ const els = {
   counts: document.querySelector("#counts"),
   allCardsLabel: document.querySelector("#allCardsLabel"),
   handCardsLabel: document.querySelector("#handCardsLabel"),
+  currentMana: document.querySelector("#currentMana"),
   handManaTotal: document.querySelector("#handManaTotal"),
   commandStatus: document.querySelector("#commandStatus"),
   evolutionsButton: document.querySelector("#evolutionsButton"),
@@ -475,16 +480,107 @@ function formatCostSymbol(cost) {
   return "?";
 }
 
-function renderManaCost(cost) {
+function renderManaCost(card) {
+  const cost = card?.cost;
+  const comboClass = card?.comboCostHighlighted ? " mana-cost-combo" : "";
   if (cost === "W") {
     return `
-      <span class="mana-cost mana-cost-wild" title="${formatCost(cost)}">
+      <span class="mana-cost mana-cost-wild${comboClass}" title="${formatCost(cost)}">
         <img src="${WILD_COST_ICON_PATH}" alt="Wild" onerror="this.hidden=true; this.nextElementSibling.hidden=false">
         <span class="mana-cost-fallback" hidden>W</span>
       </span>
     `;
   }
-  return `<span class="mana-cost" title="${formatCost(cost)}">${formatCostSymbol(cost)}</span>`;
+  return `<span class="mana-cost${comboClass}" title="${formatCost(cost)}">${formatCostSymbol(cost)}</span>`;
+}
+
+function comboHighlightKey(card) {
+  return card?.guid || `${card?.pileId || ""}:${card?.index ?? ""}:${card?.cardId || ""}`;
+}
+
+function handVisualLatchKey(card) {
+  return card?.guid || `${card?.cardId || ""}:${card?.baseId || ""}:${card?.index ?? ""}`;
+}
+
+function handVisualLatchSignature(snapshot) {
+  if (!Array.isArray(snapshot?.cards)) return "";
+  return snapshot.cards
+    .filter((card) => card.pileId === "HandPile")
+    .map(handVisualLatchKey)
+    .filter(Boolean)
+    .sort()
+    .join("|");
+}
+
+function rawCardCrackOverlayStage(card) {
+  const sprite = String(card?.cardCrackSprite || "").toLowerCase();
+  const spriteStage = sprite.match(/shatter[\s_-]*(\d+)/)?.[1];
+  if (spriteStage === "1" || spriteStage === "2") return spriteStage;
+
+  const stage = Number(card?.breakableCrackStage || card?.crackStage || 0);
+  if (stage >= 2) return "2";
+  if (stage >= 1) return "1";
+
+  return String(card?.crackState || "").toLowerCase() === "cracked" ? "1" : "";
+}
+
+function stabilizeHandVisualStates(snapshot) {
+  if (!snapshot?.liveStateActive || !Array.isArray(snapshot.cards)) {
+    state.handVisualLatchSignature = "";
+    state.latchedComboHighlights.clear();
+    state.latchedShatterStages.clear();
+    return snapshot;
+  }
+
+  const signature = handVisualLatchSignature(snapshot);
+  if (signature !== state.handVisualLatchSignature) {
+    state.handVisualLatchSignature = signature;
+    state.latchedComboHighlights.clear();
+    state.latchedShatterStages.clear();
+  }
+
+  const activeKeys = new Set();
+  for (const card of snapshot.cards) {
+    const key = comboHighlightKey(card);
+    if (!key) continue;
+    activeKeys.add(key);
+
+    if (card.comboCostHighlighted) {
+      state.latchedComboHighlights.add(key);
+    } else if (state.latchedComboHighlights.has(key)) {
+      card.comboCostHighlighted = true;
+    }
+
+    const rawShatterStage = rawCardCrackOverlayStage(card);
+    if (rawShatterStage) {
+      const existingStage = state.latchedShatterStages.get(key);
+      state.latchedShatterStages.set(key, existingStage === "2" || rawShatterStage === "2" ? "2" : "1");
+    }
+
+    const latchedShatterStage = state.latchedShatterStages.get(key);
+    if (latchedShatterStage) {
+      card.latchedCrackOverlayStage = latchedShatterStage;
+    }
+  }
+
+  for (const key of state.latchedComboHighlights) {
+    if (!activeKeys.has(key)) state.latchedComboHighlights.delete(key);
+  }
+
+  for (const key of state.latchedShatterStages.keys()) {
+    if (!activeKeys.has(key)) state.latchedShatterStages.delete(key);
+  }
+
+  return snapshot;
+}
+
+function applyCombatViewTransition(snapshot) {
+  const isInCombat = snapshot?.isInCombat === true;
+  if (state.previousIsInCombat === false && isInCombat && state.cardViewMode === "all") {
+    state.cardViewMode = "hand";
+    els.cardViewMode.checked = true;
+  }
+  state.previousIsInCombat = isInCombat;
 }
 
 function cardArtHtml(cardId, className = "recipe-card-art") {
@@ -737,6 +833,15 @@ function formatHandManaTotal(snapshot) {
   return [String(numericTotal), ...extras].join(" + ");
 }
 
+function formatCurrentMana(snapshot) {
+  const currentMana = Number.isFinite(snapshot?.currentMana)
+    ? snapshot.currentMana
+    : Number.isFinite(snapshot?.displayedMana)
+      ? snapshot.displayedMana
+      : null;
+  return currentMana == null ? "--" : currentMana;
+}
+
 function renderGemSlots(card) {
   const openSlotCount = Math.max(0, Number(card.openGemSlots) || 0);
   const filledGems = Array.isArray(card.gems) ? card.gems : [];
@@ -757,6 +862,20 @@ function renderGemSlots(card) {
   `;
 }
 
+function cardCrackOverlayStage(card) {
+  return card?.latchedCrackOverlayStage || rawCardCrackOverlayStage(card);
+}
+
+function renderCardCrackOverlay(card) {
+  const stage = cardCrackOverlayStage(card);
+  if (!stage) return "";
+
+  const warning = stage === "2"
+    ? `<span class="card-break-warning" title="Will break on next use" aria-label="Will break on next use">!</span>`
+    : "";
+  return `<img class="card-crack-overlay card-crack-overlay-${stage}" src="/assets/overlays/shatter-${stage}.png" alt="">${warning}`;
+}
+
 function renderCards(snapshot) {
   const visibleCards = state.cardViewMode === "hand"
     ? snapshot.cards.filter((card) => card.pileId === "HandPile")
@@ -769,6 +888,7 @@ function renderCards(snapshot) {
   els.handCardsLabel.textContent = `CARDS IN HAND (${handCardCount})`;
   els.allCardsLabel.classList.toggle("is-active", state.cardViewMode === "all");
   els.handCardsLabel.classList.toggle("is-active", state.cardViewMode === "hand");
+  els.currentMana.textContent = `CURRENT MANA: ${formatCurrentMana(snapshot)}`;
   els.handManaTotal.textContent = `HAND MANA TOTAL: ${formatHandManaTotal(snapshot)}`;
 
   els.cards.innerHTML = cards.length
@@ -802,19 +922,21 @@ function renderCards(snapshot) {
       const rulesTooltipAttrs = rulesTooltipTitle ? ` title="${escapeHtml(rulesTooltipTitle)}"` : "";
       const rulesTooltipElement = rulesTooltipHtml ? `<span class="card-rules-tooltip">${rulesTooltipHtml}</span>` : "";
       const canSendLiveCommand = snapshot.liveStateActive && card.pileId === "HandPile";
+      const crackOverlayHtml = renderCardCrackOverlay(card);
       const commandAttrs = canSendLiveCommand
         ? ` data-live-command="play-card" data-card-id="${escapeHtml(card.cardId)}" data-card-guid="${escapeHtml(card.guid)}" data-pile-id="${escapeHtml(card.pileId)}" data-card-index="${card.index}" title="Play ${escapeHtml(cardDisplayName(card.cardId))}"`
         : "";
 
       return `
-        <article class="card-row ${cardTypeClass(card)}${canSendLiveCommand ? " playable-card" : ""}"${commandAttrs}>
+        <article class="card-row ${cardTypeClass(card)}${canSendLiveCommand ? " playable-card" : ""}${crackOverlayHtml ? " is-cracked-card" : ""}"${commandAttrs}>
           <div class="${cardTitleClass}">
-            ${renderManaCost(card.cost)}
+            ${renderManaCost(card)}
             ${renderGemSlots(card)}
             ${evolutionMarker}
             <span class="card-name">${escapeHtml(cardDisplayName(card.cardId))}</span>
           </div>
           ${artPath ? `<img class="card-art" src="/${artPath}" alt="">` : ""}
+          ${crackOverlayHtml}
           ${hasDescription ? `<p class="${descriptionClass}"${rulesTooltipAttrs}><span>${rulesTextHtml}${gemRulesHtml ? `<span class="gem-rules">${gemRulesHtml}</span>` : ""}</span>${rulesTooltipElement}</p>` : ""}
           ${statusLinesHtml}
         </article>
@@ -1054,6 +1176,8 @@ async function refresh() {
     const response = await fetch("/api/deck", { cache: "no-store" });
     const snapshot = await response.json();
     if (!response.ok) throw new Error(snapshot.error || "Unable to read save");
+    stabilizeHandVisualStates(snapshot);
+    applyCombatViewTransition(snapshot);
     state.snapshot = snapshot;
     render(snapshot);
   } catch (error) {
