@@ -60,9 +60,28 @@ setup copies the payload automatically. `File > Install/Update Live Bridge`
 remains as a manual fallback.
 
 The live bridge also draws a tiny two-line in-game IMGUI overlay near the lower
-right combat UI area showing `HAND MANA` and `TOTAL: <value>`. This is
-intentionally narrow in scope: the Electron app remains the main tracker UI,
-while the plugin provides only a few high-value in-game hints.
+right combat UI area showing `HAND MANA` and `TOTAL: <value>`. The overlay uses
+an opaque dark IMGUI background and a very low `GUI.depth` so it remains legible
+over most combat UI. This is intentionally narrow in scope: the Electron app
+remains the main tracker UI, while the plugin provides only a few high-value
+in-game hints.
+
+The bridge also has an experimental command channel for future app-to-game
+control work. The app/server writes:
+
+```text
+%APPDATA%\VampireCrawlersDeckTracker\command.json
+```
+
+The bridge polls this file and writes dry-run results to:
+
+```text
+%APPDATA%\VampireCrawlersDeckTracker\command-result.json
+```
+
+As of this writing, `play-card` commands are diagnostic only: the bridge matches
+the requested hand card and returns/logs candidate game methods, but does not
+invoke game actions or mutate combat state.
 
 ### Config
 
@@ -103,6 +122,8 @@ Responsibilities:
   - `/api/gem-map`
   - `/api/gem-text`
   - `/api/text-meta`
+  - `/api/live-command`
+  - `/api/live-command-result`
 - Parse save file piles into normalized card data.
 - Apply cost data and mana modifiers.
 
@@ -113,6 +134,8 @@ Important behavior:
 - Card text, gem text, and display metadata are app-owned assets served from `public/assets` first so app updates can refresh wording, highlights, and card colors without requiring users to rebuild local data.
 - Static path resolution checks `public` first, then generated assets for `/assets/...`.
 - Generated assets fill in `/assets/...` paths that are not shipped in `public/`; `public` is checked first.
+- `/api/live-command` accepts experimental bridge commands and writes the command file consumed by the BepInEx plugin.
+- `/api/live-command-result` reads the most recent bridge command result. The current `play-card` flow is a dry-run diagnostic, not real card play.
 
 ### Frontend
 
@@ -131,6 +154,7 @@ Responsibilities:
 - Filter by cost bucket, switch between all cards and cards in hand, and sort the visible card grid.
 - Render generated card rules text and gem rules text inside the card description plate.
 - Render the evolution cheat sheet modal from `public/assets/evolutions.json`.
+- In live-bridge mode, show an experimental **Play** button on hand cards. This sends a dry-run `play-card` command to the bridge and displays the command result/candidate count. It does not currently play cards in-game.
 
 Current default sort:
 
@@ -180,9 +204,14 @@ Each save card can include:
   "ConfusedManaCostModifier": 0,
   "GemIds": ["GemConfig_Mana_Plus2"],
   "IsTemporary": false,
-  "IsBroken": false
+  "IsBroken": false,
+  "CardCrackStage": 0
 }
 ```
+
+`IsBroken` and `CardCrackStage` are distinct. `IsBroken` is a gameplay/model
+flag. `CardCrackStage` is intended to capture the visual cracked/shattered card
+state when the live bridge can read it from the runtime object.
 
 ## Cost Logic
 
@@ -308,6 +337,14 @@ Literal `\n` sequences are also converted to real line breaks by the CSV loader.
 aliases such as `red`, `yellow`, `purple`, `green`, `blue`, and `gray` are also
 accepted by the frontend. Do not add per-card or per-gem override dictionaries
 back into the Python builders.
+
+CSV-to-display ownership is:
+
+- `tools/build_card_text_map.py` reads `data/display-overrides.csv` for card text overrides.
+- `tools/build_gem_text_map.py` reads `data/display-overrides.csv` for gem text overrides.
+- `tools/build_text_meta.py` reads `data/display-overrides.csv` for highlights, tooltips, and colors.
+- All three expand display names through `data/game-item-names.csv` using `tools/display_overrides.py`.
+- `tools/build_evolutions.py` reads `data/evolutions.csv` and resolves names through `data/game-item-names.csv`.
 
 The frontend highlights rule placeholders and selected keywords such as `XX`,
 `XX%`, `Crit`, `Disarm`, `Duration`, `Area`, `Crawler`, and `Might` in gold. `Wings` is a

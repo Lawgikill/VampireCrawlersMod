@@ -12,6 +12,7 @@ const state = {
   frequencySort: "name",
   cardViewMode: "all",
   config: null,
+  pendingCommandId: "",
   setupHiddenThisSession: false,
 };
 
@@ -35,6 +36,7 @@ const els = {
   allCardsLabel: document.querySelector("#allCardsLabel"),
   handCardsLabel: document.querySelector("#handCardsLabel"),
   handManaTotal: document.querySelector("#handManaTotal"),
+  commandStatus: document.querySelector("#commandStatus"),
   evolutionsButton: document.querySelector("#evolutionsButton"),
   evolutionDialog: document.querySelector("#evolutionDialog"),
   evolutionClose: document.querySelector("#evolutionClose"),
@@ -798,6 +800,10 @@ function renderCards(snapshot) {
       const rulesTooltipTitle = rulesTooltipEntriesValue.map((entry) => entry.text).join("\n");
       const rulesTooltipAttrs = rulesTooltipTitle ? ` title="${escapeHtml(rulesTooltipTitle)}"` : "";
       const rulesTooltipElement = rulesTooltipHtml ? `<span class="card-rules-tooltip">${rulesTooltipHtml}</span>` : "";
+      const canSendLiveCommand = snapshot.liveStateActive && card.pileId === "HandPile";
+      const playButton = canSendLiveCommand
+        ? `<button class="card-play-command" type="button" data-live-command="play-card" data-card-id="${escapeHtml(card.cardId)}" data-card-guid="${escapeHtml(card.guid)}" data-pile-id="${escapeHtml(card.pileId)}" data-card-index="${card.index}" title="Experimental: inspect play-card bridge">Play</button>`
+        : "";
 
       return `
         <article class="card-row ${cardTypeClass(card)}">
@@ -806,6 +812,7 @@ function renderCards(snapshot) {
             ${renderGemSlots(card)}
             ${evolutionMarker}
             <span class="card-name">${escapeHtml(cardDisplayName(card.cardId))}</span>
+            ${playButton}
           </div>
           ${artPath ? `<img class="card-art" src="/${artPath}" alt="">` : ""}
           ${hasDescription ? `<p class="${descriptionClass}"${rulesTooltipAttrs}><span>${rulesTextHtml}${gemRulesHtml ? `<span class="gem-rules">${gemRulesHtml}</span>` : ""}</span>${rulesTooltipElement}</p>` : ""}
@@ -816,6 +823,53 @@ function renderCards(snapshot) {
     : `<p class="muted">${state.cardViewMode === "hand" ? "No cards in hand match the current filters." : "No cards match the current filters."}</p>`;
 
   requestAnimationFrame(fitCardTitles);
+}
+
+async function sendPlayCardCommand(button) {
+  const command = {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    type: button.dataset.liveCommand || "play-card",
+    cardGuid: button.dataset.cardGuid || "",
+    cardConfigId: button.dataset.cardId || "",
+    pileId: button.dataset.pileId || "",
+    index: Number(button.dataset.cardIndex),
+  };
+  state.pendingCommandId = command.id;
+  els.commandStatus.textContent = `Sent ${cardDisplayName(command.cardConfigId)} command`;
+  button.disabled = true;
+
+  try {
+    const response = await fetch("/api/live-command", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(command),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.ok) throw new Error(result.error || "Command was not accepted.");
+    setTimeout(checkLiveCommandResult, 700);
+  } catch (error) {
+    els.commandStatus.textContent = error.message;
+    button.disabled = false;
+  }
+}
+
+async function checkLiveCommandResult() {
+  if (!state.pendingCommandId) return;
+
+  try {
+    const response = await fetch("/api/live-command-result", { cache: "no-store" });
+    const result = await response.json();
+    if (result.Id && result.Id !== state.pendingCommandId) return;
+
+    const candidates = Array.isArray(result.CandidateMethods) ? result.CandidateMethods.length : 0;
+    els.commandStatus.textContent = result.Message
+      ? `${result.DryRun ? "Dry run: " : ""}${result.Message}${candidates ? ` (${candidates} candidates)` : ""}`
+      : "Command result received.";
+    console.info("Live bridge command result", result);
+    state.pendingCommandId = "";
+  } catch (error) {
+    els.commandStatus.textContent = error.message;
+  }
 }
 
 function render(snapshot) {
@@ -1013,6 +1067,12 @@ els.clearCostFilter.addEventListener("click", () => {
     renderCosts(state.snapshot);
     renderCards(state.snapshot);
   }
+});
+
+els.cards.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-live-command]");
+  if (!button || !els.cards.contains(button) || button.disabled) return;
+  sendPlayCardCommand(button);
 });
 
 els.evolutionsButton.addEventListener("click", () => {

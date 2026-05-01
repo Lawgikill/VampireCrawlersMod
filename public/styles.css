@@ -349,6 +349,17 @@ button:disabled {
   white-space: nowrap;
 }
 
+.command-status {
+  max-width: 280px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .card-sort-control {
   display: inline-flex;
   gap: 8px;
@@ -996,6 +1007,33 @@ button:disabled {
   text-shadow:
     1px 1px 0 rgba(0, 0, 0, 0.9),
     0 0 4px rgba(0, 0, 0, 0.55);
+}
+
+.card-play-command {
+  flex: 0 0 auto;
+  min-width: 40px;
+  min-height: 22px;
+  margin-left: 6px;
+  border-color: rgba(255, 236, 161, 0.85);
+  border-radius: 4px;
+  background: #101412;
+  color: #ffe98c;
+  padding: 0 7px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.card-play-command:hover,
+.card-play-command:focus-visible {
+  border-color: #fff2ac;
+  filter: brightness(1.12);
+}
+
+.card-play-command:disabled {
+  cursor: wait;
+  opacity: 0.55;
 }
 
 .card-title.has-evolution-marker {

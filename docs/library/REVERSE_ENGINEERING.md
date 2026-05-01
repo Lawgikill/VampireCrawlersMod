@@ -269,6 +269,53 @@ specific card instance, while `CardGemSlots[cardId]` appears to be the unlocked
 slot capacity for that card config. The tracker shows open slots as black/gold
 circles under the mana cost badge.
 
+## Live Card State
+
+The live bridge reads runtime `CardModel` objects when available. Known exported
+state fields include:
+
+```text
+IsBroken
+IsCopyWithDestroy
+TimesLimitBroken
+CardCrackStage
+```
+
+`IsBroken` did not reflect the observed cracked/shattered card face in a live
+test. Game strings and app code point to a separate crack pipeline, including
+names such as `CrackCardCommand`, `CrackCardAnimation`, `CardCrackingConfig`,
+and `_cardCrackRenderer`. The bridge therefore exports `CardCrackStage`
+separately via reflection fallbacks:
+
+```text
+CardCrackStage
+CrackStage
+_cardCrackStage
+_crackStage
+cardCrackStage
+crackStage
+CardCrackingConfig.Stage
+_cardCrackingConfig.Stage
+CrackingConfig.Stage
+_crackingConfig.Stage
+```
+
+If cracked/shattered cards still report stage `0`, inspect card view/controller
+objects rather than only `CardModel`; the crack renderer may be view-owned.
+
+## Experimental Play-Card Bridge
+
+The app-to-game command channel is currently a diagnostic scaffold, not an
+enabled automation feature. `play-card` commands are written by the Node server
+to `%APPDATA%\VampireCrawlersDeckTracker\command.json`, then consumed by the
+BepInEx bridge. The bridge matches a hand card by GUID, hand index, or card ID,
+then writes a dry-run result to `command-result.json`.
+
+Do not implement actual card play by manually removing cards from piles or
+subtracting mana. The correct next step is to use the dry-run candidate list and
+BepInEx logs to identify the game's real play-card/controller method, then call
+that method through the same flow the game UI uses.
+
 ## AssetRipper Notes
 
 AssetRipper was useful to confirm exported C# stubs and script/class names, but it did not expose the custom CardConfig payload in YAML/JSON. It showed only shallow Unity fields for MagicWand:

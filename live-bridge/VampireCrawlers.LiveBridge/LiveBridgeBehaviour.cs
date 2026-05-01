@@ -12,16 +12,28 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "VampireCrawlersDeckTracker",
         "live-state.json");
+    private static readonly string CommandPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "VampireCrawlersDeckTracker",
+        "command.json");
+    private static readonly string CommandResultPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "VampireCrawlersDeckTracker",
+        "command-result.json");
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
+        PropertyNameCaseInsensitive = true,
         WriteIndented = true,
     };
 
     private float _nextWriteAt;
     private float _nextErrorLogAt;
     private GUIStyle _overlayStyle;
+    private GUIStyle _overlayPanelStyle;
+    private Texture2D _overlayBackground;
     private string _handManaTotal = "HAND MANA\nTOTAL: --";
+    private string _lastCommandId = "";
     private bool _overlayDisabled;
 
     public LiveBridgeBehaviour(IntPtr pointer) : base(pointer)
@@ -38,6 +50,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             var state = CaptureState();
             if (state.Piles.Count == 0) return;
             _handManaTotal = $"HAND MANA\nTOTAL: {FormatHandManaTotal(state)}";
+            ProcessPendingCommand(state);
 
             Directory.CreateDirectory(Path.GetDirectoryName(OutputPath));
             File.WriteAllText(OutputPath, JsonSerializer.Serialize(state, JsonOptions));
@@ -48,6 +61,144 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             _nextErrorLogAt = Time.realtimeSinceStartup + 5f;
             Plugin.BridgeLog?.LogWarning($"Live bridge capture/write failed: {error}");
         }
+    }
+
+    private void ProcessPendingCommand(LiveState state)
+    {
+        if (!File.Exists(CommandPath)) return;
+
+        BridgeCommand command;
+        try
+        {
+            command = JsonSerializer.Deserialize<BridgeCommand>(File.ReadAllText(CommandPath), JsonOptions);
+        }
+        catch (Exception error)
+        {
+            WriteCommandResult(new BridgeCommandResult
+            {
+                Ok = false,
+                Message = $"Unable to read command: {error.Message}",
+            });
+            return;
+        }
+
+        if (command == null || string.IsNullOrWhiteSpace(command.Id)) return;
+        if (command.Id == _lastCommandId) return;
+        _lastCommandId = command.Id;
+
+        if (!string.Equals(command.Type, "play-card", StringComparison.OrdinalIgnoreCase))
+        {
+            WriteCommandResult(new BridgeCommandResult
+            {
+                Id = command.Id,
+                Type = command.Type,
+                Ok = false,
+                Message = $"Unsupported command type: {command.Type}",
+            });
+            return;
+        }
+
+        WriteCommandResult(InspectPlayCardCommand(command, state));
+    }
+
+    private static BridgeCommandResult InspectPlayCardCommand(BridgeCommand command, LiveState state)
+    {
+        var hand = state.Piles.FirstOrDefault((pile) => pile.PileId == "HandPile");
+        var matched = FindCommandCard(hand, command);
+        var candidates = FindPlayCardCandidates();
+        var message = matched == null
+            ? $"No matching hand card found for {command.CardConfigId} at index {command.Index}."
+            : $"Matched {matched.CardConfigId} in hand. Play invocation is not enabled yet; inspect candidates to choose the real game API.";
+
+        Plugin.BridgeLog?.LogInfo($"Received play-card command for {command.CardConfigId} index={command.Index} guid={command.CardGuid}. {message}");
+        foreach (var candidate in candidates.Take(20))
+        {
+            Plugin.BridgeLog?.LogInfo($"Play-card candidate: {candidate}");
+        }
+
+        return new BridgeCommandResult
+        {
+            Id = command.Id,
+            Type = command.Type,
+            Ok = matched != null,
+            DryRun = true,
+            Message = message,
+            MatchedCard = matched,
+            CandidateMethods = candidates,
+        };
+    }
+
+    private static LiveCard FindCommandCard(LivePile hand, BridgeCommand command)
+    {
+        if (hand == null || hand.Cards == null) return null;
+
+        if (!string.IsNullOrWhiteSpace(command.CardGuid))
+        {
+            var byGuid = hand.Cards.FirstOrDefault((card) =>
+                !string.IsNullOrWhiteSpace(card.CardGuid)
+                && string.Equals(card.CardGuid, command.CardGuid, StringComparison.OrdinalIgnoreCase));
+            if (byGuid != null) return byGuid;
+        }
+
+        if (command.Index >= 0 && command.Index < hand.Cards.Count)
+        {
+            var byIndex = hand.Cards[command.Index];
+            if (string.IsNullOrWhiteSpace(command.CardConfigId)
+                || string.Equals(byIndex.CardConfigId, command.CardConfigId, StringComparison.Ordinal))
+            {
+                return byIndex;
+            }
+        }
+
+        return hand.Cards.FirstOrDefault((card) =>
+            string.Equals(card.CardConfigId, command.CardConfigId, StringComparison.Ordinal));
+    }
+
+    private static List<string> FindPlayCardCandidates()
+    {
+        var candidates = new SortedSet<string>(StringComparer.Ordinal);
+
+        foreach (var component in UnityEngine.Object.FindObjectsOfType<MonoBehaviour>())
+        {
+            if (component == null) continue;
+            var type = component.GetType();
+            var typeName = type.FullName ?? type.Name;
+
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+            foreach (var method in type.GetMethods(flags))
+            {
+                var methodName = method.Name;
+                if (!LooksLikePlayCardMethod(typeName, methodName)) continue;
+                var parameters = string.Join(", ", method.GetParameters().Select((parameter) =>
+                    $"{parameter.ParameterType.Name} {parameter.Name}"));
+                candidates.Add($"{typeName}.{methodName}({parameters})");
+                if (candidates.Count >= 80) return candidates.ToList();
+            }
+        }
+
+        return candidates.ToList();
+    }
+
+    private static bool LooksLikePlayCardMethod(string typeName, string methodName)
+    {
+        var combined = $"{typeName}.{methodName}";
+        var hasCardContext = combined.Contains("Card", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("Hand", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("Pile", StringComparison.OrdinalIgnoreCase);
+        var hasActionContext = methodName.Contains("Play", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Try", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Select", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Interact", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Afford", StringComparison.OrdinalIgnoreCase)
+            || methodName.Contains("Move", StringComparison.OrdinalIgnoreCase);
+        return hasCardContext && hasActionContext;
+    }
+
+    private static void WriteCommandResult(BridgeCommandResult result)
+    {
+        result.UpdatedAt = DateTimeOffset.UtcNow.ToString("O");
+        Directory.CreateDirectory(Path.GetDirectoryName(CommandResultPath));
+        File.WriteAllText(CommandResultPath, JsonSerializer.Serialize(result, JsonOptions));
     }
 
     private void OnGUI()
@@ -70,10 +221,39 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
                 };
             }
 
-            var width = 150f;
-            var height = 46f;
+            if (_overlayBackground == null)
+            {
+                _overlayBackground = new Texture2D(1, 1);
+                _overlayBackground.SetPixel(0, 0, new Color(0.06f, 0.06f, 0.06f, 1f));
+                _overlayBackground.Apply();
+            }
+
+            if (_overlayPanelStyle == null)
+            {
+                _overlayPanelStyle = new GUIStyle(GUI.skin.label)
+                {
+                    normal =
+                    {
+                        background = _overlayBackground,
+                    },
+                };
+            }
+
+            var width = 162f;
+            var height = 52f;
             var rect = new Rect(Screen.width - width - 238f, Screen.height * 0.78f, width, height);
-            GUI.Label(rect, _handManaTotal, _overlayStyle);
+
+            var previousDepth = GUI.depth;
+            try
+            {
+                GUI.depth = -10000;
+                GUI.Label(rect, GUIContent.none, _overlayPanelStyle);
+                GUI.Label(rect, _handManaTotal, _overlayStyle);
+            }
+            finally
+            {
+                GUI.depth = previousDepth;
+            }
         }
         catch (Exception error)
         {
@@ -205,13 +385,14 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             {
                 CardConfigId = cardModel.CardConfig?.AssetId ?? "",
                 BaseCardConfigId = cardModel.BaseCardConfig?.AssetId ?? cardModel.CardConfig?.AssetId ?? "",
-                CardGuid = cardModel.Guid.ToString(),
+                CardGuid = FormatGuidValue(cardModel.Guid),
                 ManaCostModifier = cardModel.ManaCostModifier,
                 TempManaCostModifier = cardModel.TempManaCostModifier,
                 ConfusedManaCostModifier = cardModel.ConfuseManaCostModifier,
                 IsBroken = cardModel.IsBroken,
                 IsCopyWithDestroy = cardModel.IsCopyWithDestroy,
                 TimesLimitBroken = cardModel.TimesLimitBroken,
+                CardCrackStage = ReadCardCrackStage(cardModel),
                 GemIds = ReadGemIds(cardModel),
             };
             card.Cost = GetEffectiveCostLabel(cardModel, card);
@@ -244,10 +425,11 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
         {
             CardConfigId = cardId ?? "",
             BaseCardConfigId = baseId ?? cardId ?? "",
-            CardGuid = ReadString(value, "CardGuid") ?? "",
+            CardGuid = ReadString(value, "CardGuid") ?? FormatGuidValue(ReadMember(value, "Guid")),
             ManaCostModifier = ReadInt(value, "ManaCostModifier") ?? ReadInt(value, "_manaCostModifier") ?? 0,
             TempManaCostModifier = ReadInt(value, "TempManaCostModifier") ?? ReadInt(value, "_temporaryManaCostModifier") ?? 0,
             ConfusedManaCostModifier = ReadInt(value, "ConfusedManaCostModifier") ?? ReadInt(value, "_confuseManaCostModifier") ?? 0,
+            CardCrackStage = ReadCardCrackStage(value),
             GemIds = ReadGemIds(value),
         };
         fallbackCard.Cost = GetEffectiveCostLabel(value, fallbackCard);
@@ -394,6 +576,41 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
         return ReadMember(value, name) as string;
     }
 
+    private static string FormatGuidValue(object value)
+    {
+        if (value == null) return "";
+        if (value is Guid guid) return guid.ToString();
+        if (value is string text) return text;
+
+        var candidateNames = new[]
+        {
+            "Value",
+            "Guid",
+            "_guid",
+            "guid",
+            "SerializedGuid",
+            "_serializedGuid",
+            "m_Guid",
+        };
+        foreach (var name in candidateNames)
+        {
+            var member = ReadMember(value, name);
+            if (member == null) continue;
+            var formatted = FormatGuidValue(member);
+            if (!string.IsNullOrWhiteSpace(formatted)) return formatted;
+        }
+
+        var fields = value.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            .Where((field) => field.FieldType == typeof(string) || field.FieldType == typeof(Guid) || field.FieldType.IsPrimitive)
+            .Select((field) => field.GetValue(value)?.ToString())
+            .Where((entry) => !string.IsNullOrWhiteSpace(entry))
+            .ToList();
+        if (fields.Count > 0) return string.Join("-", fields);
+
+        var raw = value.ToString();
+        return raw == value.GetType().FullName ? "" : raw;
+    }
+
     private static string ReadUnityName(object value)
     {
         return value is UnityEngine.Object unityObject ? unityObject.name : null;
@@ -404,6 +621,23 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
         var member = ReadMember(value, name);
         if (member == null) return null;
         return int.TryParse(member.ToString(), out var parsed) ? parsed : null;
+    }
+
+    private static int ReadCardCrackStage(object value)
+    {
+        if (value == null) return 0;
+
+        return ReadInt(value, "CardCrackStage")
+            ?? ReadInt(value, "CrackStage")
+            ?? ReadInt(value, "_cardCrackStage")
+            ?? ReadInt(value, "_crackStage")
+            ?? ReadInt(value, "cardCrackStage")
+            ?? ReadInt(value, "crackStage")
+            ?? ReadInt(ReadMember(value, "CardCrackingConfig"), "Stage")
+            ?? ReadInt(ReadMember(value, "_cardCrackingConfig"), "Stage")
+            ?? ReadInt(ReadMember(value, "CrackingConfig"), "Stage")
+            ?? ReadInt(ReadMember(value, "_crackingConfig"), "Stage")
+            ?? 0;
     }
 
     private static int? InvokeInt(object value, string name)
@@ -450,5 +684,29 @@ public sealed class LiveCard
     public bool IsBroken { get; set; }
     public bool IsCopyWithDestroy { get; set; }
     public int TimesLimitBroken { get; set; }
+    public int CardCrackStage { get; set; }
     public List<string> GemIds { get; set; } = new();
+}
+
+public sealed class BridgeCommand
+{
+    public string Id { get; set; } = "";
+    public string Type { get; set; } = "";
+    public string CardGuid { get; set; } = "";
+    public string CardConfigId { get; set; } = "";
+    public string PileId { get; set; } = "";
+    public int Index { get; set; } = -1;
+    public string IssuedAt { get; set; } = "";
+}
+
+public sealed class BridgeCommandResult
+{
+    public string Id { get; set; } = "";
+    public string Type { get; set; } = "";
+    public bool Ok { get; set; }
+    public bool DryRun { get; set; }
+    public string Message { get; set; } = "";
+    public string UpdatedAt { get; set; } = "";
+    public LiveCard MatchedCard { get; set; }
+    public List<string> CandidateMethods { get; set; } = new();
 }

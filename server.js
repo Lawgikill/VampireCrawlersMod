@@ -379,6 +379,34 @@ function sendJson(res, status, body) {
   res.end(JSON.stringify(body, null, 2));
 }
 
+function readRequestJson(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+      if (body.length > 64 * 1024) {
+        reject(new Error("Request body too large"));
+        req.destroy();
+      }
+    });
+    req.on("end", () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (error) {
+        reject(error);
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
+function writeJsonAtomic(filePath, data) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const tempPath = `${filePath}.${process.pid}.tmp`;
+  fs.writeFileSync(tempPath, JSON.stringify(data, null, 2));
+  fs.renameSync(tempPath, filePath);
+}
+
 function contentTypeFor(filePath) {
   const ext = path.extname(filePath).toLowerCase();
   return ext === ".html" ? "text/html; charset=utf-8" :
@@ -456,8 +484,10 @@ function startServer(options = {}) {
   const fallbackTextMetaPath = path.join(publicDir, "assets", "text-meta.json");
   const getSavePath = () => options.savePath || process.env.VC_SAVE_PATH || config.savePath || DEFAULT_SAVE_PATH;
   const getLiveStatePath = () => options.liveStatePath || process.env.VC_LIVE_STATE_PATH || path.join(defaultUserDataDir(), "live-state.json");
+  const commandPath = options.commandPath || process.env.VC_COMMAND_PATH || path.join(defaultUserDataDir(), "command.json");
+  const commandResultPath = options.commandResultPath || process.env.VC_COMMAND_RESULT_PATH || path.join(defaultUserDataDir(), "command-result.json");
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
     if (req.url === "/api/deck") {
       try {
         const savePath = getSavePath();
@@ -470,6 +500,36 @@ function startServer(options = {}) {
       } catch (error) {
         sendJson(res, 500, { error: error.message, savePath });
       }
+      return;
+    }
+
+    if (req.url === "/api/live-command" && req.method === "POST") {
+      try {
+        const body = await readRequestJson(req);
+        const command = {
+          id: body.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          type: body.type || "play-card",
+          cardGuid: body.cardGuid || "",
+          cardConfigId: body.cardConfigId || "",
+          pileId: body.pileId || "",
+          index: Number.isFinite(Number(body.index)) ? Number(body.index) : -1,
+          issuedAt: new Date().toISOString(),
+        };
+        writeJsonAtomic(commandPath, command);
+        sendJson(res, 202, {
+          ok: true,
+          command,
+          commandPath,
+          resultPath: commandResultPath,
+        });
+      } catch (error) {
+        sendJson(res, 400, { ok: false, error: error.message });
+      }
+      return;
+    }
+
+    if (req.url === "/api/live-command-result") {
+      sendJson(res, 200, readJsonIfExists(commandResultPath, { ok: false, message: "No command result yet." }));
       return;
     }
 

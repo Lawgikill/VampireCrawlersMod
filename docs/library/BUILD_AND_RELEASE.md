@@ -107,6 +107,17 @@ dist\win-unpacked\resources\app\public\assets\gem-text.json
 dist\win-unpacked\resources\app\public\assets\text-meta.json
 ```
 
+Those app-owned assets are generated from CSV source data:
+
+```text
+data\display-overrides.csv -> card-text.json, gem-text.json, text-meta.json
+data\game-item-names.csv -> name-to-ID expansion for display overrides and evolutions
+data\evolutions.csv -> evolutions.json
+```
+
+Always regenerate the JSON outputs before packaging when any of those CSVs
+change.
+
 The app should **not** package:
 
 ```text
