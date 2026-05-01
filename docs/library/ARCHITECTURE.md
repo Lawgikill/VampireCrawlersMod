@@ -59,12 +59,16 @@ builder automatically. If the live bridge payload differs from the game folder,
 setup copies the payload automatically. `File > Install/Update Live Bridge`
 remains as a manual fallback.
 
-The live bridge also draws a tiny two-line in-game IMGUI overlay near the lower
-right combat UI area showing `HAND MANA` and `TOTAL: <value>`. The overlay uses
-an opaque dark IMGUI background and a very low `GUI.depth` so it remains legible
-over most combat UI. This is intentionally narrow in scope: the Electron app
-remains the main tracker UI, while the plugin provides only a few high-value
-in-game hints.
+The live bridge also draws a tiny two-line in-game overlay near the lower right
+combat UI area showing `HAND MANA` and `TOTAL: <value>`. The first IMGUI
+attempt could draw text but could not reliably draw an opaque panel in this
+IL2CPP runtime: `GUI.DrawTexture` threw `NotSupportedException`, and style
+backgrounds on `GUI.Label`/`GUI.Box` were not visible in-game. The working
+implementation now uses a real `ScreenSpaceOverlay` Unity UI `Canvas` with an
+opaque `Image` panel and a `Text` child. The panel is styled and positioned to
+line up near the game's **End Turn** button. This is intentionally narrow in
+scope: the Electron app remains the main tracker UI, while the plugin provides
+only a few high-value in-game hints.
 
 The bridge also has an experimental command channel for future app-to-game
 control work. The app/server writes:
@@ -345,6 +349,7 @@ CSV-to-display ownership is:
 - `tools/build_text_meta.py` reads `data/display-overrides.csv` for highlights, tooltips, and colors.
 - All three expand display names through `data/game-item-names.csv` using `tools/display_overrides.py`.
 - `tools/build_evolutions.py` reads `data/evolutions.csv` and resolves names through `data/game-item-names.csv`.
+- `tools/build_local_data.py` passes the project `data/display-overrides.csv` into the local card/gem text and metadata builders when users rebuild local data from the app.
 
 The frontend highlights rule placeholders and selected keywords such as `XX`,
 `XX%`, `Crit`, `Disarm`, `Duration`, `Area`, `Crawler`, and `Might` in gold. `Wings` is a

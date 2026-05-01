@@ -73,8 +73,10 @@
   },
   "Card_A_1_GattiAmari": {
     "gold": [
-      "XX"
+      "XX",
+      "Scuffle"
     ],
+    "tooltip": "Scuffle : When two cats collide, they may start fighting.",
     "color": "attack"
   },
   "Card_A_1_KingBible": {
@@ -97,8 +99,11 @@
   },
   "Card_A_1_SoulEater": {
     "gold": [
-      "XX"
+      "XX",
+      "YY",
+      "Disarm"
     ],
+    "tooltip": "Disarm : High chance of preventing a single enemy attack.",
     "color": "attack"
   },
   "Card_A_2_Axe": {
@@ -109,8 +114,11 @@
   },
   "Card_A_2_BloodyTear": {
     "gold": [
-      "XX"
+      "XX",
+      "YY",
+      "Crit"
     ],
+    "tooltip": "Crit : Has a chance to do multiplied damage.",
     "color": "attack"
   },
   "Card_A_2_Carrello": {
@@ -164,8 +172,10 @@
   },
   "Card_A_2_ValkyrieTurner": {
     "gold": [
-      "XX"
+      "XX",
+      "Valkyrie's Inferno"
     ],
+    "tooltip": "Valkyrie's Inferno : After use, every card played charges up the damage of this card.",
     "color": "attack"
   },
   "Card_A_2_ViciousHunger": {
@@ -189,13 +199,16 @@
   },
   "Card_A_3_HeavenSword": {
     "gold": [
-      "XX"
+      "XX",
+      "Crit"
     ],
+    "tooltip": "Crit : Has a chance to do multiplied damage.",
     "color": "attack"
   },
   "Card_A_3_HellFire": {
     "gold": [
-      "XX"
+      "XX",
+      "Knockback"
     ],
     "color": "attack"
   },
@@ -231,8 +244,11 @@
   },
   "Card_A_3_SoulEater": {
     "gold": [
-      "XX"
+      "XX",
+      "YY",
+      "Disarm"
     ],
+    "tooltip": "Disarm : High chance of preventing a single enemy attack.",
     "color": "attack"
   },
   "Card_A_3_ThousandEdge": {
@@ -448,20 +464,26 @@
   },
   "Card_M_3_SongOfMana": {
     "gold": [
-      "XX"
+      "XX",
+      "Raw Mana"
     ],
+    "tooltip": "Raw Mana : Chance to add 2 mana cards to your Hand.",
     "color": "utility"
   },
   "Card_M_4_SongOfMana": {
     "gold": [
-      "XX"
+      "XX",
+      "Raw Mana"
     ],
+    "tooltip": "Raw Mana : Chance to add 2 mana cards to your Hand.",
     "color": "utility"
   },
   "Card_M_5_Mannajja": {
     "gold": [
-      "XX"
+      "XX",
+      "Raw Mana"
     ],
+    "tooltip": "Raw Mana : Chance to add 2 mana cards to your Hand.",
     "color": "utility"
   },
   "Card_S_0_Candelabrador": {
@@ -658,7 +680,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Deal XX% more damage when a red card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Deal XX% more damage when a red card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Arca": {
@@ -668,7 +690,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Add XX Mana when a purple card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Add XX Mana when a purple card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Cavallo": {
@@ -678,7 +700,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Add XX Amount when a yellow card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Add XX Amount when a yellow card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Christine": {
@@ -688,7 +710,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Prevent XX enemies from attacking when a purple card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Prevent XX enemies from attacking when a purple card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Clerici": {
@@ -698,7 +720,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Heal XX after encounter when a blue card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Heal XX after encounter when a blue card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Concetta": {
@@ -709,7 +731,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Add XX Area when a red card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Add XX Area when a red card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Dommario": {
@@ -719,7 +741,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Deal XX damage when a purple card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Deal XX damage when a purple card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Gallo": {
@@ -729,7 +751,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Gain XX% more coins when a wild card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Gain XX% more coins when a wild card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Gennaro": {
@@ -739,7 +761,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Deal XX damage when a red card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Deal XX damage when a red card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Giovanna": {
@@ -749,7 +771,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Draw XX card when a purple card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Draw XX card when a purple card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Imelda": {
@@ -759,7 +781,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Gain XX XP Growth when a yellow card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Gain XX XP Growth when a yellow card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Krochi": {
@@ -769,7 +791,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Add XX Revival when a wild card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Add XX Revival when a wild card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Lama": {
@@ -779,7 +801,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Deal XX% more damage when a blue card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Deal XX% more damage when a blue card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Mana": {
@@ -790,7 +812,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Increase Hand by XX when a purple card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Increase Hand by XX when a purple card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_ManaDuration": {
@@ -800,7 +822,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Deal XX damage when a purple card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Deal XX damage when a purple card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_MissingNo": {
@@ -810,7 +832,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Draw XX card when a red card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Draw XX card when a red card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Mortaccio": {
@@ -820,7 +842,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Add XX Amount when a blue card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Add XX Amount when a blue card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_OSole": {
@@ -830,7 +852,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Add XX Luck when a red card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Add XX Luck when a red card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Pasqualina": {
@@ -841,7 +863,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Increase Hand by XX when a purple card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Increase Hand by XX when a purple card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Poe": {
@@ -852,7 +874,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Draw XX card when a blue card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Draw XX card when a blue card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Poppea": {
@@ -863,7 +885,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Gain XX Duration when a yellow card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Gain XX Duration when a yellow card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Porta": {
@@ -874,7 +896,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Add XX Mana when a red card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Add XX Mana when a red card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Pugnala": {
@@ -885,7 +907,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Draw XX card when a yellow card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Draw XX card when a yellow card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Ramba": {
@@ -895,7 +917,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Add XX Amount when a purple card is played. \nDuration: Triggers Z times.",
+    "tooltip": "Add XX Amount when a purple card is played.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "FCC_Zi'Assunta": {
@@ -908,7 +930,7 @@
       "Z",
       "Crawler"
     ],
-    "tooltip": "Add XX Area when a red card is played. Gain XX Duration. Deal XX% more damage. \nDuration: Triggers Z times.",
+    "tooltip": "Add XX Area when a red card is played. Gain XX Duration. Deal XX% more damage.\nDuration: Triggers Z times.",
     "color": "crawler"
   },
   "GemConfig_Draw": {
@@ -957,6 +979,6 @@
       "Yang",
       "1"
     ],
-    "tooltip": "Yin : Even Mana - Gain 1 Mana. \nYang : Odd Mana - Draw 1 card."
+    "tooltip": "Yin : Even Mana - Gain 1 Mana.\nYang : Odd Mana - Draw 1 card."
   }
 }

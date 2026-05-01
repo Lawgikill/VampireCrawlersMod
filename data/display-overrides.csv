@@ -10,12 +10,12 @@ Crit.",Crit : Has a chance to do multiplied damage.,XX|Crit,attack
 Magic Wand,Deal XX damage. Prioritize attackers.,Deal XX damage. Prioritize attackers.,,XX,attack
 Whip,"Deal XX damage. Attacks horizontally, passes through enemies.",Deal XX damage to multiple enemies.,,XX,attack
 Fire Wand,Deal XX damage. Fires randomly left or right.,Deal XX damage.,,XX,attack
-Gatti Amari,Deal XX damage. Chance to {:color(Keyword):Scuffle}.,Deal XX damage. Chance to {:color(Keyword):Scuffle}.,,XX,attack
+Gatti Amari,Deal XX damage. Chance to {:color(Keyword):Scuffle}.,Deal XX damage. Chance to Scuffle.,"Scuffle : When two cats collide, they may start fighting.",XX|Scuffle,attack
 King Bible,Deal XX damage. Fire in an arc.,Deal XX damage. Fire in an arc.,,XX,attack
 Runetracer,Deal XX damage. Bounces to deal more damage.,Deal XX damage. Bounces to deal more damage.,,XX,attack
-Soul Eater,Deal XX damage. Heal XX HP. Evolved {db.Cards.Card_A_0_Garlic.Name}. Heal on use.,Deal XX damage. Heal XX HP. Evolved {db.Cards.Card_A_0_Garlic.Name}. Heal on use.,,XX,attack
+Soul Eater,Deal XX damage. Heal XX HP. Evolved {db.Cards.Card_A_0_Garlic.Name}. Heal on use.,Deal XX damage. Heal YY.\nDisarm.,Disarm : High chance of preventing a single enemy attack.,XX|YY|Disarm,attack
 Axe,Deal XX damage. High damage.,Deal XX damage. High damage.,,XX,attack
-Bloody Tear,Deal XX damage. Heal XX HP. Evolution of the {db.Cards.Card_A_0_Whip.Name}. Can deal Critical damage and absorb HP.,Deal XX damage. Heal XX HP. Evolution of the {db.Cards.Card_A_0_Whip.Name}. Can deal Critical damage and absorb HP.,,XX,attack
+Bloody Tear,Deal XX damage. Heal XX HP. Evolution of the {db.Cards.Card_A_0_Whip.Name}. Can deal Critical damage and absorb HP.,Deal XX damage to multiple enemies. On Crit: Heal YY.,Crit : Has a chance to do multiplied damage.,XX|YY|Crit,attack
 Carréllo,Deal XX damage. Throws a bouncing projectile. Number of bounces affected by Amount.,Deal XX damage. Throws a bouncing projectile. Number of bounces affected by Amount.,,XX,attack
 Celestial Dusting,Deal XX damage. Throws flowers.,Deal XX damage. Throws flowers.,,XX,attack
 Eight The Sparrow,Deal XX damage. Fires quickly from two directions.,Deal XX damage. Fires quickly from two directions.,,XX,attack
@@ -23,26 +23,26 @@ Glass Fandango,Deal XX damage. Attacks from the bottom.,Deal XX damage. Attacks 
 Holy Wand,Deal XX damage. Evolution of the {db.Cards.Card_A_1_MagicWand.Name}. Fires more projectiles.,Deal XX damage. Prioritize attackers.,,XX,attack
 Lightning Ring,Deal XX damage. Fires projectiles from the sky.,Deal XX damage. Fires projectiles from the sky.,,XX,attack
 Unholy Vespers,Deal XX damage. Evolved {db.Cards.Card_A_1_KingBible.Name}. Fires more projectiles.,Deal XX damage with a chance to Knockback.,,XX|Knockback,attack
-Valkyrie Turner,Deal XX damage. Evolved {db.Cards.Card_A_3_ShadowPinion.Name}. Charges up between uses.,Deal XX damage. Evolved {db.Cards.Card_A_3_ShadowPinion.Name}. Charges up between uses.,,XX,attack
+Valkyrie Turner,Deal XX damage. Evolved {db.Cards.Card_A_3_ShadowPinion.Name}. Charges up between uses.,Deal XX damage to the front row.\nValkyrie's Inferno.,"Valkyrie's Inferno : After use, every card played charges up the damage of this card.",XX|Valkyrie's Inferno,attack
 Vicious Hunger,Deal XX damage. May turn enemies into coins.,Deal XX damage. May turn enemies into coins.,,XX,attack
 Death Spiral,Deal XX damage. Evolved {db.Cards.Card_A_3_Axe.Name}. Send an onslaught of scythes to kill the enemy.,"Deal XX damage to the front row.
 Crit.",,XX|Crit,attack
-Heaven Sword,Deal XX damage. Evolved {db.Cards.Card_A_0_Cross.Name}. Can do Critical damage.,Deal XX damage. Evolved {db.Cards.Card_A_0_Cross.Name}. Can do Critical damage.,,XX,attack
-Hellfire,Deal XX damage. Evolved {db.Cards.Card_A_1_FireWand.Name}. Deals massive damage to a few enemies.,Deal XX damage. Evolved {db.Cards.Card_A_1_FireWand.Name}. Deals massive damage to a few enemies.,,XX,attack
+Heaven Sword,Deal XX damage. Evolved {db.Cards.Card_A_0_Cross.Name}. Can do Critical damage.,Deal XX damage.\nCrit.,Crit : Has a chance to do multiplied damage.,XX|Crit,attack
+Hellfire,Deal XX damage. Evolved {db.Cards.Card_A_1_FireWand.Name}. Deals massive damage to a few enemies.,Deal XX damage with a chance to Knockback.,,XX|Knockback,attack
 NO FUTURE,Deal XX damage. Heal XX HP. Bounces and explodes.,Deal XX damage. Heal XX HP. Bounces and explodes.,,XX,attack
-Peachone,Deal XX damage. Bombards enemies after every turn.,Deal XX damage. \nBombards enemies \nafter every turn.,,XX,attack
+Peachone,Deal XX damage. Bombards enemies after every turn.,Deal XX damage.\nBombards enemies\nafter every turn.,,XX,attack
 Phiera Der Tuphello,Deal XX damage. Fires quickly from two directions.,Deal XX damage. Fires quickly from two directions.,,XX,attack
-Santa Water,Deal XX damage. Burns enemies after this turn.,Deal XX damage. \nBurns enemies \nafter this turn.,,XX,attack
+Santa Water,Deal XX damage. Burns enemies after this turn.,Deal XX damage.\nBurns enemies\nafter this turn.,,XX,attack
 Shadow Pinion,Deal XX damage. Burns enemies after this turn.,Deal XX damage. Burns enemies after this turn.,,XX,attack
-Thousand Edge,Deal XX damage. Evolved {db.Cards.Card_A_0_Knife.Name}. Fires more projectiles.,Deal XX damage. Evolved {db.Cards.Card_A_0_Knife.Name}. Fires more projectiles.,,XX,attack
+Thousand Edge,Deal XX damage. Evolved {db.Cards.Card_A_0_Knife.Name}. Fires more projectiles.,Deal XX damage.,,XX,attack
 Vento Sacro,Deal XX damage. Attack quickly with high Critical strike chance.,Deal XX damage. Attack quickly with high Critical strike chance.,,XX,attack
 Ebony Wings,Deal XX damage. Bombards enemies after every turn.,Deal XX damage. Bombards enemies after every turn.,,XX,attack
 Fuwalafuwaloo,Deal XX damage. Union of {db.Cards.Card_A_3_VentoSacro.Name} and {db.Cards.Card_A_2_BloodyTear.Name}. Critical hits might generate explosions.,Deal XX damage. Union of {db.Cards.Card_A_3_VentoSacro.Name} and {db.Cards.Card_A_2_BloodyTear.Name}. Critical hits might generate explosions.,,XX,attack
-La Borra,Deal XX damage. Burns enemies after every turn.,Deal XX damage. \nBurns enemies after every turn.,,XX,attack
+La Borra,Deal XX damage. Burns enemies after every turn.,Deal XX damage.\nBurns enemies after every turn.,,XX,attack
 Phieraggi,Deal XX damage. Fires quickly from two directions.,Deal XX damage. Fires quickly from two directions.,,XX,attack
 Thunder Loop,Deal XX damage. Attacks again at the end of the turn.,Deal XX damage. Attacks again at the end of the turn.,,XX,attack
-Pentagram,,Erase XX row. \nCountdown.,,Erase XX|Countdown,attack
-Vandalier,Deal XX damage. Summon a big bird.,Deal XX damage \nwith a chance to \nKnockback. \nBig Bird.,,XX|Knockback|Big Bird,attack
+Pentagram,,Erase XX row.\nCountdown.,,Erase XX|Countdown,attack
+Vandalier,Deal XX damage. Summon a big bird.,Deal XX damage\nwith a chance to\nKnockback.\nBig Bird.,,XX|Knockback|Big Bird,attack
 Empty Tome,Gain XX Mana.,Add XX Mana.,,XX,buff
 Raw Mana,Gain XX Mana. Gain temporary Mana.,Gain XX Mana. Gain temporary Mana.,,XX,buff
 Light Tome,Gain XX Mana.,Add XX Mana.,,XX,buff
@@ -63,9 +63,9 @@ Little Heart,Heal XX HP. Heals HP.,Heal XX HP. Heals HP.,,XX,unknown
 Orologion,Deal XX damage. Freeze the front row.,Deal XX damage. Freeze the front row.,,XX,unknown
 Rosary,Deal massive damage to the front row.,Deal massive damage to the front row.,,,unknown
 Vacuum,Draw XX card. Coin Purse.,Draw XX card. Coin Purse.,,XX,unknown
-Wings,Reduce Mana cost of next card played by 1.,Reduce Mana cost \nof next card played \nby 1.,,,utility
-Song of Mana,Deal XX damage. Attack all enemies with a wave of mana. Create a {db.Cards.Card_B_0_RawMana.Name} card.,Deal XX damage. Attack all enemies with a wave of mana. Create a {db.Cards.Card_B_0_RawMana.Name} card.,,XX,utility
-Mannajja,Deal XX damage. Attack all enemies with a wave of mana. Create multiple {db.Cards.Card_B_0_RawMana.Name} cards.,Deal XX damage. Attack all enemies with a wave of mana. Create multiple {db.Cards.Card_B_0_RawMana.Name} cards.,,XX,utility
+Wings,Reduce Mana cost of next card played by 1.,Reduce Mana cost\nof next card played\nby 1.,,,utility
+Song of Mana,Deal XX damage. Attack all enemies with a wave of mana. Create a {db.Cards.Card_B_0_RawMana.Name} card.,Deal XX damage to multiple enemies.\nRaw Mana.,Raw Mana : Chance to add 2 mana cards to your Hand.,XX|Raw Mana,utility
+Mannajja,Deal XX damage. Attack all enemies with a wave of mana. Create multiple {db.Cards.Card_B_0_RawMana.Name} cards.,Deal XX damage to multiple enemies.\nRaw Mana.,Raw Mana : Chance to add 2 mana cards to your Hand.,XX|Raw Mana,utility
 Candle,Increase area by XX. Projectiles hit additional times.,Area : Attacks deal XX% splash damage.,,Area|XX%,support
 Crown,Gain additional XP.,Gain additional XP.,,,support
 Hollow Heart,Increase Max Health.,Increase Max Health.,,,support
@@ -86,36 +86,36 @@ Du-Duplicator,Fire more projectiles.,Fire more projectiles.,,,support
 Forever Heart,Increase Max Health.,Gain XX Max Health.,,XX,support
 Pummadora,Heals after Battle.,Heals after Battle.,,,support
 Silver Ring,Increase duration by XX. Increase area by XX. {GlobalKeywords.Crawlers} stay longer and increased weapons hit additional times.,Increase duration by XX. Increase area by XX. {GlobalKeywords.Crawlers} stay longer and increased weapons hit additional times.,,XX,support
-Sprig o' Spinach,Increase damage.,Might : Deal XX% \nmore damage.,,Might|XX%,support
+Sprig o' Spinach,Increase damage.,Might : Deal XX%\nmore damage.,,Might|XX%,support
 Tirajisú,Revive on death.,Revive on death.,,,support
 Bracelet,Deal XX damage. Combo anywhere.,Deal XX damage.,,XX,attack
 Friendship Amulet,Increases Combo.,Increases Combo.,,,support
 Parm Aegis,Add XX Armor. Combo anywhere.,Add XX Armor.,,XX,defence
 Ambrojoe,,,,,
-Antonio,Add XX Armor. Deal XX% more damage when a red card is played. Duration: Triggers Z times.,Add XX Armor. \nCrawler.,Deal XX% more damage when a red card is played. \nDuration: Triggers Z times.,XX|XX%|Duration|Z|Crawler,crawler
-Arca,Add XX Mana. Add XX Mana when a purple card is played. Duration: Triggers Z times.,Add XX Mana. \nCrawler.,Add XX Mana when a purple card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Cavallo,Add XX Amount. Add XX Amount when a yellow card is played. Duration: Triggers Z times.,Add XX Amount. \nCrawler.,Add XX Amount when a yellow card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Christine,Reduce card cost by XX. Prevent XX enemies from attacking when a purple card is played. Duration: Triggers Z times.,Reduce card cost by XX. \nCrawler.,Prevent XX enemies from attacking when a purple card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Clerici,Heal XX. Heal XX after encounter when a blue card is played. Duration: Triggers Z times.,Heal XX. \nCrawler.,Heal XX after encounter when a blue card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Concetta,Add XX Area. Add XX Area when a red card is played. Duration: Triggers Z times.,Add XX Area. \nCrawler.,Add XX Area when a red card is played. \nDuration: Triggers Z times.,XX|Area|Duration|Z|Crawler,crawler
+Antonio,Add XX Armor. Deal XX% more damage when a red card is played. Duration: Triggers Z times.,Add XX Armor.\nCrawler.,Deal XX% more damage when a red card is played.\nDuration: Triggers Z times.,XX|XX%|Duration|Z|Crawler,crawler
+Arca,Add XX Mana. Add XX Mana when a purple card is played. Duration: Triggers Z times.,Add XX Mana.\nCrawler.,Add XX Mana when a purple card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Cavallo,Add XX Amount. Add XX Amount when a yellow card is played. Duration: Triggers Z times.,Add XX Amount.\nCrawler.,Add XX Amount when a yellow card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Christine,Reduce card cost by XX. Prevent XX enemies from attacking when a purple card is played. Duration: Triggers Z times.,Reduce card cost by XX.\nCrawler.,Prevent XX enemies from attacking when a purple card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Clerici,Heal XX. Heal XX after encounter when a blue card is played. Duration: Triggers Z times.,Heal XX.\nCrawler.,Heal XX after encounter when a blue card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Concetta,Add XX Area. Add XX Area when a red card is played. Duration: Triggers Z times.,Add XX Area.\nCrawler.,Add XX Area when a red card is played.\nDuration: Triggers Z times.,XX|Area|Duration|Z|Crawler,crawler
 Divano,,,,,
-Dommario,Gain XX Duration. Deal XX damage when a purple card is played. Duration: Triggers Z times.,Gain XX Duration. \nCrawler.,Deal XX damage when a purple card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Gallo,Gain XX% more coins. Gain XX% more coins when a wild card is played. Duration: Triggers Z times.,Gain XX% more coins. \nCrawler.,Gain XX% more coins when a wild card is played. \nDuration: Triggers Z times.,XX%|Duration|Z|Crawler,crawler
-Gennaro,Add XX Amount. Deal XX damage when a red card is played. Duration: Triggers Z times.,Add XX Amount. \nCrawler.,Deal XX damage when a red card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Giovanna,Add XX Luck. Draw XX card when a purple card is played. Duration: Triggers Z times.,Add XX Luck. \nCrawler.,Draw XX card when a purple card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Imelda,Add XX XP. Gain XX XP Growth when a yellow card is played. Duration: Triggers Z times.,Add XX XP. \nCrawler.,Gain XX XP Growth when a yellow card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Krochi,Add XX Revival. Add XX Revival when a wild card is played. Duration: Triggers Z times.,Add XX Revival. \nCrawler.,Add XX Revival when a wild card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Lama,Deal XX% more damage. Deal XX% more damage when a blue card is played. Duration: Triggers Z times.,Deal XX% more damage. \nCrawler.,Deal XX% more damage when a blue card is played. \nDuration: Triggers Z times.,XX%|Duration|Z|Crawler,crawler
-Pasqualina,Increase Hand by XX. Increase Hand by XX when a purple card is played. Duration: Triggers Z times.,Increase Hand by XX. \nCrawler.,Increase Hand by XX when a purple card is played. \nDuration: Triggers Z times.,Hand|XX|Duration|Z|Crawler,crawler
-MissingN0,Add XX Armor. Draw XX card when a red card is played. Duration: Triggers Z times.,Add XX Armor. \nCrawler.,Draw XX card when a red card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Mortaccio,Add XX Amount. Add XX Amount when a blue card is played. Duration: Triggers Z times.,Add XX Amount. \nCrawler.,Add XX Amount when a blue card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-O'Sole,Add XX Amount. Add XX Luck when a red card is played. Duration: Triggers Z times.,Add XX Amount. \nCrawler.,Add XX Luck when a red card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Poe,Add XX Area. Draw XX card when a blue card is played. Duration: Triggers Z times.,Add XX Area. \nCrawler.,Draw XX card when a blue card is played. \nDuration: Triggers Z times.,XX|Area|Duration|Z|Crawler,crawler
-Poppea,Increase Hand by XX. Gain XX Duration when a yellow card is played. Duration: Triggers Z times.,Increase Hand by XX. \nCrawler.,Gain XX Duration when a yellow card is played. \nDuration: Triggers Z times.,Hand|XX|Duration|Z|Crawler,crawler
-Porta,Add XX Area. Add XX Mana when a red card is played. Duration: Triggers Z times.,Add XX Area. \nCrawler.,Add XX Mana when a red card is played. \nDuration: Triggers Z times.,XX|Area|Duration|Z|Crawler,crawler
-Pugnala,Deal XX% more damage. Draw XX card when a yellow card is played. Duration: Triggers Z times.,Deal XX% more damage. \nCrawler.,Draw XX card when a yellow card is played. \nDuration: Triggers Z times.,XX%|XX|Duration|Z|Crawler,crawler
-Ramba,Add XX Amount. Add XX Amount when a purple card is played. Duration: Triggers Z times.,Add XX Amount. \nCrawler.,Add XX Amount when a purple card is played. \nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
-Zi'Assunta,Increase Hand by XX. Add XX Area when a red card is played. Gain XX Duration. Deal XX% more damage. Duration: Triggers Z times.,Increase Hand by XX. \nCrawler.,Add XX Area when a red card is played. Gain XX Duration. Deal XX% more damage. \nDuration: Triggers Z times.,Hand|XX|Area|Duration|XX%|Z|Crawler,crawler
+Dommario,Gain XX Duration. Deal XX damage when a purple card is played. Duration: Triggers Z times.,Gain XX Duration.\nCrawler.,Deal XX damage when a purple card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Gallo,Gain XX% more coins. Gain XX% more coins when a wild card is played. Duration: Triggers Z times.,Gain XX% more coins.\nCrawler.,Gain XX% more coins when a wild card is played.\nDuration: Triggers Z times.,XX%|Duration|Z|Crawler,crawler
+Gennaro,Add XX Amount. Deal XX damage when a red card is played. Duration: Triggers Z times.,Add XX Amount.\nCrawler.,Deal XX damage when a red card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Giovanna,Add XX Luck. Draw XX card when a purple card is played. Duration: Triggers Z times.,Add XX Luck.\nCrawler.,Draw XX card when a purple card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Imelda,Add XX XP. Gain XX XP Growth when a yellow card is played. Duration: Triggers Z times.,Add XX XP.\nCrawler.,Gain XX XP Growth when a yellow card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Krochi,Add XX Revival. Add XX Revival when a wild card is played. Duration: Triggers Z times.,Add XX Revival.\nCrawler.,Add XX Revival when a wild card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Lama,Deal XX% more damage. Deal XX% more damage when a blue card is played. Duration: Triggers Z times.,Deal XX% more damage.\nCrawler.,Deal XX% more damage when a blue card is played.\nDuration: Triggers Z times.,XX%|Duration|Z|Crawler,crawler
+Pasqualina,Increase Hand by XX. Increase Hand by XX when a purple card is played. Duration: Triggers Z times.,Increase Hand by XX.\nCrawler.,Increase Hand by XX when a purple card is played.\nDuration: Triggers Z times.,Hand|XX|Duration|Z|Crawler,crawler
+MissingN0,Add XX Armor. Draw XX card when a red card is played. Duration: Triggers Z times.,Add XX Armor.\nCrawler.,Draw XX card when a red card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Mortaccio,Add XX Amount. Add XX Amount when a blue card is played. Duration: Triggers Z times.,Add XX Amount.\nCrawler.,Add XX Amount when a blue card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+O'Sole,Add XX Amount. Add XX Luck when a red card is played. Duration: Triggers Z times.,Add XX Amount.\nCrawler.,Add XX Luck when a red card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Poe,Add XX Area. Draw XX card when a blue card is played. Duration: Triggers Z times.,Add XX Area.\nCrawler.,Draw XX card when a blue card is played.\nDuration: Triggers Z times.,XX|Area|Duration|Z|Crawler,crawler
+Poppea,Increase Hand by XX. Gain XX Duration when a yellow card is played. Duration: Triggers Z times.,Increase Hand by XX.\nCrawler.,Gain XX Duration when a yellow card is played.\nDuration: Triggers Z times.,Hand|XX|Duration|Z|Crawler,crawler
+Porta,Add XX Area. Add XX Mana when a red card is played. Duration: Triggers Z times.,Add XX Area.\nCrawler.,Add XX Mana when a red card is played.\nDuration: Triggers Z times.,XX|Area|Duration|Z|Crawler,crawler
+Pugnala,Deal XX% more damage. Draw XX card when a yellow card is played. Duration: Triggers Z times.,Deal XX% more damage.\nCrawler.,Draw XX card when a yellow card is played.\nDuration: Triggers Z times.,XX%|XX|Duration|Z|Crawler,crawler
+Ramba,Add XX Amount. Add XX Amount when a purple card is played. Duration: Triggers Z times.,Add XX Amount.\nCrawler.,Add XX Amount when a purple card is played.\nDuration: Triggers Z times.,XX|Duration|Z|Crawler,crawler
+Zi'Assunta,Increase Hand by XX. Add XX Area when a red card is played. Gain XX Duration. Deal XX% more damage. Duration: Triggers Z times.,Increase Hand by XX.\nCrawler.,Add XX Area when a red card is played. Gain XX Duration. Deal XX% more damage.\nDuration: Triggers Z times.,Hand|XX|Area|Duration|XX%|Z|Crawler,crawler
 Add Type Armor,Blue Trigger.,Blue Trigger.,,,
 Add Type Attack,Red Trigger.,Red Trigger.,,,
 Add Type Defense,Blue Trigger.,Blue Trigger.,,,
@@ -174,4 +174,4 @@ Thief,Big Coin Bag.,Big Coin Bag.,,Big Coin Bag,
 Triple Damage,Triple Damage.,,,,
 Uncrackable,Uncrackable.,Uncrackable.,,,
 Upgrade Damage,Upgrade (NOT USED).,Upgrade (NOT USED).,,,
-Yin Yang,Draw XX card.,Yin : Add 1 Mana. \nYang : Draw 1 card.,Yin : Even Mana - Gain 1 Mana. \nYang : Odd Mana - Draw 1 card.,Yin|Yang|1,
+Yin Yang,Draw XX card.,Yin : Add 1 Mana.\nYang : Draw 1 card.,Yin : Even Mana - Gain 1 Mana.\nYang : Odd Mana - Draw 1 card.,Yin|Yang|1,

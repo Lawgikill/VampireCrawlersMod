@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text.Json;
 using Nosebleed.Pancake.Models;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace VampireCrawlers.LiveBridge;
 
@@ -32,6 +33,9 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
     private GUIStyle _overlayStyle;
     private GUIStyle _overlayPanelStyle;
     private Texture2D _overlayBackground;
+    private GameObject _overlayRoot;
+    private RectTransform _overlayRect;
+    private Text _overlayText;
     private string _handManaTotal = "HAND MANA\nTOTAL: --";
     private string _lastCommandId = "";
     private bool _overlayDisabled;
@@ -50,6 +54,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             var state = CaptureState();
             if (state.Piles.Count == 0) return;
             _handManaTotal = $"HAND MANA\nTOTAL: {FormatHandManaTotal(state)}";
+            UpdateOverlayCanvas();
             ProcessPendingCommand(state);
 
             Directory.CreateDirectory(Path.GetDirectoryName(OutputPath));
@@ -203,6 +208,78 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
 
     private void OnGUI()
     {
+        return;
+    }
+
+    private void UpdateOverlayCanvas()
+    {
+        if (_overlayDisabled) return;
+
+        try
+        {
+            EnsureOverlayCanvas();
+            if (_overlayText != null) _overlayText.text = _handManaTotal;
+            PositionOverlayCanvas();
+        }
+        catch (Exception error)
+        {
+            _overlayDisabled = true;
+            Plugin.BridgeLog?.LogWarning($"Live bridge overlay disabled after UI draw failure: {error}");
+        }
+    }
+
+    private void EnsureOverlayCanvas()
+    {
+        if (_overlayRoot != null && _overlayText != null && _overlayRect != null) return;
+
+        _overlayRoot = new GameObject("VampireCrawlers.LiveBridge.HandManaOverlay");
+        _overlayRoot.hideFlags = HideFlags.HideAndDontSave;
+        UnityEngine.Object.DontDestroyOnLoad(_overlayRoot);
+
+        var canvas = _overlayRoot.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = short.MaxValue;
+
+        var panel = new GameObject("Panel");
+        panel.hideFlags = HideFlags.HideAndDontSave;
+        panel.transform.SetParent(_overlayRoot.transform, false);
+        _overlayRect = panel.AddComponent<RectTransform>();
+        _overlayRect.anchorMin = new Vector2(1f, 1f);
+        _overlayRect.anchorMax = new Vector2(1f, 1f);
+        _overlayRect.pivot = new Vector2(1f, 1f);
+        _overlayRect.sizeDelta = new Vector2(138f, 52f);
+
+        var image = panel.AddComponent<Image>();
+        image.color = new Color(0.78f, 0.66f, 0.42f, 1f);
+        image.raycastTarget = false;
+
+        var textObject = new GameObject("Text");
+        textObject.hideFlags = HideFlags.HideAndDontSave;
+        textObject.transform.SetParent(panel.transform, false);
+        var textRect = textObject.AddComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        _overlayText = textObject.AddComponent<Text>();
+        _overlayText.raycastTarget = false;
+        _overlayText.alignment = TextAnchor.MiddleCenter;
+        _overlayText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        _overlayText.fontSize = 15;
+        _overlayText.fontStyle = FontStyle.Bold;
+        _overlayText.color = new Color(0.36f, 0.30f, 0.22f, 1f);
+        _overlayText.text = _handManaTotal;
+    }
+
+    private void PositionOverlayCanvas()
+    {
+        if (_overlayRect == null) return;
+        _overlayRect.anchoredPosition = new Vector2(-242f, -(Screen.height * 0.765f));
+    }
+
+    private void DrawImGuiOverlay()
+    {
         if (_overlayDisabled) return;
 
         try
@@ -230,8 +307,11 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
 
             if (_overlayPanelStyle == null)
             {
-                _overlayPanelStyle = new GUIStyle(GUI.skin.label)
+                _overlayPanelStyle = new GUIStyle(GUI.skin.box)
                 {
+                    border = new RectOffset(0, 0, 0, 0),
+                    margin = new RectOffset(0, 0, 0, 0),
+                    padding = new RectOffset(0, 0, 0, 0),
                     normal =
                     {
                         background = _overlayBackground,
@@ -247,7 +327,7 @@ public sealed class LiveBridgeBehaviour : MonoBehaviour
             try
             {
                 GUI.depth = -10000;
-                GUI.Label(rect, GUIContent.none, _overlayPanelStyle);
+                GUI.Box(rect, GUIContent.none, _overlayPanelStyle);
                 GUI.Label(rect, _handManaTotal, _overlayStyle);
             }
             finally

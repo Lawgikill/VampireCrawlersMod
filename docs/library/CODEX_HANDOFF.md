@@ -6,7 +6,7 @@ The current app prefers the live bridge JSON when fresh, falls back to the activ
 
 ## Current State
 
-- Version is currently `1.1.8`.
+- Version is currently `1.1.9`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`
@@ -95,7 +95,7 @@ art\*.png
 ## Things That Are Known Fragile
 
 - The live bridge is combat-live when BepInEx is installed and the game has active pile models. Save polling is only as real-time as the game's save writes and remains the fallback path.
-- The live bridge plugin also draws a small two-line in-game hand-mana overlay near the lower right combat UI area using Unity IMGUI. The overlay uses an opaque dark style background, not `GUI.DrawTexture`; the latter threw `NotSupportedException` in this IL2CPP IMGUI path.
+- The live bridge plugin also draws a small two-line in-game hand-mana overlay near the lower right combat UI area. IMGUI text worked, but IMGUI backgrounds did not: `GUI.DrawTexture` threw `NotSupportedException`, and `GUI.Label`/`GUI.Box` style backgrounds were not visible. The working overlay is now a `ScreenSpaceOverlay` Unity UI `Canvas` with an opaque `Image` panel and `Text` child, styled to resemble the **End Turn** button.
 - The app-to-game bridge command channel is diagnostic only. `play-card` commands match a live hand card and log/return candidate play-related methods; they do not currently invoke gameplay.
 - `CardGuid` needs to serialize as a real value for command targeting. If it falls back to a type name, use the command result plus hand index only as a temporary diagnostic.
 - Cracked/shattered card visuals appear to be separate from `IsBroken`. The bridge now exports `CardCrackStage` via reflection fallbacks when available; `server.js` already normalizes it as `crackStage`.
@@ -113,7 +113,7 @@ art\*.png
 - Evolved cards and base cards can differ. Do not fall back from an evolved `cardId` to `baseId` for cost unless you know it is correct.
 - `Card_M_0_Wings` is a special wild-cost card even though the serialized cost map contains a numeric value.
 - Game item ID-to-name mapping lives in `data/game-item-names.csv`. Card/gem rules text, optional rules tooltips, gold highlight tokens, and card color overrides live in the name-based `data/display-overrides.csv`. Regenerate local JSON and avoid editing generated JSON as the source of truth.
-- The CSV display pipeline is split by builder: `build_card_text_map.py`, `build_gem_text_map.py`, and `build_text_meta.py` all consume `display-overrides.csv` through `tools/display_overrides.py`; name resolution comes from `game-item-names.csv`.
+- The CSV display pipeline is split by builder: `build_card_text_map.py`, `build_gem_text_map.py`, and `build_text_meta.py` all consume `display-overrides.csv` through `tools/display_overrides.py`; name resolution comes from `game-item-names.csv`. `build_local_data.py` also passes the project display override CSV into those builders for user-triggered local rebuilds.
 - Evolution recipes live in the name-based `data/evolutions.csv` and ship through `public/assets/evolutions.json`. The CSV uses `+` for required recipe parts and `|` for alternatives, and `tools/build_evolutions.py` resolves names through `data/game-item-names.csv`.
 - Release prep must regenerate app-owned JSON from CSV before packaging: `tools/build_card_text_map.py`, `tools/build_gem_text_map.py`, `tools/build_text_meta.py`, and `tools/build_evolutions.py`.
 - The evolution chart highlights owned components from the live deck snapshot. Normal first inputs require an open gem slot. Vandalier is special: Peachone and Ebony Wings both highlight if both are present and at least one has an open slot; if both are present but both are gemmed, both use the blocked/orange highlight. Phieraggi uses the same two-weapon rule for Eight The Sparrow and Phiera Der Tuphello; Tirajisú is presence-only.

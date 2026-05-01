@@ -316,6 +316,29 @@ subtracting mana. The correct next step is to use the dry-run candidate list and
 BepInEx logs to identify the game's real play-card/controller method, then call
 that method through the same flow the game UI uses.
 
+## Live Overlay Rendering
+
+The hand-mana overlay started as IMGUI because it was the quickest way to draw
+debug-style text from the bridge. In this game/runtime, IMGUI text was reliable,
+but IMGUI backgrounds were not:
+
+```text
+GUI.DrawTexture -> NotSupportedException
+GUI.Label with style background -> no visible panel
+GUI.Box with style background -> no visible panel
+```
+
+The working implementation uses normal Unity UI instead:
+
+```text
+Canvas(renderMode = ScreenSpaceOverlay, sortingOrder = short.MaxValue)
+  Panel Image(color ~= End Turn parchment)
+    Text(Arial built-in font, bold, muted brown)
+```
+
+This means future visual tweaks should adjust the `RectTransform`, `Image.color`,
+and `Text` settings in `LiveBridgeBehaviour`, not the parked IMGUI helper.
+
 ## AssetRipper Notes
 
 AssetRipper was useful to confirm exported C# stubs and script/class names, but it did not expose the custom CardConfig payload in YAML/JSON. It showed only shallow Unity fields for MagicWand:
