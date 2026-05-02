@@ -347,17 +347,41 @@ function renderCounts(snapshot) {
 
 function renderCosts(snapshot) {
   const costCounts = snapshot.costCounts || [];
+  const hiddenHistogramCostKeys = getHiddenHistogramCostKeys(snapshot.cards || []);
   const histogramCosts = [
     ...costCounts.filter((entry) => entry.kind === "wild"),
     ...costCounts.filter(isManaCostEntry),
-  ];
+  ].filter((entry) => !hiddenHistogramCostKeys.has(entry.key));
   const otherCosts = costCounts.filter((entry) => !isManaCostEntry(entry) && entry.kind !== "wild");
+
+  if (hiddenHistogramCostKeys.has(state.costFilterKey)) {
+    state.costFilterKey = "";
+  }
 
   els.clearCostFilter.disabled = !state.costFilterKey;
   els.costs.innerHTML = [
     renderCostHistogram(histogramCosts, snapshot.cards || []),
     renderCostRows(otherCosts),
   ].filter(Boolean).join("");
+}
+
+function isPentagramCard(card) {
+  return card?.cardId === "Card_A_4_Pentagram" || card?.cardId === "Card_A_5_Pentagram";
+}
+
+function getHiddenHistogramCostKeys(cards) {
+  const cardsByCostKey = new Map();
+
+  cards.forEach((card) => {
+    const costKey = costFilterKeyForCard(card);
+    const costCards = cardsByCostKey.get(costKey) || [];
+    costCards.push(card);
+    cardsByCostKey.set(costKey, costCards);
+  });
+
+  return new Set(Array.from(cardsByCostKey.entries())
+    .filter(([, costCards]) => costCards.length === 1 && isPentagramCard(costCards[0]))
+    .map(([costKey]) => costKey));
 }
 
 function isManaCostEntry(entry) {

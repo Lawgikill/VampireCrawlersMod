@@ -430,6 +430,11 @@
     "color": "unknown"
   },
   "Card_E_LittleClover": {
+    "gold": [
+      "10%",
+      "Destroy"
+    ],
+    "tooltip": "Destroy : Card burns up on use.\nWild : Combo with any cards.",
     "color": "unknown"
   },
   "Card_E_LittleHeart": {
@@ -500,6 +505,11 @@
     "color": "support"
   },
   "Card_S_0_HollowHeart": {
+    "gold": [
+      "XX",
+      "Destroy"
+    ],
+    "tooltip": "Destroy : Card burns up on use.",
     "color": "support"
   },
   "Card_S_0_Pummarola": {
@@ -564,6 +574,11 @@
     "color": "support"
   },
   "Card_S_1_HollowHeart": {
+    "gold": [
+      "XX",
+      "Destroy"
+    ],
+    "tooltip": "Destroy : Card burns up on use.",
     "color": "support"
   },
   "Card_S_1_Pummarola": {
