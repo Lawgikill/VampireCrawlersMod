@@ -159,11 +159,31 @@ Responsibilities:
 - Load `/api/card-map`, `/api/card-names`, `/api/card-text`, `/api/gem-map`, `/api/gem-text`, and `/api/text-meta` once on startup and after local data rebuild.
 - Render the cost curve, non-mana cost buckets, card frequency, and card grid.
 - Filter by cost bucket, switch between all cards and cards in hand, and sort the visible card grid.
+- The Costs/Frequency sidebar can be collapsed from the top toolbar with
+  **Hide Column** / **Show Column**. This is UI-only session state; cost filters
+  and frequency sort state remain intact while the sidebar is hidden.
+- The card grid header shows `CURRENT MANA`, `HAND MANA TOTAL`, and live pile
+  counts for `DRAW PILE`, `DISCARD PILE`, and `COMBO PILE` from
+  `snapshot.piles[].count`.
+- The card grid has action filters for:
+  - only showing cards that continue combo,
+  - hiding cards about to break (`shatter 2`),
+  - always showing Attractorb through those two action filters.
+  Wild-cost cards (`cost === "W"`) are always treated as combo continuers even
+  if the bridge does not mark their cost text with the combo highlight.
 - Render generated card rules text and gem rules text inside the card description plate.
 - Render the evolution cheat sheet modal from `public/assets/evolutions.json`.
-- In live-bridge mode, cards in hand are clickable. Clicking a hand card sends a real `play-card` command to the bridge. The app keeps success quiet, surfaces errors in the toolbar, and polls the command result until the matching command ID is observed so stale results do not leave the UI latched.
+- In live-bridge mode, cards in hand are clickable. Clicking a hand card sends a real `play-card` command to the bridge. The app keeps success quiet, surfaces errors in the toolbar, polls the command result until the matching command ID is observed so stale results do not leave the UI latched, and immediately refreshes `/api/deck` after bridge confirmation so played cards leave the hand view without waiting for the normal two-second poll.
 - In live-bridge mode, the app also displays `CURRENT MANA` from the bridge's promoted `CurrentMana` field. The bridge obtains this from the visible mana orb text at `_manaDisplay oldschool (plinth)/oldschool (angel)/ManaOrb/_manaFiller/_manaCountText`, not from `PlayerModel.CachedMana`, which was observed to report stale or zero values.
-- Combo mana-cost highlighting and cracked/shattered overlays are latched in the frontend until the unique set of cards in hand changes. This smooths over the game's visual/text signals flickering between bridge captures while still clearing the state when cards are played or drawn.
+- Combo mana-cost highlighting is latched in the frontend until the unique set
+  of cards in hand changes. This smooths over the game's cost-text flicker while
+  still clearing naturally when cards are played or drawn.
+- Cracked/shattered overlays are combat-local learned state keyed by card GUID
+  when available. During combat, an observed shatter state can only promote
+  `none -> shatter 1 -> shatter 2`; missing/flickered bridge fields do not
+  downgrade it, and moving into deck/draw/discard does not clear it. When
+  `snapshot.isInCombat === false`, learned shatter state is cleared and overlays
+  are suppressed for out-of-combat snapshots.
 
 Current default sort:
 
@@ -369,10 +389,16 @@ CSV-to-display ownership is:
 - `tools/build_evolutions.py` reads `data/evolutions.csv` and resolves names through `data/game-item-names.csv`.
 - `tools/build_local_data.py` passes the project `data/display-overrides.csv` into the local card/gem text and metadata builders when users rebuild local data from the app.
 
-Audit note, 2026-05-01: all editable CSV display sources are wired into app
-display generation. The release build must regenerate `card-text.json`,
-`gem-text.json`, `text-meta.json`, and `evolutions.json` before packaging so
-CSV changes are reflected in the app.
+Audit note, 2026-05-02: all editable CSV display sources are wired into app
+display generation. `data/display-overrides.csv` feeds card text, gem text,
+highlight metadata, hover tooltips, and color metadata through
+`tools/display_overrides.py`; `data/game-item-names.csv` resolves display names
+back to card/gem IDs for those builders and for evolutions; `data/evolutions.csv`
+feeds `public/assets/evolutions.json`. `tools/build_local_data.py` also passes
+the project display override CSV into the user-triggered local rebuild pipeline.
+The release build must regenerate `card-text.json`, `gem-text.json`,
+`text-meta.json`, and `evolutions.json` before packaging so CSV changes are
+reflected in the app.
 
 The frontend highlights rule placeholders and selected keywords such as `XX`,
 `XX%`, `Crit`, `Disarm`, `Duration`, `Area`, `Crawler`, and `Might` in gold. `Wings` is a

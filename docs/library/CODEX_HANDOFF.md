@@ -6,7 +6,7 @@ The current app prefers the live bridge JSON when fresh, falls back to the activ
 
 ## Current State
 
-- Version is currently `1.2.1`.
+- Version is currently `1.3.0`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`
@@ -92,6 +92,14 @@ art\*.png
 17. In live-bridge mode, clicking a hand card sends a `play-card` bridge command through `/api/live-command`.
 18. The BepInEx bridge polls `%APPDATA%\VampireCrawlersDeckTracker\command.json` and writes `%APPDATA%\VampireCrawlersDeckTracker\command-result.json`.
 19. Current player mana is exported as `CurrentMana`/`DisplayedMana` from the visible mana orb text. Do not use `PlayerModel.CachedMana`; it was observed reporting `0` while the in-game orb showed `4`.
+20. After a bridge command is confirmed, the frontend immediately refreshes
+    `/api/deck` instead of waiting for the normal two-second poll.
+21. The card grid header shows live draw/discard/combo pile counts from
+    `snapshot.piles[].count`.
+22. The card grid has action filters for combo continuers, hiding `shatter 2`
+    cards, and always showing Attractorb through those two action filters. Wild
+    cards always count as combo continuers without needing bridge confirmation.
+23. The Costs/Frequency sidebar can be hidden or shown from the top toolbar.
 
 ## Things That Are Known Fragile
 
@@ -100,7 +108,15 @@ art\*.png
 - The app-to-game bridge command channel is live for card play. `play-card` commands match a live hand card by GUID and invoke `Nosebleed.Pancake.Models.CardModel.TryPlayCard()`. The command result records `InvocationMethod`, `InvocationReturnValue`, and `InvocationError`. Keep `dryRun` support for future diagnostics.
 - `CardGuid` needs to serialize as a real value for command targeting. If it falls back to a type name, use the command result plus hand index only as a temporary diagnostic.
 - Cracked/shattered card visuals are separate from `IsBroken` in observed live runs. A cracked Spellbinder reported `CardModel.IsBroken = false`, `TimesLimitBroken = 0`, and `CardCrackStage = 0`, while its `Nosebleed.Pancake.GameLogic.BreakableCard` reported `CrackState = Cracked`, `TimesPlayedThisTurn = 3`, and a `_cardCrack` image sprite named `shatter 1`. The bridge now exports promoted `BreakableCrackState`, `BreakableCrackStage`, `BreakableTimesPlayedThisTurn`, and `CardCrackSprite` fields. Raw `CardViewDiagnostics`/`CardViewComponents` are available only when `EnableVerboseDiagnostics` is enabled because normal-mode diagnostics caused light game jitter.
-- Combo mana-cost highlights and cracked/shattered overlays are frontend-latched until the unique set of hand cards changes. This handles bridge-visible UI flicker while resetting naturally when cards are played or drawn.
+- Combo mana-cost highlights are frontend-latched until the unique set of hand
+  cards changes. This handles bridge-visible cost-text flicker while resetting
+  naturally when cards are played or drawn.
+- Cracked/shattered overlays are frontend learned state scoped to the current
+  combat. The bridge reports observations, not durable truth: when a card is no
+  longer view-inspected, the crack fields can disappear. The frontend therefore
+  remembers the highest observed state for each card GUID during combat
+  (`none -> shatter 1 -> shatter 2`) and clears all learned shatter state when
+  `isInCombat` becomes false.
 - The card art mapping is reverse-engineered from Unity assets and is not perfect for every future card/config.
 - Unity/Odin serialized `CardConfig` data is partially custom; do not assume `read_typetree()` will expose all fields.
 - Card IDs like `Card_A_1_MagicWand` are not reliable for mana cost. MagicWand's true base cost is `0`.
@@ -118,7 +134,12 @@ art\*.png
 - The CSV display pipeline is split by builder: `build_card_text_map.py`, `build_gem_text_map.py`, and `build_text_meta.py` all consume `display-overrides.csv` through `tools/display_overrides.py`; name resolution comes from `game-item-names.csv`. `build_local_data.py` also passes the project display override CSV into those builders for user-triggered local rebuilds.
 - Evolution recipes live in the name-based `data/evolutions.csv` and ship through `public/assets/evolutions.json`. The CSV uses `+` for required recipe parts and `|` for alternatives, and `tools/build_evolutions.py` resolves names through `data/game-item-names.csv`.
 - Release prep must regenerate app-owned JSON from CSV before packaging: `tools/build_card_text_map.py`, `tools/build_gem_text_map.py`, `tools/build_text_meta.py`, and `tools/build_evolutions.py`.
-- CSV audit, 2026-05-01: `display-overrides.csv` feeds card text, gem text, highlights, tooltips, and colors; `game-item-names.csv` resolves display names back to IDs for those builders and for evolutions; `evolutions.csv` feeds `public/assets/evolutions.json`.
+- CSV audit, 2026-05-02: `display-overrides.csv` feeds card text, gem text,
+  highlights, tooltips, and colors through `tools/display_overrides.py`;
+  `game-item-names.csv` resolves display names back to IDs for those builders
+  and for evolutions; `evolutions.csv` feeds `public/assets/evolutions.json`;
+  `build_local_data.py` passes the project display override CSV into
+  user-triggered local card/gem text and metadata rebuilds.
 - The evolution chart highlights owned components from the live deck snapshot. Normal first inputs require an open gem slot. Vandalier is special: Peachone and Ebony Wings both highlight if both are present and at least one has an open slot; if both are present but both are gemmed, both use the blocked/orange highlight. Phieraggi uses the same two-weapon rule for Eight The Sparrow and Phiera Der Tuphello; Tirajisú is presence-only.
 - Blank gem text in `data/display-overrides.csv` intentionally hides that gem rule line while keeping the icon visible, currently including `GemConfig_DoubleDamage` and `GemConfig_Evolve`.
 - The packaged app must include `public/assets/card-costs.json`, `public/assets/card-text.json`, `public/assets/evolutions.json`, `public/assets/gem-text.json`, `public/assets/text-meta.json`, and `resources/live-bridge/**`, but must not include extracted PNG art or generated `card-map.json`, `card-names.json`, or `gem-map.json`.

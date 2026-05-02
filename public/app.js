@@ -11,13 +11,17 @@ const state = {
   sortBy: "cost",
   frequencySort: "name",
   cardViewMode: "all",
+  onlyComboCards: false,
+  hideBreakingCards: false,
+  alwaysShowAttractorb: false,
+  sidebarColumnHidden: false,
   config: null,
   pendingCommandId: "",
   pendingCommandStartedAt: 0,
   setupHiddenThisSession: false,
   handVisualLatchSignature: "",
   latchedComboHighlights: new Set(),
-  latchedShatterStages: new Map(),
+  learnedShatterStages: new Map(),
   previousIsInCombat: null,
 };
 
@@ -43,6 +47,12 @@ const els = {
   currentMana: document.querySelector("#currentMana"),
   handManaTotal: document.querySelector("#handManaTotal"),
   commandStatus: document.querySelector("#commandStatus"),
+  drawPileCount: document.querySelector("#drawPileCount"),
+  discardPileCount: document.querySelector("#discardPileCount"),
+  comboPileCount: document.querySelector("#comboPileCount"),
+  mainLayout: document.querySelector("#mainLayout"),
+  sidebarColumn: document.querySelector("#sidebarColumn"),
+  toggleSidebarColumn: document.querySelector("#toggleSidebarColumn"),
   evolutionsButton: document.querySelector("#evolutionsButton"),
   evolutionDialog: document.querySelector("#evolutionDialog"),
   evolutionClose: document.querySelector("#evolutionClose"),
@@ -53,6 +63,9 @@ const els = {
   startupSetupLog: document.querySelector("#startupSetupLog"),
   startupSetupRetry: document.querySelector("#startupSetupRetry"),
   cardViewMode: document.querySelector("#cardViewMode"),
+  onlyComboCards: document.querySelector("#onlyComboCards"),
+  hideBreakingCards: document.querySelector("#hideBreakingCards"),
+  alwaysShowAttractorb: document.querySelector("#alwaysShowAttractorb"),
   cards: document.querySelector("#cards"),
 };
 
@@ -303,8 +316,22 @@ function costFilterKeyForCard(card) {
   return `unknown:${card.cost}`;
 }
 
+function isAttractorb(card) {
+  return /(^|_)Attractorb$/i.test(card?.cardId || "")
+    || /(^|_)Attractorb$/i.test(card?.baseId || "")
+    || cardDisplayName(card?.cardId).toLowerCase() === "attractorb"
+    || cardDisplayName(card?.baseId).toLowerCase() === "attractorb";
+}
+
+function isComboContinuer(card) {
+  return card?.comboCostHighlighted || card?.cost === "W";
+}
+
 function cardMatches(card) {
   if (state.costFilterKey && costFilterKeyForCard(card) !== state.costFilterKey) return false;
+  if (state.alwaysShowAttractorb && isAttractorb(card)) return true;
+  if (state.onlyComboCards && !isComboContinuer(card)) return false;
+  if (state.hideBreakingCards && cardCrackOverlayStage(card) === "2") return false;
   return true;
 }
 
@@ -522,6 +549,10 @@ function comboHighlightKey(card) {
   return card?.guid || `${card?.pileId || ""}:${card?.index ?? ""}:${card?.cardId || ""}`;
 }
 
+function cardShatterKey(card) {
+  return card?.guid || `${card?.cardId || ""}:${card?.baseId || ""}:${card?.index ?? ""}`;
+}
+
 function handVisualLatchKey(card) {
   return card?.guid || `${card?.cardId || ""}:${card?.baseId || ""}:${card?.index ?? ""}`;
 }
@@ -549,50 +580,60 @@ function rawCardCrackOverlayStage(card) {
 }
 
 function stabilizeHandVisualStates(snapshot) {
-  if (!snapshot?.liveStateActive || !Array.isArray(snapshot.cards)) {
+  if (snapshot?.isInCombat === false) {
+    state.learnedShatterStages.clear();
+  }
+
+  if (!Array.isArray(snapshot?.cards)) {
     state.handVisualLatchSignature = "";
     state.latchedComboHighlights.clear();
-    state.latchedShatterStages.clear();
     return snapshot;
   }
 
-  const signature = handVisualLatchSignature(snapshot);
-  if (signature !== state.handVisualLatchSignature) {
-    state.handVisualLatchSignature = signature;
+  if (snapshot.liveStateActive) {
+    const signature = handVisualLatchSignature(snapshot);
+    if (signature !== state.handVisualLatchSignature) {
+      state.handVisualLatchSignature = signature;
+      state.latchedComboHighlights.clear();
+    }
+  } else {
+    state.handVisualLatchSignature = "";
     state.latchedComboHighlights.clear();
-    state.latchedShatterStages.clear();
   }
 
   const activeKeys = new Set();
   for (const card of snapshot.cards) {
     const key = comboHighlightKey(card);
-    if (!key) continue;
-    activeKeys.add(key);
+    if (key) {
+      activeKeys.add(key);
 
-    if (card.comboCostHighlighted) {
-      state.latchedComboHighlights.add(key);
-    } else if (state.latchedComboHighlights.has(key)) {
-      card.comboCostHighlighted = true;
+      if (snapshot.liveStateActive && card.comboCostHighlighted) {
+        state.latchedComboHighlights.add(key);
+      } else if (state.latchedComboHighlights.has(key)) {
+        card.comboCostHighlighted = true;
+      }
     }
 
     const rawShatterStage = rawCardCrackOverlayStage(card);
-    if (rawShatterStage) {
-      const existingStage = state.latchedShatterStages.get(key);
-      state.latchedShatterStages.set(key, existingStage === "2" || rawShatterStage === "2" ? "2" : "1");
+    const shatterKey = cardShatterKey(card);
+    if (snapshot.isInCombat === false) {
+      card.suppressCrackOverlay = true;
+      continue;
     }
 
-    const latchedShatterStage = state.latchedShatterStages.get(key);
-    if (latchedShatterStage) {
-      card.latchedCrackOverlayStage = latchedShatterStage;
+    if (rawShatterStage && shatterKey && snapshot.liveStateActive && snapshot.isInCombat === true) {
+      const existingStage = state.learnedShatterStages.get(shatterKey);
+      state.learnedShatterStages.set(shatterKey, existingStage === "2" || rawShatterStage === "2" ? "2" : "1");
+    }
+
+    const learnedShatterStage = shatterKey ? state.learnedShatterStages.get(shatterKey) : "";
+    if (learnedShatterStage) {
+      card.latchedCrackOverlayStage = learnedShatterStage;
     }
   }
 
   for (const key of state.latchedComboHighlights) {
     if (!activeKeys.has(key)) state.latchedComboHighlights.delete(key);
-  }
-
-  for (const key of state.latchedShatterStages.keys()) {
-    if (!activeKeys.has(key)) state.latchedShatterStages.delete(key);
   }
 
   return snapshot;
@@ -866,6 +907,19 @@ function formatCurrentMana(snapshot) {
   return currentMana == null ? "--" : currentMana;
 }
 
+function pileCount(snapshot, pileId) {
+  const pile = Array.isArray(snapshot?.piles)
+    ? snapshot.piles.find((entry) => entry.pileId === pileId)
+    : null;
+  return Number.isFinite(pile?.count) ? pile.count : "--";
+}
+
+function updateSidebarColumnVisibility() {
+  els.mainLayout.classList.toggle("is-sidebar-hidden", state.sidebarColumnHidden);
+  els.sidebarColumn.hidden = state.sidebarColumnHidden;
+  els.toggleSidebarColumn.textContent = state.sidebarColumnHidden ? "Show Column" : "Hide Column";
+}
+
 function renderGemSlots(card) {
   const openSlotCount = Math.max(0, Number(card.openGemSlots) || 0);
   const filledGems = Array.isArray(card.gems) ? card.gems : [];
@@ -887,6 +941,7 @@ function renderGemSlots(card) {
 }
 
 function cardCrackOverlayStage(card) {
+  if (card?.suppressCrackOverlay) return "";
   return card?.latchedCrackOverlayStage || rawCardCrackOverlayStage(card);
 }
 
@@ -914,6 +969,9 @@ function renderCards(snapshot) {
   els.handCardsLabel.classList.toggle("is-active", state.cardViewMode === "hand");
   els.currentMana.textContent = `CURRENT MANA: ${formatCurrentMana(snapshot)}`;
   els.handManaTotal.textContent = `HAND MANA TOTAL: ${formatHandManaTotal(snapshot)}`;
+  els.drawPileCount.textContent = `DRAW PILE: ${pileCount(snapshot, "DrawPile")}`;
+  els.discardPileCount.textContent = `DISCARD PILE: ${pileCount(snapshot, "DiscardPile")}`;
+  els.comboPileCount.textContent = `COMBO PILE: ${pileCount(snapshot, "ComboPile")}`;
 
   els.cards.innerHTML = cards.length
     ? cards.map((card) => {
@@ -1035,6 +1093,7 @@ async function checkLiveCommandResult() {
       : result.Message || result.InvocationError || "Command failed.";
     console.info("Live bridge command result", result);
     clearPendingPlayCommand();
+    await refresh();
   } catch (error) {
     if (Date.now() - state.pendingCommandStartedAt < 5000) {
       setTimeout(checkLiveCommandResult, 500);
@@ -1221,6 +1280,26 @@ els.frequencySort.addEventListener("change", (event) => {
 
 els.cardViewMode.addEventListener("change", (event) => {
   state.cardViewMode = event.target.checked ? "hand" : "all";
+  if (state.snapshot) renderCards(state.snapshot);
+});
+
+els.toggleSidebarColumn.addEventListener("click", () => {
+  state.sidebarColumnHidden = !state.sidebarColumnHidden;
+  updateSidebarColumnVisibility();
+});
+
+els.onlyComboCards.addEventListener("change", (event) => {
+  state.onlyComboCards = event.target.checked;
+  if (state.snapshot) renderCards(state.snapshot);
+});
+
+els.hideBreakingCards.addEventListener("change", (event) => {
+  state.hideBreakingCards = event.target.checked;
+  if (state.snapshot) renderCards(state.snapshot);
+});
+
+els.alwaysShowAttractorb.addEventListener("change", (event) => {
+  state.alwaysShowAttractorb = event.target.checked;
   if (state.snapshot) renderCards(state.snapshot);
 });
 

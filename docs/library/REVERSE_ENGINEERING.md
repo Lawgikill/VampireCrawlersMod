@@ -335,9 +335,13 @@ CardCrackSprite
 Treat `BreakableCrackState` as the primary signal for visible crack state unless
 future tests show a separate value for full shatter.
 
-The frontend latches crack/shatter overlays until the unique set of hand cards
-changes. This compensates for the game briefly dropping view signals between
-bridge captures without keeping stale overlays after cards are played or drawn.
+The frontend treats crack/shatter data as combat-local learned state. Once a
+bridge capture shows `shatter 1` or `shatter 2` for a card, the app remembers
+the highest observed shatter state for that card GUID until combat ends. Missing
+fields in later captures do not clear or downgrade the state because the game
+often stops exposing view-owned crack data when the card is no longer being
+inspected in hand/combo. The only normal reset is `isInCombat === false`, which
+clears all learned shatter state and suppresses out-of-combat crack overlays.
 
 ## Current Mana
 
@@ -366,6 +370,9 @@ orange-glow material markup, for example:
 The bridge exports this as `IsComboCostHighlighted` and `ComboCostText`.
 Because the game can flicker that text state between captures, the frontend
 latches combo mana-cost highlighting until the unique set of hand cards changes.
+Wild-cost cards are a frontend-defined exception for action filtering: cards
+whose normalized cost is `W` are always considered combo continuers, even if the
+bridge does not currently mark their cost text as highlighted.
 
 ## Experimental Play-Card Bridge
 

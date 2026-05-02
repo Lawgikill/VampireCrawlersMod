@@ -40,11 +40,12 @@
       </section>
 
       <div class="evolutions-toolbar">
+        <button id="toggleSidebarColumn" class="column-toggle-button" type="button">Hide Column</button>
         <button id="evolutionsButton" class="evolutions-button" type="button">Evolutions</button>
       </div>
 
-      <section class="layout">
-        <aside class="panel">
+      <section id="mainLayout" class="layout">
+        <aside id="sidebarColumn" class="panel">
           <div class="panel-section-header costs-header">
             <h2>Costs</h2>
             <button id="clearCostFilter" class="clear-cost-filter" type="button" disabled>Show all</button>
@@ -88,6 +89,27 @@
                   <option value="gems">gems</option>
                 </select>
               </label>
+            </div>
+            <div class="card-play-section" aria-label="Card play filters">
+              <div class="pile-summary">
+                <span id="drawPileCount">DRAW PILE: --</span>
+                <span id="discardPileCount">DISCARD PILE: --</span>
+                <span id="comboPileCount">COMBO PILE: --</span>
+              </div>
+              <div class="card-play-filters">
+                <label class="card-play-filter">
+                  <input id="onlyComboCards" type="checkbox">
+                  <span>Only show cards that continue combo</span>
+                </label>
+                <label class="card-play-filter">
+                  <input id="hideBreakingCards" type="checkbox">
+                  <span>Hide cards about to break</span>
+                </label>
+                <label class="card-play-filter">
+                  <input id="alwaysShowAttractorb" type="checkbox">
+                  <span>Override to always show Attractorb</span>
+                </label>
+              </div>
             </div>
           </div>
           <div id="cards" class="card-grid"></div>
