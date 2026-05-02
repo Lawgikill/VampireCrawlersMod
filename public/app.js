@@ -13,10 +13,12 @@ const state = {
   cardViewMode: "all",
   onlyComboCards: false,
   hideBreakingCards: false,
-  alwaysShowAttractorb: false,
   sidebarColumnHidden: false,
   config: null,
   pendingCommandId: "",
+  pendingCommandCardGuid: "",
+  pendingCommandCardId: "",
+  pendingCommandCardIndex: null,
   pendingCommandStartedAt: 0,
   setupHiddenThisSession: false,
   handVisualLatchSignature: "",
@@ -65,7 +67,7 @@ const els = {
   cardViewMode: document.querySelector("#cardViewMode"),
   onlyComboCards: document.querySelector("#onlyComboCards"),
   hideBreakingCards: document.querySelector("#hideBreakingCards"),
-  alwaysShowAttractorb: document.querySelector("#alwaysShowAttractorb"),
+  playableAttractorbsInHand: document.querySelector("#playableAttractorbsInHand"),
   cards: document.querySelector("#cards"),
 };
 
@@ -169,12 +171,17 @@ function formatRulesTooltipHtml(entries) {
 }
 
 function formatGemRulesHtml(gems) {
+  const seenRules = new Set();
   return (gems || [])
     .map((gem) => {
       const rawText = gemRulesText(gem);
       if (!rawText) return "";
+      const punctuatedText = punctuateSentence(rawText);
+      const ruleKey = punctuatedText.trim().toLowerCase();
+      if (seenRules.has(ruleKey)) return "";
+      seenRules.add(ruleKey);
       const text = highlightRuleValues(
-        highlightConfiguredTokens(escapeHtml(punctuateSentence(rawText)).replace(/\r?\n/g, "<br>"), gem),
+        highlightConfiguredTokens(escapeHtml(punctuatedText).replace(/\r?\n/g, "<br>"), gem),
         null,
       );
       return `<span class="gem-rule">${text}</span>`;
@@ -329,7 +336,6 @@ function isComboContinuer(card) {
 
 function cardMatches(card) {
   if (state.costFilterKey && costFilterKeyForCard(card) !== state.costFilterKey) return false;
-  if (state.alwaysShowAttractorb && isAttractorb(card)) return true;
   if (state.onlyComboCards && !isComboContinuer(card)) return false;
   if (state.hideBreakingCards && cardCrackOverlayStage(card) === "2") return false;
   return true;
@@ -898,6 +904,11 @@ function formatHandManaTotal(snapshot) {
   return [String(numericTotal), ...extras].join(" + ");
 }
 
+function playableAttractorbsInHandCount(snapshot) {
+  if (!snapshot?.liveStateActive || !Array.isArray(snapshot.cards)) return 0;
+  return snapshot.cards.filter((card) => card.pileId === "HandPile" && isAttractorb(card)).length;
+}
+
 function formatCurrentMana(snapshot) {
   const currentMana = Number.isFinite(snapshot?.currentMana)
     ? snapshot.currentMana
@@ -972,6 +983,10 @@ function renderCards(snapshot) {
   els.drawPileCount.textContent = `DRAW PILE: ${pileCount(snapshot, "DrawPile")}`;
   els.discardPileCount.textContent = `DISCARD PILE: ${pileCount(snapshot, "DiscardPile")}`;
   els.comboPileCount.textContent = `COMBO PILE: ${pileCount(snapshot, "ComboPile")}`;
+  const playableAttractorbCount = playableAttractorbsInHandCount(snapshot);
+  els.playableAttractorbsInHand.textContent = `PLAYABLE ATTRACTORBS IN HAND: ${playableAttractorbCount}`;
+  els.playableAttractorbsInHand.classList.toggle("is-positive", playableAttractorbCount > 0);
+  els.playableAttractorbsInHand.classList.toggle("is-zero", playableAttractorbCount === 0);
 
   els.cards.innerHTML = cards.length
     ? cards.map((card) => {
@@ -984,7 +999,6 @@ function renderCards(snapshot) {
       ].filter(Boolean);
       const artPath = state.cardMap[card.cardId] || state.cardMap[card.baseId] || "";
       const rulesText = cardRulesText(card.cardId) || cardRulesText(card.baseId);
-      const gemRulesTextValue = card.gems.map((gem) => punctuateSentence(gemRulesText(gem))).filter(Boolean).join("\n");
       const rulesTextHtml = formatRulesTextHtml(rulesText, card);
       const gemRulesHtml = formatGemRulesHtml(card.gems);
       const statusLinesHtml = statusLines.length
@@ -1004,13 +1018,21 @@ function renderCards(snapshot) {
       const rulesTooltipAttrs = rulesTooltipTitle ? ` title="${escapeHtml(rulesTooltipTitle)}"` : "";
       const rulesTooltipElement = rulesTooltipHtml ? `<span class="card-rules-tooltip">${rulesTooltipHtml}</span>` : "";
       const canSendLiveCommand = snapshot.liveStateActive && card.pileId === "HandPile";
+      const isPendingCommandCard = Boolean(
+        state.pendingCommandId
+        && canSendLiveCommand
+        && (
+          (card.guid && card.guid === state.pendingCommandCardGuid)
+          || (!card.guid && card.cardId === state.pendingCommandCardId && card.index === state.pendingCommandCardIndex)
+        ),
+      );
       const crackOverlayHtml = renderCardCrackOverlay(card);
       const commandAttrs = canSendLiveCommand
-        ? ` data-live-command="play-card" data-card-id="${escapeHtml(card.cardId)}" data-card-guid="${escapeHtml(card.guid)}" data-pile-id="${escapeHtml(card.pileId)}" data-card-index="${card.index}" title="Play ${escapeHtml(cardDisplayName(card.cardId))}"`
+        ? ` data-live-command="play-card" data-card-id="${escapeHtml(card.cardId)}" data-card-guid="${escapeHtml(card.guid)}" data-pile-id="${escapeHtml(card.pileId)}" data-card-index="${card.index}" title="Play ${escapeHtml(cardDisplayName(card.cardId))}"${isPendingCommandCard ? " aria-disabled=\"true\"" : ""}`
         : "";
 
       return `
-        <article class="card-row ${cardTypeClass(card)}${canSendLiveCommand ? " playable-card" : ""}${crackOverlayHtml ? " is-cracked-card" : ""}"${commandAttrs}>
+        <article class="card-row ${cardTypeClass(card)}${canSendLiveCommand ? " playable-card" : ""}${isPendingCommandCard ? " is-command-pending" : ""}${crackOverlayHtml ? " is-cracked-card" : ""}"${commandAttrs}>
           <div class="${cardTitleClass}">
             ${renderManaCost(card)}
             ${renderGemSlots(card)}
@@ -1035,6 +1057,9 @@ function clearPendingPlayCommand() {
     card.removeAttribute("aria-disabled");
   });
   state.pendingCommandId = "";
+  state.pendingCommandCardGuid = "";
+  state.pendingCommandCardId = "";
+  state.pendingCommandCardIndex = null;
   state.pendingCommandStartedAt = 0;
 }
 
@@ -1048,11 +1073,18 @@ async function sendPlayCardCommand(button) {
     pileId: button.dataset.pileId || "",
     index: Number(button.dataset.cardIndex),
   };
-  if (state.pendingCommandId) return;
+  if (state.pendingCommandId) {
+    els.commandStatus.textContent = "Waiting for the previous card command...";
+    checkLiveCommandResult();
+    return;
+  }
 
   state.pendingCommandId = command.id;
+  state.pendingCommandCardGuid = command.cardGuid;
+  state.pendingCommandCardId = command.cardConfigId;
+  state.pendingCommandCardIndex = command.index;
   state.pendingCommandStartedAt = Date.now();
-  els.commandStatus.textContent = "";
+  els.commandStatus.textContent = "Playing card...";
   button.classList.add("is-command-pending");
   button.setAttribute("aria-disabled", "true");
 
@@ -1295,11 +1327,6 @@ els.onlyComboCards.addEventListener("change", (event) => {
 
 els.hideBreakingCards.addEventListener("change", (event) => {
   state.hideBreakingCards = event.target.checked;
-  if (state.snapshot) renderCards(state.snapshot);
-});
-
-els.alwaysShowAttractorb.addEventListener("change", (event) => {
-  state.alwaysShowAttractorb = event.target.checked;
   if (state.snapshot) renderCards(state.snapshot);
 });
 

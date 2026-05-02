@@ -403,6 +403,28 @@ button:disabled {
   cursor: pointer;
 }
 
+.playable-attractorb-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.playable-attractorb-status.is-positive {
+  color: var(--good);
+  text-shadow: 0 0 6px rgba(120, 194, 143, 0.28);
+}
+
+.playable-attractorb-status.is-zero {
+  color: var(--accent);
+  text-shadow: 0 0 6px rgba(215, 71, 56, 0.24);
+}
+
 .evolutions-button {
   justify-self: center;
   min-height: 30px;
@@ -1587,7 +1609,8 @@ button:disabled {
     justify-content: flex-end;
   }
 
-  .card-play-filter {
+  .card-play-filter,
+  .playable-attractorb-status {
     white-space: normal;
   }
 

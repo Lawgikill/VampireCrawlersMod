@@ -6,7 +6,7 @@ The current app prefers the live bridge JSON when fresh, falls back to the activ
 
 ## Current State
 
-- Version is currently `1.3.0`.
+- Version is currently `1.4.0`.
 - The app has both browser mode and Electron desktop mode.
 - Browser mode:
   - `npm start`
@@ -96,10 +96,14 @@ art\*.png
     `/api/deck` instead of waiting for the normal two-second poll.
 21. The card grid header shows live draw/discard/combo pile counts from
     `snapshot.piles[].count`.
-22. The card grid has action filters for combo continuers, hiding `shatter 2`
-    cards, and always showing Attractorb through those two action filters. Wild
-    cards always count as combo continuers without needing bridge confirmation.
+22. The card grid has action filters for combo continuers and hiding `shatter 2`
+    cards. Wild cards always count as combo continuers without needing bridge
+    confirmation.
 23. The Costs/Frequency sidebar can be hidden or shown from the top toolbar.
+24. The card grid shows `PLAYABLE ATTRACTORBS IN HAND` as an informational live
+    hand count. It does not override the action filters.
+25. Gem icons remain per-instance, but duplicate gem rules text is deduplicated
+    per card so repeated same-kind gems do not repeat identical text lines.
 
 ## Things That Are Known Fragile
 
@@ -126,6 +130,8 @@ art\*.png
 - The Costs panel separates crawler buckets from normal deck mana buckets. `Wild` and normal numeric mana buckets render as a histogram; `Crawler N` buckets render as rows.
 - `GemConfig_SetCostType_Wild` changes a card's effective cost to `W`; this must happen in server-side snapshot cost logic so the badge, histogram, filters, and hand mana total agree.
 - Gem tags are display-formatted in the frontend. `GemConfig_YinYang` becomes `Yin Yang`, and mana modifier gems display as `Mana +N` / `Mana -N`.
+- Duplicate gem rule lines are deduped after punctuation/normalization in the
+  frontend. This affects display text only; duplicate gem icons still show.
 - Open gem slots can be derived from the save: `Data.ProgressionSaveData.CardGemSlots[cardId] - GemIds.length`, clamped at zero. The app renders them as black/gold circles under the card's mana cost.
 - Filled gem slots render generated gem sprites and should not show a separate colored backing ring.
 - Evolved cards and base cards can differ. Do not fall back from an evolved `cardId` to `baseId` for cost unless you know it is correct.

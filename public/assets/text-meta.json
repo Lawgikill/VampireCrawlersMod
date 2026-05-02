@@ -27,8 +27,11 @@
   },
   "Card_A_0_GorgeousMoon": {
     "gold": [
-      "1"
+      "Erase*",
+      "XX",
+      "Moonrise"
     ],
+    "tooltip": "Erase* : Remove enemies and gain bonus experience.\nMoonrise : Gorgeous Moon grows stronger but the Mana cost increases.",
     "color": "attack"
   },
   "Card_A_0_Knife": {
@@ -101,9 +104,9 @@
     "gold": [
       "XX",
       "YY",
-      "Disarm"
+      "Disarm*"
     ],
-    "tooltip": "Disarm : High chance of preventing a single enemy attack.",
+    "tooltip": "Disarm* : High chance of preventing 2 enemy attacks.",
     "color": "attack"
   },
   "Card_A_2_Axe": {
@@ -195,6 +198,7 @@
       "XX",
       "Crit"
     ],
+    "tooltip": "Crit : Has a chance to do multiplied damage.",
     "color": "attack"
   },
   "Card_A_3_HeavenSword": {
@@ -246,9 +250,9 @@
     "gold": [
       "XX",
       "YY",
-      "Disarm"
+      "Disarm*"
     ],
-    "tooltip": "Disarm : High chance of preventing a single enemy attack.",
+    "tooltip": "Disarm* : High chance of preventing 2 enemy attacks.",
     "color": "attack"
   },
   "Card_A_3_ThousandEdge": {
@@ -409,6 +413,7 @@
     "gold": [
       "XX"
     ],
+    "tooltip": "Big Coin Bag : Create a coin card.",
     "color": "unknown"
   },
   "Card_E_CloverPetal": {
@@ -976,8 +981,10 @@
   },
   "GemConfig_Might": {
     "gold": [
-      "10% Might"
-    ]
+      "10%",
+      "Might"
+    ],
+    "tooltip": "Might : Increase damage."
   },
   "GemConfig_ReturnToHand": {
     "gold": [
@@ -987,7 +994,8 @@
   "GemConfig_Sprightly": {
     "gold": [
       "Recycle"
-    ]
+    ],
+    "tooltip": "Recycle : Card returns to Deck Pile when discarded."
   },
   "GemConfig_Steal": {
     "gold": [
@@ -997,7 +1005,8 @@
   "GemConfig_Thief": {
     "gold": [
       "Big Coin Bag"
-    ]
+    ],
+    "tooltip": "Big Coin Bag : Create a coin card."
   },
   "GemConfig_YinYang": {
     "gold": [

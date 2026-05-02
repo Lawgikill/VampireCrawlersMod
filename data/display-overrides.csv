@@ -4,7 +4,7 @@ Cherry Bomb,Deal XX damage. Chance to explode.,Deal XX damage. Chance to explode
 Cross,Deal XX damage. Damages enemies from the centre out.,Deal XX damage.,,XX,attack
 Garlic,Deal XX damage. Damages front enemies. Chance to Knockback.,"Deal XX damage to the front row.
 Disarm.",Disarm : High chance of preventing a single enemy attack.,XX|Disarm,attack
-Gorgeous Moon,Erase 1 enemy. Keep using to increase power.,Erase 1 enemy. Keep using to increase power.,,1,attack
+Gorgeous Moon,Erase 1 enemy. Keep using to increase power.,Erase* XX enemies.\nMoonrise.,Erase* : Remove enemies and gain bonus experience.\nMoonrise : Gorgeous Moon grows stronger but the Mana cost increases.,Erase*|XX|Moonrise,attack
 Knife,Deal XX damage. Fires quickly from right to left.,"Deal XX damage.
 Crit.",Crit : Has a chance to do multiplied damage.,XX|Crit,attack
 Magic Wand,Deal XX damage. Prioritize attackers.,Deal XX damage. Prioritize attackers.,,XX,attack
@@ -13,20 +13,20 @@ Fire Wand,Deal XX damage. Fires randomly left or right.,Deal XX damage.,,XX,atta
 Gatti Amari,Deal XX damage. Chance to {:color(Keyword):Scuffle}.,Deal XX damage. Chance to Scuffle.,"Scuffle : When two cats collide, they may start fighting.",XX|Scuffle,attack
 King Bible,Deal XX damage. Fire in an arc.,Deal XX damage. Fire in an arc.,,XX,attack
 Runetracer,Deal XX damage. Bounces to deal more damage.,Deal XX damage. Bounces to deal more damage.,,XX,attack
-Soul Eater,Deal XX damage. Heal XX HP. Evolved {db.Cards.Card_A_0_Garlic.Name}. Heal on use.,Deal XX damage. Heal YY.\nDisarm.,Disarm : High chance of preventing a single enemy attack.,XX|YY|Disarm,attack
+Soul Eater,Deal XX damage. Heal XX HP. Evolved {db.Cards.Card_A_0_Garlic.Name}. Heal on use.,Deal XX damage to the front row.\nHeal YY.\nDisarm*.,Disarm* : High chance of preventing 2 enemy attacks.,XX|YY|Disarm*,attack
 Axe,Deal XX damage. High damage.,Deal XX damage. High damage.,,XX,attack
-Bloody Tear,Deal XX damage. Heal XX HP. Evolution of the {db.Cards.Card_A_0_Whip.Name}. Can deal Critical damage and absorb HP.,Deal XX damage to multiple enemies. On Crit: Heal YY.,Crit : Has a chance to do multiplied damage.,XX|YY|Crit,attack
+Bloody Tear,Deal XX damage. Heal XX HP. Evolution of the {db.Cards.Card_A_0_Whip.Name}. Can deal Critical damage and absorb HP.,Deal XX damage to multiple enemies.\nOn Crit: Heal YY.,Crit : Has a chance to do multiplied damage.,XX|YY|Crit,attack
 Carréllo,Deal XX damage. Throws a bouncing projectile. Number of bounces affected by Amount.,Deal XX damage. Throws a bouncing projectile. Number of bounces affected by Amount.,,XX,attack
 Celestial Dusting,Deal XX damage. Throws flowers.,Deal XX damage. Throws flowers.,,XX,attack
 Eight The Sparrow,Deal XX damage. Fires quickly from two directions.,Deal XX damage. Fires quickly from two directions.,,XX,attack
 Glass Fandango,Deal XX damage. Attacks from the bottom.,Deal XX damage. Attacks from the bottom.,,XX,attack
 Holy Wand,Deal XX damage. Evolution of the {db.Cards.Card_A_1_MagicWand.Name}. Fires more projectiles.,Deal XX damage. Prioritize attackers.,,XX,attack
-Lightning Ring,Deal XX damage. Fires projectiles from the sky.,Deal XX damage. Fires projectiles from the sky.,,XX,attack
+Lightning Ring,Deal XX damage. Fires projectiles from the sky.,Deal XX damage.,,XX,attack
 Unholy Vespers,Deal XX damage. Evolved {db.Cards.Card_A_1_KingBible.Name}. Fires more projectiles.,Deal XX damage with a chance to Knockback.,,XX|Knockback,attack
 Valkyrie Turner,Deal XX damage. Evolved {db.Cards.Card_A_3_ShadowPinion.Name}. Charges up between uses.,Deal XX damage to the front row.\nValkyrie's Inferno.,"Valkyrie's Inferno : After use, every card played charges up the damage of this card.",XX|Valkyrie's Inferno,attack
 Vicious Hunger,Deal XX damage. May turn enemies into coins.,Deal XX damage. May turn enemies into coins.,,XX,attack
 Death Spiral,Deal XX damage. Evolved {db.Cards.Card_A_3_Axe.Name}. Send an onslaught of scythes to kill the enemy.,"Deal XX damage to the front row.
-Crit.",,XX|Crit,attack
+Crit.",Crit : Has a chance to do multiplied damage.,XX|Crit,attack
 Heaven Sword,Deal XX damage. Evolved {db.Cards.Card_A_0_Cross.Name}. Can do Critical damage.,Deal XX damage.\nCrit.,Crit : Has a chance to do multiplied damage.,XX|Crit,attack
 Hellfire,Deal XX damage. Evolved {db.Cards.Card_A_1_FireWand.Name}. Deals massive damage to a few enemies.,Deal XX damage with a chance to Knockback.,,XX|Knockback,attack
 NO FUTURE,Deal XX damage. Heal XX HP. Bounces and explodes.,Deal XX damage. Heal XX HP. Bounces and explodes.,,XX,attack
@@ -54,7 +54,7 @@ Rainbow Armor,Add XX Armor.,Add XX Armor.,,XX,defence
 Hero's Armor,Add XX Armor.,Add XX Armor.,,XX,defence
 Clock Lancet,Deal XX damage. Time your attack to select a target.,Apply XX Freeze.,,XX Freeze,defence
 Infinite Corridor,Deal XX damage. Freeze enemies in time.,Deal XX damage. Freeze enemies in time.,,XX,defence
-Big Coin Bag,Gain XX coins.,Gain XX coins.,,XX,unknown
+Big Coin Bag,Gain XX coins.,Gain XX coins.,Big Coin Bag : Create a coin card.,XX,unknown
 Clover Petal,Draw XX card. Increase Luck slightly. Draw a card.,Draw XX card. Increase Luck slightly. Draw a card.,,XX,unknown
 Coin Purse,Draw XX card. Gain XX coins. Coin Purse.,Draw XX card. Gain XX coins. Coin Purse.,,XX,unknown
 Rich Coin Bag,Gain XX coins.,Gain XX coins.,,XX,unknown
@@ -152,7 +152,7 @@ Mana -2,Reduce Mana Cost.,,,,
 Mana +1,Increase Mana Cost.,,,,
 Mana +2,Increase Mana Cost.,,,,
 Midas,Midas.,Midas.,,,
-Might,Might.,Add 10% Might.,,10% Might,
+Might,Might.,Add 10% Might.,Might : Increase damage.,10%|Might,
 Mild,Mild.,Mild.,,,
 Nduja,Nduja.,Nduja.,,,
 Plunder,Greed.,Greed.,,,
@@ -167,10 +167,10 @@ Set Cost Type Wild,Wild.,,,,
 Set Cost Type X Cost,X Mana.,X Mana.,,,
 Slayer,Kill Count.,Kill Count.,,,
 Spike,Armor Strike.,Armor Strike.,,,
-Sprightly,Recycle.,Recycle.,,Recycle,
+Sprightly,Recycle.,Recycle.,Recycle : Card returns to Deck Pile when discarded.,Recycle,
 Steal,Mug.,Mug.,,Mug,
 Swift,Quick Draw.,Quick Draw.,,,
-Thief,Big Coin Bag.,Big Coin Bag.,,Big Coin Bag,
+Thief,Big Coin Bag.,Big Coin Bag.,Big Coin Bag : Create a coin card.,Big Coin Bag,
 Triple Damage,Triple Damage.,,,,
 Uncrackable,Uncrackable.,Uncrackable.,,,
 Upgrade Damage,Upgrade (NOT USED).,Upgrade (NOT USED).,,,

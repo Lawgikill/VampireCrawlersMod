@@ -167,11 +167,16 @@ Responsibilities:
   `snapshot.piles[].count`.
 - The card grid has action filters for:
   - only showing cards that continue combo,
-  - hiding cards about to break (`shatter 2`),
-  - always showing Attractorb through those two action filters.
+  - hiding cards about to break (`shatter 2`).
   Wild-cost cards (`cost === "W"`) are always treated as combo continuers even
   if the bridge does not mark their cost text with the combo highlight.
+- The card grid header also shows `PLAYABLE ATTRACTORBS IN HAND`, counting
+  live-bridge hand cards matched as Attractorb. The count is informational only,
+  independent of the visible card filters, green when positive, and red at zero.
 - Render generated card rules text and gem rules text inside the card description plate.
+- Filled gem icons are rendered per gem instance, but duplicate gem rules text is
+  deduplicated per card so two identical Might gems show two icons and only one
+  `Add 10% Might.` rules line.
 - Render the evolution cheat sheet modal from `public/assets/evolutions.json`.
 - In live-bridge mode, cards in hand are clickable. Clicking a hand card sends a real `play-card` command to the bridge. The app keeps success quiet, surfaces errors in the toolbar, polls the command result until the matching command ID is observed so stale results do not leave the UI latched, and immediately refreshes `/api/deck` after bridge confirmation so played cards leave the hand view without waiting for the normal two-second poll.
 - In live-bridge mode, the app also displays `CURRENT MANA` from the bridge's promoted `CurrentMana` field. The bridge obtains this from the visible mana orb text at `_manaDisplay oldschool (plinth)/oldschool (angel)/ManaOrb/_manaFiller/_manaCountText`, not from `PlayerModel.CachedMana`, which was observed to report stale or zero values.

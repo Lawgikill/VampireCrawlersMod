@@ -487,6 +487,10 @@ public\assets\gem-text.json
 public\assets\text-meta.json
 ```
 
+The frontend renders gem icons per filled gem slot but deduplicates identical
+gem rules text per card. For example, two Might gems still show two Might icons,
+but the card description shows `Add 10% Might.` once.
+
 Extracted art, art manifests, and generated art maps remain local ignored
 artifacts because they are rebuilt from each user's installed game files.
 
