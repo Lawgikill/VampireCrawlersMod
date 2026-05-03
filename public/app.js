@@ -1355,9 +1355,11 @@ els.clearCostFilter.addEventListener("click", () => {
   }
 });
 
-els.cards.addEventListener("click", (event) => {
+els.cards.addEventListener("pointerdown", (event) => {
+  if (typeof event.button === "number" && event.button !== 0) return;
   const card = event.target.closest("[data-live-command]");
   if (!card || !els.cards.contains(card) || card.getAttribute("aria-disabled") === "true") return;
+  event.preventDefault();
   sendPlayCardCommand(card);
 });
 
