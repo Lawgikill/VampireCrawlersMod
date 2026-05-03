@@ -906,7 +906,11 @@ function formatHandManaTotal(snapshot) {
 
 function playableAttractorbsInHandCount(snapshot) {
   if (!snapshot?.liveStateActive || !Array.isArray(snapshot.cards)) return 0;
-  return snapshot.cards.filter((card) => card.pileId === "HandPile" && isAttractorb(card)).length;
+  return snapshot.cards.filter((card) =>
+    card.pileId === "HandPile"
+    && isAttractorb(card)
+    && cardCrackOverlayStage(card) !== "2"
+  ).length;
 }
 
 function formatCurrentMana(snapshot) {
